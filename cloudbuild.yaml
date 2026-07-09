@@ -1,0 +1,49 @@
+steps:
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: bash
+    args:
+      - -c
+      - gcloud secrets versions access latest --secret=kenko-keiei-frontend-env-production > .env.production
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - us-central1-docker.pkg.dev/$PROJECT_ID/kenko-keiei-frontend/kenko-keiei-frontend:$COMMIT_SHA
+      - .
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - us-central1-docker.pkg.dev/$PROJECT_ID/kenko-keiei-frontend/kenko-keiei-frontend:$COMMIT_SHA
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud artifacts repositories set-cleanup-policies kenko-keiei-frontend \
+          --project=$PROJECT_ID \
+          --location=us-central1 \
+          --policy=cleanup-policy.json \
+          --no-dry-run
+
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - kenko-keiei-frontend
+      - --image
+      - us-central1-docker.pkg.dev/$PROJECT_ID/kenko-keiei-frontend/kenko-keiei-frontend:$COMMIT_SHA
+      - --region
+      - us-central1
+      - --memory
+      - 512Mi
+      - --allow-unauthenticated
+
+images:
+  - us-central1-docker.pkg.dev/$PROJECT_ID/kenko-keiei-frontend/kenko-keiei-frontend:$COMMIT_SHA
+
+options:
+  logging: CLOUD_LOGGING_ONLY
