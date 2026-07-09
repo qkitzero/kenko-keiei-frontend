@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Header from "@/components/Header";
+import { UserProvider } from "@/context/UserContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kenko Keiei",
-  description: "Health and Productivity Management Portal",
+  title: "健康経営",
+  description: "健康経営ポータル",
 };
 
 export default function RootLayout({
@@ -24,10 +26,15 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="ja"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col font-sans">{children}</body>
+      <body className="min-h-full flex flex-col font-sans">
+        <UserProvider>
+          <Header />
+          {children}
+        </UserProvider>
+      </body>
     </html>
   );
 }
