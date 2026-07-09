@@ -9,21 +9,29 @@ export async function GET(req: NextRequest) {
 
   const refreshToken = req.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
   if (refreshToken) {
-    await client.POST("/v1/revoke", {
-      body: {},
-      headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${refreshToken}` },
+    try {
+      await client.POST("/v1/revoke", {
+        body: {},
+        headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${refreshToken}` },
+      });
+    } catch (e) {
+      console.error("failed to revoke token during logout:", e);
+    }
+  }
+
+  let logoutUrl = returnTo;
+  try {
+    const { data } = await client.POST("/v1/logout", {
+      body: { returnTo },
     });
+    if (data?.logoutUrl) {
+      logoutUrl = data.logoutUrl;
+    }
+  } catch (e) {
+    console.error("failed to call logout endpoint:", e);
   }
 
-  const { data, error } = await client.POST("/v1/logout", {
-    body: { returnTo },
-  });
-
-  if (error) {
-    return NextResponse.json(error, { status: 500 });
-  }
-
-  const res = NextResponse.json(data);
+  const res = NextResponse.json({ logoutUrl });
   clearAuthCookies(res);
   return res;
 }
