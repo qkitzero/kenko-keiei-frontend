@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Kenko Keiei Frontend
 
-## Getting Started
+[![release](https://img.shields.io/github/v/release/qkitzero/kenko-keiei-frontend?logo=github)](https://github.com/qkitzero/kenko-keiei-frontend/releases)
+[![Release](https://github.com/qkitzero/kenko-keiei-frontend/actions/workflows/release.yml/badge.svg)](https://github.com/qkitzero/kenko-keiei-frontend/actions/workflows/release.yml)
 
-First, run the development server:
+[kenko-keiei.qkitzero.xyz](https://kenko-keiei.qkitzero.xyz)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```mermaid
+flowchart TD
+    subgraph gcp[GCP]
+        secret_manager[Secret Manager]
+
+        subgraph cloud_build[Cloud Build]
+            build_kenko_keiei_frontend(Build kenko-keiei-frontend)
+            push_kenko_keiei_frontend(Push kenko-keiei-frontend)
+            deploy_kenko_keiei_frontend(Deploy kenko-keiei-frontend)
+        end
+
+        subgraph artifact_registry[Artifact Registry]
+            kenko_keiei_frontend_image[(kenko-keiei-frontend image)]
+        end
+
+        subgraph cloud_run[Cloud Run]
+            kenko_keiei_frontend(Kenko Keiei Frontend)
+        end
+    end
+
+    subgraph external[External]
+        auth0(Auth0)
+        auth_service(Auth Service)
+        user_service(User Service)
+    end
+
+    build_kenko_keiei_frontend --> push_kenko_keiei_frontend --> kenko_keiei_frontend_image
+
+    kenko_keiei_frontend_image --> deploy_kenko_keiei_frontend --> kenko_keiei_frontend
+
+    secret_manager --> deploy_kenko_keiei_frontend
+
+    kenko_keiei_frontend --> auth0
+    kenko_keiei_frontend --> auth_service
+    kenko_keiei_frontend --> user_service
 ```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
