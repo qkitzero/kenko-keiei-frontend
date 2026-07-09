@@ -24,33 +24,38 @@ export async function authorizedRequest<T>(
   req: NextRequest,
   call: AuthorizedCall<T>,
 ): Promise<AuthorizedResult<T>> {
-  const accessToken = req.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
+  try {
+    const accessToken = req.cookies.get(ACCESS_TOKEN_COOKIE)?.value;
 
-  if (accessToken) {
-    const first = await call(accessToken);
-    if (first.status !== 401) {
-      return first;
+    if (accessToken) {
+      const first = await call(accessToken);
+      if (first.status !== 401) {
+        return first;
+      }
     }
+
+    const refreshToken = req.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
+    if (!refreshToken) {
+      return { status: 401, error: { message: "unauthenticated" } };
+    }
+
+    const { data: refreshData, response: refreshResponse } =
+      await authClient.POST("/v1/refresh", {
+        body: {},
+        headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${refreshToken}` },
+      });
+
+    const newAccessToken = refreshData?.accessToken;
+    if (!refreshResponse.ok || !newAccessToken) {
+      return { status: 401, error: { message: "refresh failed" } };
+    }
+
+    const newRefreshToken = extractRefreshToken(refreshResponse);
+
+    const retry = await call(newAccessToken);
+    return { ...retry, newAccessToken, newRefreshToken };
+  } catch (e) {
+    console.error("authorizedRequest failed:", e);
+    return { status: 500, error: { message: "upstream request failed" } };
   }
-
-  const refreshToken = req.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
-  if (!refreshToken) {
-    return { status: 401, error: { message: "unauthenticated" } };
-  }
-
-  const { data: refreshData, response: refreshResponse } =
-    await authClient.POST("/v1/refresh", {
-      body: {},
-      headers: { Cookie: `${REFRESH_TOKEN_COOKIE}=${refreshToken}` },
-    });
-
-  const newAccessToken = refreshData?.accessToken;
-  if (!refreshResponse.ok || !newAccessToken) {
-    return { status: 401, error: { message: "refresh failed" } };
-  }
-
-  const newRefreshToken = extractRefreshToken(refreshResponse);
-
-  const retry = await call(newAccessToken);
-  return { ...retry, newAccessToken, newRefreshToken };
 }
