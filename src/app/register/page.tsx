@@ -20,9 +20,13 @@ export default function Register() {
     setLoading(true);
     setError("");
 
-    const [year, month, day] = birthDate
-      .split("-")
-      .map((str) => parseInt(str, 10));
+    const dateParts = birthDate.split("-").map((str) => parseInt(str, 10));
+    if (dateParts.length !== 3 || dateParts.some(isNaN)) {
+      setError("生年月日を正しく入力してください。");
+      setLoading(false);
+      return;
+    }
+    const [year, month, day] = dateParts;
 
     try {
       const res = await fetch("/api/user/create", {
