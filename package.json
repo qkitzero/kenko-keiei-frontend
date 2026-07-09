@@ -1,0 +1,44 @@
+{
+  "name": "kenko-keiei-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "generate:auth:buf": "buf generate buf.build/qkitzero-org/auth-service",
+    "generate:user:buf": "buf generate buf.build/qkitzero-org/user-service",
+    "generate:buf": "npm run generate:auth:buf && npm run generate:user:buf",
+    "generate:auth:openapi": "swagger2openapi ./gen/auth/v1/auth.swagger.json -o ./gen/auth/v1/auth.openapi.json",
+    "generate:user:openapi": "swagger2openapi ./gen/user/v1/user.swagger.json -o ./gen/user/v1/user.openapi.json",
+    "generate:openapi": "npm run generate:auth:openapi && npm run generate:user:openapi",
+    "generate:auth:schema": "openapi-typescript ./gen/auth/v1/auth.openapi.json -o ./gen/auth/v1/auth.schema.ts",
+    "generate:user:schema": "openapi-typescript ./gen/user/v1/user.openapi.json -o ./gen/user/v1/user.schema.ts",
+    "generate:schema": "npm run generate:auth:schema && npm run generate:user:schema",
+    "generate:all": "npm run generate:buf && npm run generate:openapi && npm run generate:schema",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "next": "16.2.9",
+    "openapi-fetch": "^0.17.0",
+    "react": "19.2.4",
+    "react-dom": "19.2.4"
+  },
+  "devDependencies": {
+    "@bufbuild/buf": "^1.71.0",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.9",
+    "eslint-config-prettier": "^10.1.8",
+    "openapi-typescript": "^7.13.0",
+    "prettier": "3.9.3",
+    "swagger2openapi": "^7.0.8",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
