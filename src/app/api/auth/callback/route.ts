@@ -1,10 +1,10 @@
-import { client as authClient } from "@/app/api/auth/client";
-import { client as userClient } from "@/app/api/user/client";
 import {
   extractRefreshToken,
   setAccessTokenCookie,
   setRefreshTokenCookie,
 } from "@/app/api/_lib/cookies";
+import { client as authClient } from "@/app/api/auth/client";
+import { client as userClient } from "@/app/api/user/client";
 import { NextRequest, NextResponse } from "next/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";

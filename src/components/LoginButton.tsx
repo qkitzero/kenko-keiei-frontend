@@ -20,7 +20,7 @@ export default function LoginButton() {
     <button
       onClick={handleLogin}
       disabled={isLoading}
-      className="flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+      className="bg-foreground text-background hover:bg-primary-hover flex h-12 w-full items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
     >
       {isLoading ? "ログイン中..." : "ログイン"}
     </button>

@@ -1,5 +1,5 @@
-import { client } from "@/app/api/auth/client";
 import { REFRESH_TOKEN_COOKIE, clearAuthCookies } from "@/app/api/_lib/cookies";
+import { client } from "@/app/api/auth/client";
 import { NextRequest, NextResponse } from "next/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";

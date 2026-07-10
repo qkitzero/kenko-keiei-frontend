@@ -20,7 +20,7 @@ export default function LogoutButton() {
     <button
       onClick={handleLogout}
       disabled={isLoading}
-      className="flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] disabled:opacity-50 dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
+      className="border-border hover:bg-hover flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-solid px-5 transition-colors hover:border-transparent disabled:opacity-50"
     >
       {isLoading ? "ログアウト中..." : "ログアウト"}
     </button>

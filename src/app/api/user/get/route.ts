@@ -1,6 +1,6 @@
-import { client } from "@/app/api/user/client";
 import { authorizedRequest } from "@/app/api/_lib/authorizedRequest";
 import { applyRefreshedTokens } from "@/app/api/_lib/cookies";
+import { client } from "@/app/api/user/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
