@@ -78,7 +78,7 @@ export default function Register() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               required
-              className="border-border bg-surface text-foreground focus:border-border-strong w-full rounded-xl border px-3 py-2 outline-none"
+              className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2"
             />
           </div>
 
@@ -95,7 +95,7 @@ export default function Register() {
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
               required
-              className="border-border bg-surface text-foreground focus:border-border-strong w-full rounded-xl border px-3 py-2 outline-none"
+              className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2"
             />
           </div>
 
