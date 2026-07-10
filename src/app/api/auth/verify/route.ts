@@ -1,5 +1,5 @@
-import { client } from "@/app/api/auth/client";
 import { ACCESS_TOKEN_COOKIE } from "@/app/api/_lib/cookies";
+import { client } from "@/app/api/auth/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
