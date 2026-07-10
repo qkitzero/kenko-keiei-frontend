@@ -1,10 +1,10 @@
-import { client } from "@/app/api/auth/client";
 import {
   REFRESH_TOKEN_COOKIE,
   extractRefreshToken,
   setAccessTokenCookie,
   setRefreshTokenCookie,
 } from "@/app/api/_lib/cookies";
+import { client } from "@/app/api/auth/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {

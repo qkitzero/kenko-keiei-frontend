@@ -1,10 +1,10 @@
-import { NextRequest } from "next/server";
-import { client as authClient } from "@/app/api/auth/client";
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
   extractRefreshToken,
 } from "@/app/api/_lib/cookies";
+import { client as authClient } from "@/app/api/auth/client";
+import { NextRequest } from "next/server";
 
 export type AuthorizedCall<T> = (accessToken: string) => Promise<{
   data?: T;

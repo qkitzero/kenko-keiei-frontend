@@ -37,6 +37,8 @@
     "eslint-config-prettier": "^10.1.8",
     "openapi-typescript": "^7.13.0",
     "prettier": "3.9.3",
+    "prettier-plugin-organize-imports": "^4.3.0",
+    "prettier-plugin-tailwindcss": "^0.8.0",
     "swagger2openapi": "^7.0.8",
     "tailwindcss": "^4",
     "typescript": "^5"
