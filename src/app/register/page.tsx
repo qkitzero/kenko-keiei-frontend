@@ -55,12 +55,12 @@ export default function Register() {
   };
 
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 px-6 dark:bg-black">
-      <div className="w-full max-w-sm rounded-2xl border border-black/[.06] bg-white p-8 dark:border-white/[.1] dark:bg-zinc-950">
-        <h1 className="mb-2 text-2xl font-semibold tracking-tight text-black dark:text-zinc-50">
+    <div className="bg-surface-muted flex flex-1 flex-col items-center justify-center px-6">
+      <div className="border-border bg-surface w-full max-w-sm rounded-2xl border p-8">
+        <h1 className="text-foreground mb-2 text-2xl font-semibold tracking-tight">
           プロフィールを作成
         </h1>
-        <p className="mb-6 text-sm text-zinc-600 dark:text-zinc-400">
+        <p className="text-muted mb-6 text-sm">
           アカウント設定を完了するために、あなたの情報を教えてください。
         </p>
 
@@ -68,7 +68,7 @@ export default function Register() {
           <div>
             <label
               htmlFor="displayName"
-              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              className="text-muted mb-1 block text-sm font-medium"
             >
               表示名
             </label>
@@ -78,14 +78,14 @@ export default function Register() {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               required
-              className="w-full rounded-xl border border-black/[.1] bg-white px-3 py-2 text-black outline-none focus:border-black/[.3] dark:border-white/[.15] dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-white/[.4]"
+              className="border-border bg-surface text-foreground focus:border-border-strong w-full rounded-xl border px-3 py-2 outline-none"
             />
           </div>
 
           <div>
             <label
               htmlFor="birthDate"
-              className="mb-1 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
+              className="text-muted mb-1 block text-sm font-medium"
             >
               生年月日
             </label>
@@ -95,14 +95,14 @@ export default function Register() {
               value={birthDate}
               onChange={(e) => setBirthDate(e.target.value)}
               required
-              className="w-full rounded-xl border border-black/[.1] bg-white px-3 py-2 text-black outline-none focus:border-black/[.3] dark:border-white/[.15] dark:bg-zinc-900 dark:text-zinc-50 dark:focus:border-white/[.4]"
+              className="border-border bg-surface text-foreground focus:border-border-strong w-full rounded-xl border px-3 py-2 outline-none"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="flex h-12 w-full items-center justify-center rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+            className="bg-foreground text-background hover:bg-primary-hover flex h-12 w-full items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
           >
             {loading ? "登録中..." : "登録"}
           </button>
