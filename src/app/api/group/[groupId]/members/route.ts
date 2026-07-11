@@ -34,7 +34,8 @@ export async function POST(req: NextRequest, { params }: Params) {
     !body ||
     typeof body.userId !== "string" ||
     !body.userId.trim() ||
-    typeof body.role !== "string"
+    typeof body.role !== "string" ||
+    !body.role.trim()
   ) {
     return NextResponse.json(
       { error: "Missing or invalid required fields" },
