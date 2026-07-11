@@ -431,7 +431,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
             <button
               type="submit"
               disabled={addingMember}
-              className="bg-primary text-on-primary hover:bg-primary-hover flex h-11 items-center justify-center rounded-full px-5 text-sm transition-colors disabled:opacity-50"
+              className="bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex h-11 items-center justify-center rounded-full px-5 text-sm transition-colors disabled:opacity-50"
             >
               {addingMember ? "追加中..." : "追加"}
             </button>

@@ -102,7 +102,7 @@ export default function Register() {
           <button
             type="submit"
             disabled={loading}
-            className="bg-primary text-on-primary hover:bg-primary-hover flex h-12 w-full items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
+            className="bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex h-12 w-full items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
           >
             {loading ? "登録中..." : "登録"}
           </button>
