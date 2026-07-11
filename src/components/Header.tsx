@@ -48,7 +48,7 @@ export default function Header() {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="hover:bg-hover flex cursor-pointer items-center gap-2 rounded-full py-1 pr-3 pl-1 transition-colors"
               >
-                <span className="bg-foreground text-background flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
+                <span className="bg-primary text-on-primary flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
                   {user.displayName.charAt(0).toUpperCase()}
                 </span>
                 <span className="text-foreground text-sm font-medium">

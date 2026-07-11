@@ -315,7 +315,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
         )}
       </section>
 
-      {error && <p className="text-sm text-rose-500">{error}</p>}
+      {error && <p className="text-danger text-sm">{error}</p>}
 
       {canManage && (
         <section className="border-border bg-surface rounded-2xl border p-6">
@@ -343,7 +343,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
               </p>
               <button
                 onClick={handleDeleteGroup}
-                className="flex h-11 items-center justify-center rounded-full border border-rose-500/40 px-5 text-rose-500 transition-colors hover:bg-rose-500/10"
+                className="border-danger/40 text-danger hover:bg-danger/10 flex h-11 items-center justify-center rounded-full border px-5 transition-colors"
               >
                 組織を削除
               </button>
@@ -393,7 +393,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
                   {canManage && !rowIsOwner && (
                     <button
                       onClick={() => handleRemoveMember(m.userId)}
-                      className="text-subtle text-xs hover:text-rose-500"
+                      className="text-subtle hover:text-danger text-xs"
                     >
                       削除
                     </button>
@@ -431,7 +431,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
             <button
               type="submit"
               disabled={addingMember}
-              className="bg-foreground text-background hover:bg-primary-hover flex h-11 items-center justify-center rounded-full px-5 text-sm transition-colors disabled:opacity-50"
+              className="bg-primary text-on-primary hover:bg-primary-hover flex h-11 items-center justify-center rounded-full px-5 text-sm transition-colors disabled:opacity-50"
             >
               {addingMember ? "追加中..." : "追加"}
             </button>
@@ -461,7 +461,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
                 {canManage && (
                   <button
                     onClick={() => handleRemoveChild(c.groupId)}
-                    className="text-subtle text-xs hover:text-rose-500"
+                    className="text-subtle hover:text-danger text-xs"
                   >
                     解除
                   </button>
