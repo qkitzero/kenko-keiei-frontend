@@ -2,6 +2,7 @@
 
 import LoginButton from "@/components/LoginButton";
 import LogoutButton from "@/components/LogoutButton";
+import OrgSwitcher from "@/components/OrgSwitcher";
 import { useUser } from "@/context/UserContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -36,44 +37,47 @@ export default function Header() {
         健康経営
       </Link>
 
-      <div className="relative" ref={menuRef}>
-        {loading ? (
-          <div className="bg-placeholder h-8 w-8 animate-pulse rounded-full" />
-        ) : user ? (
-          <>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="hover:bg-hover flex cursor-pointer items-center gap-2 rounded-full py-1 pr-3 pl-1 transition-colors"
-            >
-              <span className="bg-foreground text-background flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
-                {user.displayName.charAt(0).toUpperCase()}
-              </span>
-              <span className="text-foreground text-sm font-medium">
-                {user.displayName}
-              </span>
-            </button>
-            {isMenuOpen && (
-              <div className="border-border bg-surface absolute right-0 mt-2 min-w-56 rounded-xl border p-2 shadow-lg">
-                <div className="px-3 py-2">
-                  <p className="text-foreground text-sm font-medium">
-                    {user.displayName}
-                  </p>
-                  <p className="text-subtle mt-0.5 truncate text-xs">
-                    {user.userId}
-                  </p>
+      <div className="flex items-center gap-3">
+        {!loading && user && <OrgSwitcher />}
+        <div className="relative" ref={menuRef}>
+          {loading ? (
+            <div className="bg-placeholder h-8 w-8 animate-pulse rounded-full" />
+          ) : user ? (
+            <>
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="hover:bg-hover flex cursor-pointer items-center gap-2 rounded-full py-1 pr-3 pl-1 transition-colors"
+              >
+                <span className="bg-foreground text-background flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
+                  {user.displayName.charAt(0).toUpperCase()}
+                </span>
+                <span className="text-foreground text-sm font-medium">
+                  {user.displayName}
+                </span>
+              </button>
+              {isMenuOpen && (
+                <div className="border-border bg-surface absolute right-0 mt-2 min-w-56 rounded-xl border p-2 shadow-lg">
+                  <div className="px-3 py-2">
+                    <p className="text-foreground text-sm font-medium">
+                      {user.displayName}
+                    </p>
+                    <p className="text-subtle mt-0.5 truncate text-xs">
+                      {user.userId}
+                    </p>
+                  </div>
+                  <div className="bg-border my-1 h-px" />
+                  <div className="px-1 pb-1">
+                    <LogoutButton />
+                  </div>
                 </div>
-                <div className="bg-border my-1 h-px" />
-                <div className="px-1 pb-1">
-                  <LogoutButton />
-                </div>
-              </div>
-            )}
-          </>
-        ) : (
-          <div className="w-28">
-            <LoginButton />
-          </div>
-        )}
+              )}
+            </>
+          ) : (
+            <div className="w-28">
+              <LoginButton />
+            </div>
+          )}
+        </div>
       </div>
     </header>
   );
