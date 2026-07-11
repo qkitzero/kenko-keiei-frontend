@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "健康経営",
+  title: "健康経営管理システム",
   description: "健康経営ポータル",
 };
 

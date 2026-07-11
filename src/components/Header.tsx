@@ -34,7 +34,7 @@ export default function Header() {
         href="/"
         className="text-foreground text-lg font-semibold tracking-tight"
       >
-        健康経営
+        健康経営管理システム
       </Link>
 
       <div className="flex items-center gap-3">

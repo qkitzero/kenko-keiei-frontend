@@ -18,7 +18,7 @@ export default function Home() {
     return (
       <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
         <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          健康経営
+          健康経営管理システム
         </h1>
         <p className="text-muted">健康経営ポータル</p>
         <p className="text-subtle mt-2 text-sm">
