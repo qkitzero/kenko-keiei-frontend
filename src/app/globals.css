@@ -9,6 +9,8 @@
   --orange-500: #f97316;
   --orange-600: #ea580c;
   --orange-700: #c2410c;
+  --orange-800: #9a3412;
+  --orange-900: #7c2d12;
 
   --white: #ffffff;
   --zinc-50: #fafafa;
@@ -34,9 +36,9 @@
   --muted: var(--zinc-600);
   --subtle: var(--zinc-500);
 
-  --primary: var(--orange-500);
-  --primary-hover: var(--orange-600);
-  --primary-active: var(--orange-700);
+  --primary: var(--orange-700);
+  --primary-hover: var(--orange-800);
+  --primary-active: var(--orange-900);
   --primary-subtle: var(--orange-50);
   --on-primary: var(--white);
 
