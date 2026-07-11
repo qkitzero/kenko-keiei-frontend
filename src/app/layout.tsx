@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import { OrgsProvider } from "@/context/OrgsContext";
 import { UserProvider } from "@/context/UserContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "健康経営",
+  title: "健康経営管理システム",
   description: "健康経営ポータル",
 };
 
@@ -31,8 +32,10 @@ export default function RootLayout({
     >
       <body className="bg-background text-foreground flex min-h-full flex-col font-sans">
         <UserProvider>
-          <Header />
-          {children}
+          <OrgsProvider>
+            <Header />
+            {children}
+          </OrgsProvider>
         </UserProvider>
       </body>
     </html>
