@@ -56,7 +56,7 @@ export default function Header() {
                 </span>
               </button>
               {isMenuOpen && (
-                <div className="border-border bg-surface absolute right-0 mt-2 min-w-56 rounded-xl border p-2 shadow-lg">
+                <div className="border-border bg-surface absolute right-0 mt-2 min-w-64 rounded-xl border p-2 shadow-lg">
                   <div className="px-3 py-2">
                     <p className="text-foreground text-sm font-medium">
                       {user.displayName}
@@ -65,6 +65,22 @@ export default function Header() {
                       {user.userId}
                     </p>
                   </div>
+                  <div className="bg-border my-1 h-px" />
+                  <dl className="space-y-2 px-3 py-2 text-sm">
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-subtle">表示名</dt>
+                      <dd className="text-foreground font-medium">
+                        {user.displayName}
+                      </dd>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-subtle">生年月日</dt>
+                      <dd className="text-foreground font-medium">
+                        {user.birthDate.year}年{user.birthDate.month}月
+                        {user.birthDate.day}日
+                      </dd>
+                    </div>
+                  </dl>
                   <div className="bg-border my-1 h-px" />
                   <div className="px-1 pb-1">
                     <LogoutButton />
