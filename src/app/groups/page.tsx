@@ -93,12 +93,12 @@ export default function Groups() {
           <button
             type="submit"
             disabled={creating}
-            className="bg-foreground text-background hover:bg-primary-hover flex h-11 items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
+            className="bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex h-11 items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
           >
             {creating ? "作成中..." : "作成"}
           </button>
         </form>
-        {error && <p className="mt-3 text-sm text-rose-500">{error}</p>}
+        {error && <p className="text-danger mt-3 text-sm">{error}</p>}
       </section>
 
       <section className="flex flex-col gap-3">
