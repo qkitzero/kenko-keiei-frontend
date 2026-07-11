@@ -2,34 +2,48 @@
 
 :root {
   color-scheme: light;
-  --background: #ffffff;
-  --foreground: #171717;
-  --surface: #ffffff;
-  --surface-muted: #fafafa;
-  --placeholder: #e4e4e7;
+
+  --orange-50: #fff7ed;
+  --orange-100: #ffedd5;
+  --orange-200: #fed7aa;
+  --orange-500: #f97316;
+  --orange-600: #ea580c;
+  --orange-700: #c2410c;
+
+  --white: #ffffff;
+  --zinc-50: #fafafa;
+  --zinc-100: #f4f4f5;
+  --zinc-200: #e4e4e7;
+  --zinc-500: #71717a;
+  --zinc-600: #52525b;
+  --zinc-900: #18181b;
+
+  --green-600: #16a34a;
+  --amber-600: #d97706;
+  --red-600: #dc2626;
+  --blue-600: #2563eb;
+
+  --background: var(--white);
+  --foreground: var(--zinc-900);
+  --surface: var(--white);
+  --surface-muted: var(--zinc-50);
+  --placeholder: var(--zinc-200);
   --border: rgb(0 0 0 / 0.08);
   --border-strong: rgb(0 0 0 / 0.3);
   --hover: rgb(0 0 0 / 0.04);
-  --muted: #52525b;
-  --subtle: #71717a;
-  --primary-hover: #383838;
-}
+  --muted: var(--zinc-600);
+  --subtle: var(--zinc-500);
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --surface: #09090b;
-    --surface-muted: #000000;
-    --placeholder: #27272a;
-    --border: rgb(255 255 255 / 0.12);
-    --border-strong: rgb(255 255 255 / 0.4);
-    --hover: rgb(255 255 255 / 0.06);
-    --muted: #a1a1aa;
-    --subtle: #8e8e93;
-    --primary-hover: #cccccc;
-  }
+  --primary: var(--orange-500);
+  --primary-hover: var(--orange-600);
+  --primary-active: var(--orange-700);
+  --primary-subtle: var(--orange-50);
+  --on-primary: var(--white);
+
+  --success: var(--green-600);
+  --warning: var(--amber-600);
+  --danger: var(--red-600);
+  --info: var(--blue-600);
 }
 
 @theme inline {
@@ -43,7 +57,18 @@
   --color-hover: var(--hover);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
+
+  --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);
+  --color-primary-active: var(--primary-active);
+  --color-primary-subtle: var(--primary-subtle);
+  --color-on-primary: var(--on-primary);
+
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-info: var(--info);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
