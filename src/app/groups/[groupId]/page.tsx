@@ -140,7 +140,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
   const ensureOk = async (res: Response, fallback: string) => {
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      throw new Error(data.message || fallback);
+      throw new Error(data.error || data.message || fallback);
     }
   };
 

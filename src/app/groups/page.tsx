@@ -30,7 +30,9 @@ export default function Groups() {
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || "組織の作成に失敗しました");
+        throw new Error(
+          errData.error || errData.message || "組織の作成に失敗しました",
+        );
       }
 
       setName("");
