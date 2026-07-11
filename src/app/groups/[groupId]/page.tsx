@@ -41,11 +41,15 @@ async function loadGroupData(groupId: string): Promise<LoadResult> {
   const group: Group | undefined = (await groupRes.json()).group;
   if (!group) return { status: "not_found" };
 
+  if (!membersRes.ok) {
+    return { status: "error" };
+  }
+
   return {
     status: "ok",
     data: {
       group,
-      members: membersRes.ok ? ((await membersRes.json()).members ?? []) : [],
+      members: (await membersRes.json()).members ?? [],
       children: childrenRes.ok ? ((await childrenRes.json()).groups ?? []) : [],
       parents: parentsRes.ok ? ((await parentsRes.json()).groups ?? []) : [],
     },
