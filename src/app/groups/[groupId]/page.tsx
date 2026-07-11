@@ -165,6 +165,13 @@ function GroupDetail({ groupId }: { groupId: string }) {
   };
 
   const handleDeleteGroup = () => {
+    if (
+      !window.confirm(
+        "本当にこの組織を削除しますか？この操作は取り消せません。",
+      )
+    ) {
+      return;
+    }
     void withError(async () => {
       const res = await fetch(`/api/group/${groupId}`, { method: "DELETE" });
       await ensureOk(res, "組織の削除に失敗しました");
