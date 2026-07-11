@@ -37,7 +37,9 @@ async function loadMemberships(): Promise<OrgMembership[]> {
 export const OrgsProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, loading: userLoading } = useUser();
   const [memberships, setMemberships] = useState<OrgMembership[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loadedFor, setLoadedFor] = useState<string | null | undefined>(
+    undefined,
+  );
 
   const refreshOrgs = useCallback(async () => {
     setMemberships(await loadMemberships().catch(() => []));
@@ -52,12 +54,14 @@ export const OrgsProvider = ({ children }: { children: React.ReactNode }) => {
         : Promise.resolve([]));
       if (!active) return;
       setMemberships(data);
-      setLoading(false);
+      setLoadedFor(user ? user.userId : null);
     })();
     return () => {
       active = false;
     };
   }, [user, userLoading]);
+
+  const loading = userLoading || loadedFor !== (user ? user.userId : null);
 
   return (
     <OrgsContext.Provider value={{ memberships, loading, refreshOrgs }}>
