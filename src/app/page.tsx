@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@/context/UserContext";
+import Link from "next/link";
 
 export default function Home() {
   const { user, loading } = useUser();
@@ -42,6 +43,22 @@ export default function Home() {
         <p className="text-muted mt-3 text-sm">
           サインインしています。健康・生産性に関する機能は、準備が整い次第ここに表示されます。
         </p>
+      </section>
+
+      <section>
+        <h2 className="text-subtle text-sm font-medium">機能</h2>
+        <Link
+          href="/customers/register"
+          className="border-border bg-surface hover:bg-hover mt-3 flex items-center justify-between rounded-2xl border p-6 transition-colors"
+        >
+          <div>
+            <p className="text-foreground font-medium">顧客登録</p>
+            <p className="text-muted mt-1 text-sm">新しい顧客を登録します。</p>
+          </div>
+          <span className="text-subtle" aria-hidden>
+            →
+          </span>
+        </Link>
       </section>
     </main>
   );
