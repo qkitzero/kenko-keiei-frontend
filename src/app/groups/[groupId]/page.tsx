@@ -2,6 +2,7 @@
 
 import { useOrgs } from "@/context/OrgsContext";
 import { useUser } from "@/context/UserContext";
+import { ensureOk, errorMessage } from "@/lib/apiError";
 import {
   ASSIGNABLE_ROLES,
   canManageMembers,
@@ -135,16 +136,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
     try {
       await fn();
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "予期しないエラーが発生しました",
-      );
-    }
-  };
-
-  const ensureOk = async (res: Response, fallback: string) => {
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || data.message || fallback);
+      setError(errorMessage(err));
     }
   };
 
