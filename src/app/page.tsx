@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@/context/UserContext";
+import { FEATURE_NAV_ITEMS } from "@/lib/navigation";
 import Link from "next/link";
 
 export default function Home() {
@@ -47,18 +48,23 @@ export default function Home() {
 
       <section>
         <h2 className="text-subtle text-sm font-medium">機能</h2>
-        <Link
-          href="/customers/register"
-          className="border-border bg-surface hover:bg-hover mt-3 flex items-center justify-between rounded-2xl border p-6 transition-colors"
-        >
-          <div>
-            <p className="text-foreground font-medium">顧客登録</p>
-            <p className="text-muted mt-1 text-sm">新しい顧客を登録します。</p>
-          </div>
-          <span className="text-subtle" aria-hidden>
-            →
-          </span>
-        </Link>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          {FEATURE_NAV_ITEMS.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className="border-border bg-surface hover:bg-hover flex items-center justify-between gap-4 rounded-2xl border p-6 transition-colors"
+            >
+              <div>
+                <p className="text-foreground font-medium">{item.label}</p>
+                <p className="text-muted mt-1 text-sm">{item.description}</p>
+              </div>
+              <span className="text-subtle" aria-hidden>
+                →
+              </span>
+            </Link>
+          ))}
+        </div>
       </section>
     </main>
   );
