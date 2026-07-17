@@ -51,6 +51,8 @@ export default function GlobalNav() {
   const openButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(false);
+  const lastPathnameRef = useRef(pathname);
+  const skipFocusRestoreRef = useRef(false);
 
   if (prevPathname !== pathname) {
     setPrevPathname(pathname);
@@ -68,7 +70,9 @@ export default function GlobalNav() {
       if (event.key !== "Tab") return;
       const panel = panelRef.current;
       if (!panel) return;
-      const focusables = panel.querySelectorAll<HTMLElement>("a[href], button");
+      const focusables = panel.querySelectorAll<HTMLElement>(
+        'a[href], button:not([disabled]), input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
       if (focusables.length === 0) return;
       const first = focusables[0];
       const last = focusables[focusables.length - 1];
@@ -108,9 +112,16 @@ export default function GlobalNav() {
       closeButtonRef.current?.focus();
     } else if (wasOpenRef.current) {
       wasOpenRef.current = false;
-      openButtonRef.current?.focus();
+      if (
+        !skipFocusRestoreRef.current &&
+        lastPathnameRef.current === pathname
+      ) {
+        openButtonRef.current?.focus();
+      }
+      skipFocusRestoreRef.current = false;
     }
-  }, [isDrawerOpen]);
+    lastPathnameRef.current = pathname;
+  }, [isDrawerOpen, pathname]);
 
   return (
     <>
@@ -207,7 +218,10 @@ export default function GlobalNav() {
                     item={item}
                     pathname={pathname}
                     className="px-3 py-2"
-                    onClick={() => setIsDrawerOpen(false)}
+                    onClick={() => {
+                      skipFocusRestoreRef.current = true;
+                      setIsDrawerOpen(false);
+                    }}
                   />
                 ))}
               </nav>
