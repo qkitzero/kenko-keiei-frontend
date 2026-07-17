@@ -1,5 +1,6 @@
 "use client";
 
+import GlobalNav from "@/components/GlobalNav";
 import LoginButton from "@/components/LoginButton";
 import LogoutButton from "@/components/LogoutButton";
 import OrgSwitcher from "@/components/OrgSwitcher";
@@ -30,14 +31,17 @@ export default function Header() {
 
   return (
     <header className="border-border bg-surface/80 sticky top-0 z-20 flex w-full items-center justify-between border-b px-6 py-4 backdrop-blur">
-      <Link
-        href="/"
-        className="text-foreground text-lg font-semibold tracking-tight"
-      >
-        健康経営管理システム
-      </Link>
+      <div className="flex min-w-0 items-center gap-2 md:gap-4">
+        <Link
+          href="/"
+          className="text-foreground min-w-0 truncate text-lg font-semibold tracking-tight"
+        >
+          健康経営管理システム
+        </Link>
+        {!loading && user && <GlobalNav />}
+      </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-3">
         {!loading && user && <OrgSwitcher />}
         <div className="relative" ref={menuRef}>
           {loading ? (
