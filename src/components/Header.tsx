@@ -34,7 +34,7 @@ export default function Header() {
       <div className="flex min-w-0 items-center gap-2 md:gap-4">
         <Link
           href="/"
-          className="text-foreground truncate text-lg font-semibold tracking-tight"
+          className="text-foreground min-w-0 truncate text-lg font-semibold tracking-tight"
         >
           健康経営管理システム
         </Link>
