@@ -1,5 +1,6 @@
 "use client";
 
+import SecondaryButton from "@/components/SecondaryButton";
 import { useState } from "react";
 
 export default function LogoutButton() {
@@ -17,12 +18,12 @@ export default function LogoutButton() {
   };
 
   return (
-    <button
+    <SecondaryButton
       onClick={handleLogout}
       disabled={isLoading}
-      className="border-border hover:bg-hover flex h-11 w-full cursor-pointer items-center justify-center rounded-full border border-solid px-5 transition-colors hover:border-transparent disabled:opacity-50"
+      className="w-full cursor-pointer border-solid hover:border-transparent"
     >
       {isLoading ? "ログアウト中..." : "ログアウト"}
-    </button>
+    </SecondaryButton>
   );
 }
