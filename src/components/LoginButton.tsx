@@ -1,5 +1,6 @@
 "use client";
 
+import PrimaryButton from "@/components/PrimaryButton";
 import { useState } from "react";
 
 export default function LoginButton() {
@@ -17,12 +18,13 @@ export default function LoginButton() {
   };
 
   return (
-    <button
+    <PrimaryButton
       onClick={handleLogin}
       disabled={isLoading}
-      className="bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex h-12 w-full items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
+      size="lg"
+      className="w-full"
     >
       {isLoading ? "ログイン中..." : "ログイン"}
-    </button>
+    </PrimaryButton>
   );
 }

@@ -1,5 +1,8 @@
 "use client";
 
+import Card from "@/components/Card";
+import PrimaryButton from "@/components/PrimaryButton";
+import TextField from "@/components/TextField";
 import { useUser } from "@/context/UserContext";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -56,7 +59,7 @@ export default function Register() {
 
   return (
     <div className="bg-surface-muted flex flex-1 flex-col items-center justify-center px-6">
-      <div className="border-border bg-surface w-full max-w-sm rounded-2xl border p-8">
+      <Card as="div" padding="lg" className="w-full max-w-sm">
         <h1 className="text-foreground mb-2 text-2xl font-semibold tracking-tight">
           プロフィールを作成
         </h1>
@@ -65,51 +68,35 @@ export default function Register() {
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="displayName"
-              className="text-muted mb-1 block text-sm font-medium"
-            >
-              表示名
-            </label>
-            <input
-              id="displayName"
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              required
-              className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2"
-            />
-          </div>
+          <TextField
+            id="displayName"
+            label="表示名"
+            value={displayName}
+            onChange={setDisplayName}
+            required
+          />
 
-          <div>
-            <label
-              htmlFor="birthDate"
-              className="text-muted mb-1 block text-sm font-medium"
-            >
-              生年月日
-            </label>
-            <input
-              id="birthDate"
-              type="date"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              required
-              className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2"
-            />
-          </div>
+          <TextField
+            id="birthDate"
+            label="生年月日"
+            type="date"
+            value={birthDate}
+            onChange={setBirthDate}
+            required
+          />
 
-          <button
+          <PrimaryButton
             type="submit"
             disabled={loading}
-            className="bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex h-12 w-full items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
+            size="lg"
+            className="w-full"
           >
             {loading ? "登録中..." : "登録"}
-          </button>
+          </PrimaryButton>
 
           {error && <p className="text-danger text-sm">{error}</p>}
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

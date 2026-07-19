@@ -1,7 +1,14 @@
 "use client";
 
+import Card from "@/components/Card";
+import PageContainer from "@/components/PageContainer";
+import PrimaryButton from "@/components/PrimaryButton";
+import SecondaryButton from "@/components/SecondaryButton";
+import Select from "@/components/Select";
+import TextField from "@/components/TextField";
 import { useOrgs } from "@/context/OrgsContext";
 import { useUser } from "@/context/UserContext";
+import { ensureOk, errorMessage } from "@/lib/apiError";
 import {
   ASSIGNABLE_ROLES,
   canManageMembers,
@@ -135,16 +142,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
     try {
       await fn();
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "予期しないエラーが発生しました",
-      );
-    }
-  };
-
-  const ensureOk = async (res: Response, fallback: string) => {
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      throw new Error(data.error || data.message || fallback);
+      setError(errorMessage(err));
     }
   };
 
@@ -251,39 +249,39 @@ function GroupDetail({ groupId }: { groupId: string }) {
 
   if (userLoading || (user && !fetched)) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+      <PageContainer>
         <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
         <div className="bg-placeholder h-64 w-full animate-pulse rounded-2xl" />
-      </main>
+      </PageContainer>
     );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+      <PageContainer centered>
         <p className="text-subtle text-sm">
           この組織を表示するにはサインインしてください。
         </p>
-      </main>
+      </PageContainer>
     );
   }
 
   if (notFound) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+      <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           組織が見つかりません
         </h1>
         <Link href="/groups" className="text-muted text-sm underline">
           組織一覧に戻る
         </Link>
-      </main>
+      </PageContainer>
     );
   }
 
   if (loadError || !group) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+      <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           組織を読み込めませんでした
         </h1>
@@ -291,12 +289,12 @@ function GroupDetail({ groupId }: { groupId: string }) {
         <Link href="/groups" className="text-muted text-sm underline">
           組織一覧に戻る
         </Link>
-      </main>
+      </PageContainer>
     );
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+    <PageContainer>
       <div>
         <Link href="/groups" className="text-subtle text-sm hover:underline">
           ← 組織一覧
@@ -318,41 +316,33 @@ function GroupDetail({ groupId }: { groupId: string }) {
       {error && <p className="text-danger text-sm">{error}</p>}
 
       {canManage && (
-        <section className="border-border bg-surface rounded-2xl border p-6">
+        <Card>
           <h2 className="text-foreground text-sm font-medium">組織設定</h2>
           <form onSubmit={handleRename} className="mt-4 flex gap-3">
-            <input
-              type="text"
+            <TextField
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={setName}
               required
-              className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 flex-1 rounded-xl border px-3 py-2 outline-none focus:ring-2"
+              className="flex-1"
             />
-            <button
-              type="submit"
-              disabled={savingName}
-              className="border-border text-foreground hover:bg-hover flex h-11 items-center justify-center rounded-full border px-5 transition-colors disabled:opacity-50"
-            >
+            <SecondaryButton type="submit" disabled={savingName}>
               {savingName ? "保存中..." : "名前を更新"}
-            </button>
+            </SecondaryButton>
           </form>
           {owner && (
             <div className="border-border mt-4 flex items-center justify-between border-t pt-4">
               <p className="text-subtle text-sm">
                 この組織を削除します。元に戻せません。
               </p>
-              <button
-                onClick={handleDeleteGroup}
-                className="border-danger/40 text-danger hover:bg-danger/10 flex h-11 items-center justify-center rounded-full border px-5 transition-colors"
-              >
+              <SecondaryButton variant="danger" onClick={handleDeleteGroup}>
                 組織を削除
-              </button>
+              </SecondaryButton>
             </div>
           )}
-        </section>
+        </Card>
       )}
 
-      <section className="border-border bg-surface rounded-2xl border p-6">
+      <Card>
         <h2 className="text-foreground text-sm font-medium">
           メンバー ({members.length})
         </h2>
@@ -372,19 +362,17 @@ function GroupDetail({ groupId }: { groupId: string }) {
                 </span>
                 <div className="flex items-center gap-2">
                   {canManage && !rowIsOwner ? (
-                    <select
+                    <Select
+                      size="sm"
                       value={m.role}
-                      onChange={(e) =>
-                        handleRoleChange(m.userId, e.target.value)
-                      }
-                      className="border-border bg-surface text-foreground rounded-lg border px-2 py-1 text-xs outline-none"
+                      onChange={(role) => handleRoleChange(m.userId, role)}
                     >
                       {ASSIGNABLE_ROLES.map((r) => (
                         <option key={r} value={r}>
                           {roleLabel(r)}
                         </option>
                       ))}
-                    </select>
+                    </Select>
                   ) : (
                     <span className="text-muted text-xs">
                       {roleLabel(m.role)}
@@ -409,37 +397,32 @@ function GroupDetail({ groupId }: { groupId: string }) {
             onSubmit={handleAddMember}
             className="border-border mt-4 flex gap-2 border-t pt-4"
           >
-            <input
-              type="text"
+            <TextField
               value={newMemberId}
-              onChange={(e) => setNewMemberId(e.target.value)}
+              onChange={setNewMemberId}
               placeholder="ユーザーID"
               required
-              className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 flex-1 rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2"
+              className="flex-1 text-sm"
             />
-            <select
-              value={newMemberRole}
-              onChange={(e) => setNewMemberRole(e.target.value)}
-              className="border-border bg-surface text-foreground rounded-xl border px-2 py-2 text-sm outline-none"
-            >
+            <Select value={newMemberRole} onChange={setNewMemberRole}>
               {ASSIGNABLE_ROLES.map((r) => (
                 <option key={r} value={r}>
                   {roleLabel(r)}
                 </option>
               ))}
-            </select>
-            <button
+            </Select>
+            <PrimaryButton
               type="submit"
               disabled={addingMember}
-              className="bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex h-11 items-center justify-center rounded-full px-5 text-sm transition-colors disabled:opacity-50"
+              className="text-sm"
             >
               {addingMember ? "追加中..." : "追加"}
-            </button>
+            </PrimaryButton>
           </form>
         )}
-      </section>
+      </Card>
 
-      <section className="border-border bg-surface rounded-2xl border p-6">
+      <Card>
         <h2 className="text-foreground text-sm font-medium">
           下位組織 ({children.length})
         </h2>
@@ -476,27 +459,26 @@ function GroupDetail({ groupId }: { groupId: string }) {
             onSubmit={handleAddChild}
             className="border-border mt-4 flex gap-2 border-t pt-4"
           >
-            <input
-              type="text"
+            <TextField
               value={newChildId}
-              onChange={(e) => setNewChildId(e.target.value)}
+              onChange={setNewChildId}
               placeholder="下位組織のID"
               required
-              className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 flex-1 rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2"
+              className="flex-1 text-sm"
             />
-            <button
+            <SecondaryButton
               type="submit"
               disabled={addingChild}
-              className="border-border text-foreground hover:bg-hover flex h-11 items-center justify-center rounded-full border px-5 text-sm transition-colors disabled:opacity-50"
+              className="text-sm"
             >
               {addingChild ? "追加中..." : "下位組織を追加"}
-            </button>
+            </SecondaryButton>
           </form>
         )}
-      </section>
+      </Card>
 
       {parents.length > 0 && (
-        <section className="border-border bg-surface rounded-2xl border p-6">
+        <Card>
           <h2 className="text-foreground text-sm font-medium">
             上位組織 ({parents.length})
           </h2>
@@ -515,8 +497,8 @@ function GroupDetail({ groupId }: { groupId: string }) {
               </li>
             ))}
           </ul>
-        </section>
+        </Card>
       )}
-    </main>
+    </PageContainer>
   );
 }
