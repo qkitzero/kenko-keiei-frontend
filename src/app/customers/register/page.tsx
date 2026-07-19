@@ -1,5 +1,9 @@
 "use client";
 
+import Card from "@/components/Card";
+import PageContainer from "@/components/PageContainer";
+import PrimaryButton from "@/components/PrimaryButton";
+import TextField from "@/components/TextField";
 import { useUser } from "@/context/UserContext";
 import { errorMessage } from "@/lib/apiError";
 import { useRouter } from "next/navigation";
@@ -15,20 +19,20 @@ export default function CustomerRegister() {
 
   if (userLoading) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+      <PageContainer>
         <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
         <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-      </main>
+      </PageContainer>
     );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+      <PageContainer centered>
         <p className="text-subtle text-sm">
           顧客を登録するにはサインインしてください。
         </p>
-      </main>
+      </PageContainer>
     );
   }
 
@@ -66,44 +70,32 @@ export default function CustomerRegister() {
   };
 
   return (
-    <div className="bg-surface-muted flex flex-1 flex-col items-center justify-center px-6">
-      <div className="border-border bg-surface w-full max-w-sm rounded-2xl border p-8">
-        <h1 className="text-foreground mb-2 text-2xl font-semibold tracking-tight">
+    <PageContainer>
+      <section>
+        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
           顧客を登録
         </h1>
-        <p className="text-muted mb-6 text-sm">
-          新しい顧客の情報を入力してください。
-        </p>
+        <p className="text-muted mt-2">新しい顧客の情報を入力してください。</p>
+      </section>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="name"
-              className="text-muted mb-1 block text-sm font-medium"
-            >
-              顧客名
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 w-full rounded-xl border px-3 py-2 outline-none focus:ring-2"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex h-12 w-full items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
-          >
+      <Card>
+        <h2 className="text-foreground text-sm font-medium">
+          新しい顧客を登録
+        </h2>
+        <form onSubmit={handleSubmit} className="mt-4 flex gap-3">
+          <TextField
+            value={name}
+            onChange={setName}
+            placeholder="顧客名"
+            required
+            className="flex-1"
+          />
+          <PrimaryButton type="submit" disabled={loading}>
             {loading ? "登録中..." : "登録"}
-          </button>
-
-          {error && <p className="text-danger text-sm">{error}</p>}
+          </PrimaryButton>
         </form>
-      </div>
-    </div>
+        {error && <p className="text-danger mt-3 text-sm">{error}</p>}
+      </Card>
+    </PageContainer>
   );
 }

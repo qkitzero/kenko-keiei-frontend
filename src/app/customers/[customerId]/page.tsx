@@ -1,5 +1,9 @@
 "use client";
 
+import Card from "@/components/Card";
+import PageContainer from "@/components/PageContainer";
+import SecondaryButton from "@/components/SecondaryButton";
+import TextField from "@/components/TextField";
 import { useUser } from "@/context/UserContext";
 import { ensureOk, errorMessage } from "@/lib/apiError";
 import Link from "next/link";
@@ -127,26 +131,26 @@ function CustomerDetail({ customerId }: { customerId: string }) {
 
   if (userLoading || (user && !fetched)) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+      <PageContainer>
         <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
         <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-      </main>
+      </PageContainer>
     );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+      <PageContainer centered>
         <p className="text-subtle text-sm">
           この顧客を表示するにはサインインしてください。
         </p>
-      </main>
+      </PageContainer>
     );
   }
 
   if (notFound) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+      <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           顧客が見つかりません
         </h1>
@@ -156,13 +160,13 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         >
           顧客登録に戻る
         </Link>
-      </main>
+      </PageContainer>
     );
   }
 
   if (loadError || !customer) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+      <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           顧客を読み込めませんでした
         </h1>
@@ -173,12 +177,12 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         >
           顧客登録に戻る
         </Link>
-      </main>
+      </PageContainer>
     );
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+    <PageContainer>
       <div>
         <Link
           href="/customers/register"
@@ -199,37 +203,32 @@ function CustomerDetail({ customerId }: { customerId: string }) {
 
       {error && <p className="text-danger text-sm">{error}</p>}
 
-      <section className="border-border bg-surface rounded-2xl border p-6">
+      <Card>
         <h2 className="text-foreground text-sm font-medium">顧客設定</h2>
         <form onSubmit={handleRename} className="mt-4 flex gap-3">
-          <input
-            type="text"
+          <TextField
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={setName}
             required
-            className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 flex-1 rounded-xl border px-3 py-2 outline-none focus:ring-2"
+            className="flex-1"
           />
-          <button
-            type="submit"
-            disabled={savingName}
-            className="border-border text-foreground hover:bg-hover flex h-11 items-center justify-center rounded-full border px-5 transition-colors disabled:opacity-50"
-          >
+          <SecondaryButton type="submit" disabled={savingName}>
             {savingName ? "保存中..." : "名前を更新"}
-          </button>
+          </SecondaryButton>
         </form>
         <div className="border-border mt-4 flex items-center justify-between border-t pt-4">
           <p className="text-subtle text-sm">
             この顧客を削除します。元に戻せません。
           </p>
-          <button
+          <SecondaryButton
+            variant="danger"
             onClick={handleDelete}
             disabled={deleting}
-            className="border-danger/40 text-danger hover:bg-danger/10 flex h-11 items-center justify-center rounded-full border px-5 transition-colors disabled:opacity-50"
           >
             {deleting ? "削除中..." : "顧客を削除"}
-          </button>
+          </SecondaryButton>
         </div>
-      </section>
-    </main>
+      </Card>
+    </PageContainer>
   );
 }

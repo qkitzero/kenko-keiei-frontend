@@ -1,9 +1,12 @@
 "use client";
 
+import Card from "@/components/Card";
+import PageContainer from "@/components/PageContainer";
+import PrimaryButton from "@/components/PrimaryButton";
+import TextField from "@/components/TextField";
 import { useOrgs } from "@/context/OrgsContext";
 import { useUser } from "@/context/UserContext";
 import { roleLabel } from "@/lib/roles";
-import Link from "next/link";
 import { useState } from "react";
 
 export default function Groups() {
@@ -48,28 +51,28 @@ export default function Groups() {
 
   if (userLoading || (user && orgsLoading)) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+      <PageContainer>
         <div className="bg-placeholder h-9 w-48 animate-pulse rounded-lg" />
         <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-      </main>
+      </PageContainer>
     );
   }
 
   if (!user) {
     return (
-      <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col items-center justify-center gap-3 px-6 py-12 text-center">
+      <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           組織
         </h1>
         <p className="text-subtle text-sm">
           組織を表示するにはサインインしてください。
         </p>
-      </main>
+      </PageContainer>
     );
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+    <PageContainer>
       <section>
         <h1 className="text-foreground text-3xl font-semibold tracking-tight">
           組織
@@ -77,43 +80,39 @@ export default function Groups() {
         <p className="text-muted mt-2">所属している組織の一覧です。</p>
       </section>
 
-      <section className="border-border bg-surface rounded-2xl border p-6">
+      <Card>
         <h2 className="text-foreground text-sm font-medium">
           新しい組織を作成
         </h2>
         <form onSubmit={handleCreate} className="mt-4 flex gap-3">
-          <input
-            type="text"
+          <TextField
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={setName}
             placeholder="組織名"
             required
-            className="border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 flex-1 rounded-xl border px-3 py-2 outline-none focus:ring-2"
+            className="flex-1"
           />
-          <button
-            type="submit"
-            disabled={creating}
-            className="bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex h-11 items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50"
-          >
+          <PrimaryButton type="submit" disabled={creating}>
             {creating ? "作成中..." : "作成"}
-          </button>
+          </PrimaryButton>
         </form>
         {error && <p className="text-danger mt-3 text-sm">{error}</p>}
-      </section>
+      </Card>
 
       <section className="flex flex-col gap-3">
         {memberships.length === 0 ? (
-          <div className="border-border bg-surface rounded-2xl border border-dashed p-8 text-center">
+          <Card as="div" padding="lg" dashed className="text-center">
             <p className="text-muted text-sm">
               まだ組織に所属していません。上のフォームから作成してください。
             </p>
-          </div>
+          </Card>
         ) : (
           memberships.map(({ group, role }) => (
-            <Link
+            <Card
               key={group.groupId}
               href={`/groups/${group.groupId}`}
-              className="border-border bg-surface hover:bg-hover flex items-center justify-between rounded-2xl border p-5 transition-colors"
+              padding="sm"
+              className="flex items-center justify-between"
             >
               <div>
                 <p className="text-foreground font-medium">{group.name}</p>
@@ -124,10 +123,10 @@ export default function Groups() {
               <span className="border-border text-muted rounded-full border px-3 py-1 text-xs font-medium">
                 {roleLabel(role)}
               </span>
-            </Link>
+            </Card>
           ))
         )}
       </section>
-    </main>
+    </PageContainer>
   );
 }
