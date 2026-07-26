@@ -17,54 +17,80 @@ export type OrgMembership = {
 type OrgsContextType = {
   memberships: OrgMembership[];
   loading: boolean;
+  error: boolean;
   refreshOrgs: () => Promise<void>;
 };
 
 const OrgsContext = createContext<OrgsContextType>({
   memberships: [],
   loading: true,
+  error: false,
   refreshOrgs: async () => {},
 });
 
 export const useOrgs = () => useContext(OrgsContext);
 
-async function loadMemberships(): Promise<OrgMembership[]> {
-  const res = await fetch("/api/group/me");
-  if (!res.ok) return [];
-  return (await res.json()).groups ?? [];
+type LoadResult =
+  | { ok: true; memberships: OrgMembership[] }
+  | { ok: false; memberships?: undefined };
+
+async function loadMemberships(): Promise<LoadResult> {
+  try {
+    const res = await fetch("/api/group/me");
+    if (!res.ok) return { ok: false };
+    return { ok: true, memberships: (await res.json()).groups ?? [] };
+  } catch {
+    return { ok: false };
+  }
 }
 
 export const OrgsProvider = ({ children }: { children: React.ReactNode }) => {
   const { user, loading: userLoading } = useUser();
   const [memberships, setMemberships] = useState<OrgMembership[]>([]);
+  const [error, setError] = useState(false);
   const [loadedFor, setLoadedFor] = useState<string | null | undefined>(
     undefined,
   );
 
-  const refreshOrgs = useCallback(async () => {
-    setMemberships(await loadMemberships().catch(() => []));
+  const applyResult = useCallback((result: LoadResult) => {
+    if (result.ok) {
+      setMemberships(result.memberships);
+      setError(false);
+    } else {
+      setMemberships([]);
+      setError(true);
+    }
   }, []);
+
+  const refreshOrgs = useCallback(async () => {
+    applyResult(await loadMemberships());
+  }, [applyResult]);
 
   useEffect(() => {
     if (userLoading) return;
     let active = true;
     (async () => {
-      const data = await (user
-        ? loadMemberships().catch(() => [])
-        : Promise.resolve([]));
+      if (!user) {
+        if (!active) return;
+        setMemberships([]);
+        setError(false);
+        setLoadedFor(null);
+        return;
+      }
+      const result = await loadMemberships();
       if (!active) return;
-      setMemberships(data);
-      setLoadedFor(user ? user.userId : null);
+      applyResult(result);
+      setLoadedFor(user.userId);
     })();
     return () => {
       active = false;
     };
-  }, [user, userLoading]);
+  }, [user, userLoading, applyResult]);
 
   const loading = userLoading || loadedFor !== (user ? user.userId : null);
 
   return (
-    <OrgsContext.Provider value={{ memberships, loading, refreshOrgs }}>
+    <OrgsContext.Provider value={{ memberships, loading, error, refreshOrgs }}>
       {children}
     </OrgsContext.Provider>
   );
