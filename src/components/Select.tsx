@@ -1,29 +1,46 @@
 "use client";
 
-const BASE =
-  "border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 border outline-none focus:ring-2";
+import {
+  FIELD_BASE,
+  FIELD_SIZE,
+  FieldWrapper,
+  fieldClassName,
+  useFieldId,
+} from "@/components/Field";
 
 const SIZE = {
   sm: "rounded-lg px-2 py-1 text-xs",
-  md: "rounded-xl px-2 py-2 text-sm",
+  md: FIELD_SIZE,
 } as const;
 
 type SelectProps = {
+  label?: string;
   size?: keyof typeof SIZE;
   onChange: (value: string) => void;
 } & Omit<React.ComponentProps<"select">, "onChange" | "size">;
 
 export default function Select({
+  label,
   size = "md",
+  id,
   className,
   onChange,
   ...props
 }: SelectProps) {
+  const fieldId = useFieldId(id);
+
   return (
-    <select
-      {...props}
-      onChange={(e) => onChange(e.target.value)}
-      className={`${BASE} ${SIZE[size]}${className ? ` ${className}` : ""}`}
-    />
+    <FieldWrapper label={label} fieldId={fieldId} className={className}>
+      <select
+        {...props}
+        id={fieldId}
+        onChange={(e) => onChange(e.target.value)}
+        className={fieldClassName(
+          `${FIELD_BASE} ${SIZE[size]}`,
+          label,
+          className,
+        )}
+      />
+    </FieldWrapper>
   );
 }
