@@ -1,16 +1,23 @@
 "use client";
 
 import Card from "@/components/Card";
+import CustomerFields from "@/components/CustomerFields";
 import PageContainer from "@/components/PageContainer";
 import SecondaryButton from "@/components/SecondaryButton";
-import TextField from "@/components/TextField";
+import { useOrgs } from "@/context/OrgsContext";
 import { useUser } from "@/context/UserContext";
 import { ensureOk, errorMessage } from "@/lib/apiError";
+import {
+  Customer,
+  CustomerFormValues,
+  EMPTY_CUSTOMER_FORM,
+  buildCustomerPayload,
+  customerToForm,
+  fieldsNeedingInput,
+} from "@/lib/customer";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
-
-type Customer = { customerId: string; name: string };
 
 type LoadResult =
   | { status: "ok"; data: Customer }
@@ -23,8 +30,8 @@ async function loadCustomer(customerId: string): Promise<LoadResult> {
     return { status: res.status === 404 ? "not_found" : "error" };
   }
   const data = await res.json();
-  if (!data.customerId) return { status: "not_found" };
-  return { status: "ok", data };
+  if (!data.customer?.customerId) return { status: "not_found" };
+  return { status: "ok", data: data.customer };
 }
 
 export default function CustomerDetailPage({
@@ -39,36 +46,38 @@ export default function CustomerDetailPage({
 function CustomerDetail({ customerId }: { customerId: string }) {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
+  const { memberships, loading: orgsLoading, error: orgsError } = useOrgs();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [fetched, setFetched] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [error, setError] = useState("");
 
-  const [name, setName] = useState("");
-  const [savingName, setSavingName] = useState(false);
+  const [values, setValues] = useState<CustomerFormValues>(EMPTY_CUSTOMER_FORM);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
-  const applyResult = useCallback((result: LoadResult) => {
-    if (result.status === "ok") {
-      setCustomer(result.data);
-      setName(result.data.name);
-      setNotFound(false);
-      setLoadError(false);
-    } else if (result.status === "not_found") {
-      setNotFound(true);
-    } else {
-      setLoadError(true);
-    }
+  const applyCustomer = useCallback((data: Customer) => {
+    setCustomer(data);
+    setValues(customerToForm(data));
   }, []);
 
-  const reload = useCallback(async () => {
-    const result = await loadCustomer(customerId).catch(
-      () => ({ status: "error" }) as const,
-    );
-    applyResult(result);
-  }, [customerId, applyResult]);
+  const applyResult = useCallback(
+    (result: LoadResult) => {
+      if (result.status === "ok") {
+        applyCustomer(result.data);
+        setNotFound(false);
+        setLoadError(false);
+      } else if (result.status === "not_found") {
+        setNotFound(true);
+      } else {
+        setLoadError(true);
+      }
+    },
+    [applyCustomer],
+  );
 
   useEffect(() => {
     if (userLoading || !user) return;
@@ -86,28 +95,49 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     };
   }, [user, userLoading, customerId, applyResult]);
 
-  const withError = async (fn: () => Promise<void>) => {
+  const run = (
+    setError: (message: string) => void,
+    fn: () => Promise<void>,
+  ) => {
     setError("");
-    try {
-      await fn();
-    } catch (err: unknown) {
-      setError(errorMessage(err));
-    }
+    return fn().catch((err: unknown) => setError(errorMessage(err)));
   };
 
-  const handleRename = (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (savingName || !name.trim()) return;
-    setSavingName(true);
-    void withError(async () => {
+    if (saving) return;
+
+    const built = buildCustomerPayload(values);
+    if (!built.ok) {
+      setSaveError(built.error);
+      return;
+    }
+
+    setSaving(true);
+    void run(setSaveError, async () => {
       const res = await fetch(`/api/fitness/customer/${customerId}`, {
-        method: "PATCH",
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim() }),
+        body: JSON.stringify(built.payload),
       });
-      await ensureOk(res, "顧客名の更新に失敗しました");
-      await reload();
-    }).finally(() => setSavingName(false));
+      await ensureOk(res, "顧客情報の更新に失敗しました");
+
+      const data = await res.json().catch(() => null);
+      if (data?.customer?.customerId) {
+        applyCustomer(data.customer);
+        return;
+      }
+
+      const reloaded = await loadCustomer(customerId).catch(
+        () => ({ status: "error" }) as const,
+      );
+      if (reloaded.status !== "ok") {
+        throw new Error(
+          "更新は完了しましたが、最新の情報を取得できませんでした。ページを再読み込みしてください。",
+        );
+      }
+      applyCustomer(reloaded.data);
+    }).finally(() => setSaving(false));
   };
 
   const handleDelete = () => {
@@ -120,7 +150,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
       return;
     }
     setDeleting(true);
-    void withError(async () => {
+    void run(setDeleteError, async () => {
       const res = await fetch(`/api/fitness/customer/${customerId}`, {
         method: "DELETE",
       });
@@ -181,6 +211,13 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     );
   }
 
+  const groupId = customer.groupId ?? "";
+  const orgName = orgsError
+    ? `${groupId}（組織名を取得できませんでした）`
+    : (memberships.find((m) => m.group.groupId === groupId)?.group.name ??
+      groupId);
+  const needsInput = fieldsNeedingInput(customer);
+
   return (
     <PageContainer>
       <div>
@@ -196,27 +233,53 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         <h1 className="text-foreground text-3xl font-semibold tracking-tight">
           {customer.name}
         </h1>
+        <p className="text-muted mt-1 text-sm">{customer.nameKana}</p>
         <p className="text-subtle mt-1 truncate text-xs">
           {customer.customerId}
         </p>
       </section>
 
-      {error && <p className="text-danger text-sm">{error}</p>}
+      <Card>
+        <h2 className="text-foreground text-sm font-medium">顧客情報</h2>
+        <form onSubmit={handleSave} className="mt-4 flex flex-col gap-6">
+          <div>
+            <p className="text-muted text-sm font-medium">所属組織</p>
+            {orgsLoading ? (
+              <div className="bg-placeholder mt-1 h-5 w-40 animate-pulse rounded" />
+            ) : (
+              <p className="text-foreground mt-1 text-sm">{orgName}</p>
+            )}
+          </div>
+
+          {needsInput.length > 0 && (
+            <p className="text-danger text-sm">
+              {needsInput.join("・")}
+              が未登録か、現在の入力規則に合っていません。保存するにはこれらの項目を入力してください。
+            </p>
+          )}
+
+          <CustomerFields
+            values={values}
+            onChange={setValues}
+            disabled={saving}
+          />
+
+          {saveError && <p className="text-danger text-sm">{saveError}</p>}
+
+          <div className="flex justify-end">
+            <SecondaryButton type="submit" disabled={saving}>
+              {saving ? "保存中..." : "変更を保存"}
+            </SecondaryButton>
+          </div>
+        </form>
+      </Card>
 
       <Card>
-        <h2 className="text-foreground text-sm font-medium">顧客設定</h2>
-        <form onSubmit={handleRename} className="mt-4 flex gap-3">
-          <TextField
-            value={name}
-            onChange={setName}
-            required
-            className="flex-1"
-          />
-          <SecondaryButton type="submit" disabled={savingName}>
-            {savingName ? "保存中..." : "名前を更新"}
-          </SecondaryButton>
-        </form>
-        <div className="border-border mt-4 flex items-center justify-between border-t pt-4">
+        <h2 className="text-foreground text-sm font-medium">顧客の削除</h2>
+        {deleteError && (
+          <p className="text-danger mt-3 text-sm">{deleteError}</p>
+        )}
+        <div className="mt-4 flex items-center justify-between gap-4">
           <p className="text-subtle text-sm">
             この顧客を削除します。元に戻せません。
           </p>
