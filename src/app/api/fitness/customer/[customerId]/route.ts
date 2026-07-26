@@ -1,5 +1,6 @@
 import { authorizedRequest } from "@/app/api/_lib/authorizedRequest";
 import { jsonResponse, toStatusResult } from "@/app/api/_lib/response";
+import { parseCustomerFields } from "@/app/api/fitness/_lib/customerBody";
 import { client } from "@/app/api/fitness/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest, { params }: Params) {
   return jsonResponse(result);
 }
 
-export async function PATCH(req: NextRequest, { params }: Params) {
+export async function PUT(req: NextRequest, { params }: Params) {
   const { customerId } = await params;
 
   let body;
@@ -30,19 +31,17 @@ export async function PATCH(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  if (!body || typeof body.name !== "string" || !body.name.trim()) {
-    return NextResponse.json(
-      { error: "Missing or invalid required fields" },
-      { status: 400 },
-    );
+  const parsed = parseCustomerFields(body);
+  if (!parsed.ok) {
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
   const result = await authorizedRequest(req, (accessToken) =>
     toStatusResult(
-      client.PATCH("/v1/customer/{customerId}", {
+      client.PUT("/v1/customer/{customerId}", {
         headers: { Authorization: `Bearer ${accessToken}` },
         params: { path: { customerId } },
-        body: { name: body.name },
+        body: parsed.fields,
       }),
     ),
   );
