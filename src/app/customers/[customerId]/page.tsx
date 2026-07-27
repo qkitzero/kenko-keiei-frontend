@@ -155,7 +155,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         method: "DELETE",
       });
       await ensureOk(res, "顧客の削除に失敗しました");
-      router.push("/customers/register");
+      router.push("/customers");
     }).finally(() => setDeleting(false));
   };
 
@@ -184,11 +184,8 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           顧客が見つかりません
         </h1>
-        <Link
-          href="/customers/register"
-          className="text-muted text-sm underline"
-        >
-          顧客登録に戻る
+        <Link href="/customers" className="text-muted text-sm underline">
+          顧客一覧に戻る
         </Link>
       </PageContainer>
     );
@@ -201,11 +198,8 @@ function CustomerDetail({ customerId }: { customerId: string }) {
           顧客を読み込めませんでした
         </h1>
         <p className="text-subtle text-sm">時間をおいて再度お試しください。</p>
-        <Link
-          href="/customers/register"
-          className="text-muted text-sm underline"
-        >
-          顧客登録に戻る
+        <Link href="/customers" className="text-muted text-sm underline">
+          顧客一覧に戻る
         </Link>
       </PageContainer>
     );
@@ -221,11 +215,8 @@ function CustomerDetail({ customerId }: { customerId: string }) {
   return (
     <PageContainer>
       <div>
-        <Link
-          href="/customers/register"
-          className="text-subtle text-sm hover:underline"
-        >
-          ← 顧客登録
+        <Link href="/customers" className="text-subtle text-sm hover:underline">
+          ← 顧客一覧
         </Link>
       </div>
 
