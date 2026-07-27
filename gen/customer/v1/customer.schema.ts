@@ -28,12 +28,28 @@ export interface paths {
       cookie?: never;
     };
     get: operations["CustomerService_GetCustomer"];
-    put?: never;
+    put: operations["CustomerService_UpdateCustomer"];
     post?: never;
     delete: operations["CustomerService_DeleteCustomer"];
     options?: never;
     head?: never;
-    patch: operations["CustomerService_UpdateCustomer"];
+    patch?: never;
+    trace?: never;
+  };
+  "/v1/customers": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["CustomerService_ListCustomers"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
     trace?: never;
   };
 }
@@ -42,6 +58,19 @@ export interface components {
   schemas: {
     CustomerServiceUpdateCustomerBody: {
       name?: string;
+      nameKana?: string;
+      gender?: components["schemas"]["v1Gender"];
+      birthDate?: components["schemas"]["typeDate"];
+      phone?: string;
+      email?: string;
+      postalCode?: string;
+      prefecture?: string;
+      city?: string;
+      street?: string;
+      building?: string;
+      emergencyContactName?: string;
+      emergencyContactRelationship?: string;
+      emergencyContactPhone?: string;
     };
     protobufAny: {
       "@type"?: string;
@@ -54,20 +83,97 @@ export interface components {
       message?: string;
       details?: components["schemas"]["protobufAny"][];
     };
+    /**
+     * Represents a whole or partial calendar date, such as a birthday. The time of
+     *     day and time zone are either specified elsewhere or are insignificant. The
+     *     date is relative to the Gregorian Calendar. This can represent one of the
+     *     following:
+     * @description * A full date, with non-zero year, month, and day values.
+     *     * A month and day, with a zero year (for example, an anniversary).
+     *     * A year on its own, with a zero month and a zero day.
+     *     * A year and month, with a zero day (for example, a credit card expiration
+     *       date).
+     *
+     *     Related types:
+     *
+     *     * [google.type.TimeOfDay][google.type.TimeOfDay]
+     *     * [google.type.DateTime][google.type.DateTime]
+     *     * [google.protobuf.Timestamp][google.protobuf.Timestamp]
+     */
+    typeDate: {
+      /**
+       * Format: int32
+       * @description Year of the date. Must be from 1 to 9999, or 0 to specify a date without
+       *     a year.
+       */
+      year?: number;
+      /**
+       * Format: int32
+       * @description Month of a year. Must be from 1 to 12, or 0 to specify a year without a
+       *     month and day.
+       */
+      month?: number;
+      /**
+       * Format: int32
+       * @description Day of a month. Must be from 1 to 31 and valid for the year and month, or 0
+       *     to specify a year by itself or a year and month where the day isn't
+       *     significant.
+       */
+      day?: number;
+    };
     v1CreateCustomerRequest: {
       name?: string;
+      groupId?: string;
+      nameKana?: string;
+      gender?: components["schemas"]["v1Gender"];
+      birthDate?: components["schemas"]["typeDate"];
+      phone?: string;
+      email?: string;
+      postalCode?: string;
+      prefecture?: string;
+      city?: string;
+      street?: string;
+      building?: string;
+      emergencyContactName?: string;
+      emergencyContactRelationship?: string;
+      emergencyContactPhone?: string;
     };
     v1CreateCustomerResponse: {
       customerId?: string;
     };
-    v1DeleteCustomerResponse: Record<string, never>;
-    v1GetCustomerResponse: {
+    v1Customer: {
       customerId?: string;
       name?: string;
+      groupId?: string;
+      nameKana?: string;
+      gender?: components["schemas"]["v1Gender"];
+      birthDate?: components["schemas"]["typeDate"];
+      phone?: string;
+      email?: string;
+      postalCode?: string;
+      prefecture?: string;
+      city?: string;
+      street?: string;
+      building?: string;
+      emergencyContactName?: string;
+      emergencyContactRelationship?: string;
+      emergencyContactPhone?: string;
+    };
+    v1DeleteCustomerResponse: Record<string, never>;
+    /**
+     * @default GENDER_UNSPECIFIED
+     * @enum {string}
+     */
+    v1Gender:
+      "GENDER_UNSPECIFIED" | "GENDER_MALE" | "GENDER_FEMALE" | "GENDER_OTHER";
+    v1GetCustomerResponse: {
+      customer?: components["schemas"]["v1Customer"];
+    };
+    v1ListCustomersResponse: {
+      customers?: components["schemas"]["v1Customer"][];
     };
     v1UpdateCustomerResponse: {
-      customerId?: string;
-      name?: string;
+      customer?: components["schemas"]["v1Customer"];
     };
   };
   responses: never;
@@ -142,6 +248,41 @@ export interface operations {
       };
     };
   };
+  CustomerService_UpdateCustomer: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        customerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CustomerServiceUpdateCustomerBody"];
+      };
+    };
+    responses: {
+      /** @description A successful response. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["v1UpdateCustomerResponse"];
+        };
+      };
+      /** @description An unexpected error response. */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["rpcStatus"];
+        };
+      };
+    };
+  };
   CustomerService_DeleteCustomer: {
     parameters: {
       query?: never;
@@ -173,20 +314,16 @@ export interface operations {
       };
     };
   };
-  CustomerService_UpdateCustomer: {
+  CustomerService_ListCustomers: {
     parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        customerId: string;
+      query?: {
+        groupId?: string;
       };
+      header?: never;
+      path?: never;
       cookie?: never;
     };
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["CustomerServiceUpdateCustomerBody"];
-      };
-    };
+    requestBody?: never;
     responses: {
       /** @description A successful response. */
       200: {
@@ -194,7 +331,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["v1UpdateCustomerResponse"];
+          "application/json": components["schemas"]["v1ListCustomersResponse"];
         };
       };
       /** @description An unexpected error response. */

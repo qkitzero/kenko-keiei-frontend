@@ -402,7 +402,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
               onChange={setNewMemberId}
               placeholder="ユーザーID"
               required
-              className="flex-1 text-sm"
+              className="flex-1"
             />
             <Select value={newMemberRole} onChange={setNewMemberRole}>
               {ASSIGNABLE_ROLES.map((r) => (

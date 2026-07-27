@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 export default function OrgSwitcher() {
-  const { memberships, loading } = useOrgs();
+  const { memberships, loading, error } = useOrgs();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -46,7 +46,9 @@ export default function OrgSwitcher() {
         <div className="border-border bg-surface absolute right-0 mt-2 min-w-64 rounded-xl border p-2 shadow-lg">
           {memberships.length === 0 ? (
             <p className="text-subtle px-3 py-2 text-xs">
-              所属している組織はありません。
+              {error
+                ? "組織情報を取得できませんでした。"
+                : "所属している組織はありません。"}
             </p>
           ) : (
             <div className="max-h-72 overflow-y-auto">
