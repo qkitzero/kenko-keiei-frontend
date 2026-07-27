@@ -13,6 +13,7 @@ export const GENDERS: Gender[] = [
 ];
 
 const GENDER_LABELS: Record<string, string> = {
+  GENDER_UNSPECIFIED: "",
   GENDER_MALE: "男性",
   GENDER_FEMALE: "女性",
   GENDER_OTHER: "その他",
@@ -169,6 +170,11 @@ function toDateInputValue(date: CustomerDate | undefined): string {
   const month = String(date?.month ?? 0).padStart(2, "0");
   const day = String(date?.day ?? 0).padStart(2, "0");
   return `${year}-${month}-${day}`;
+}
+
+export function birthDateLabel(date: CustomerDate | undefined): string {
+  const value = toDateInputValue(date);
+  return value ? value.replaceAll("-", "/") : "";
 }
 
 function toCustomerDate(value: string): CustomerDate | null {
