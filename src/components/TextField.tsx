@@ -1,7 +1,12 @@
 "use client";
 
-const BASE =
-  "border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 rounded-xl border px-3 py-2 outline-none focus:ring-2";
+import {
+  FIELD_BASE,
+  FIELD_SIZE,
+  FieldWrapper,
+  fieldClassName,
+  useFieldId,
+} from "@/components/Field";
 
 type TextFieldProps = {
   label?: string;
@@ -15,25 +20,20 @@ export default function TextField({
   onChange,
   ...props
 }: TextFieldProps) {
-  const input = (
-    <input
-      {...props}
-      id={id}
-      onChange={(e) => onChange(e.target.value)}
-      className={
-        label ? `${BASE} w-full` : className ? `${BASE} ${className}` : BASE
-      }
-    />
-  );
-
-  if (!label) return input;
+  const fieldId = useFieldId(id);
 
   return (
-    <div className={className}>
-      <label htmlFor={id} className="text-muted mb-1 block text-sm font-medium">
-        {label}
-      </label>
-      {input}
-    </div>
+    <FieldWrapper label={label} fieldId={fieldId} className={className}>
+      <input
+        {...props}
+        id={fieldId}
+        onChange={(e) => onChange(e.target.value)}
+        className={fieldClassName(
+          `${FIELD_BASE} ${FIELD_SIZE}`,
+          label,
+          className,
+        )}
+      />
+    </FieldWrapper>
   );
 }

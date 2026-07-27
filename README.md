@@ -29,6 +29,7 @@ flowchart TD
         auth0(Auth0)
         auth_service(Auth Service)
         user_service(User Service)
+        fitness_service(Fitness Service)
     end
 
     build_kenko_keiei_frontend --> push_kenko_keiei_frontend --> kenko_keiei_frontend_image
@@ -40,4 +41,5 @@ flowchart TD
     kenko_keiei_frontend --> auth0
     kenko_keiei_frontend --> auth_service
     kenko_keiei_frontend --> user_service
+    kenko_keiei_frontend --> fitness_service
 ```

@@ -38,6 +38,21 @@ UI を追加・変更するときはこのガイドに従う。クラス文字�
 
 ローディング中・未サインイン・エラーなどの状態も `PageContainer` を使う。中央寄せのメッセージ表示には `<PageContainer centered>` を使う。
 
+ただし**全画面のエラー表示は、ページ全体が成立しない場合に限る**（未サインイン、ユーザー情報や組織情報の取得失敗など）。ページの見出しは成立していて一覧だけが取得できなかった場合は、見出しを残したまま一覧の位置に `dashed` の `Card` でメッセージと再試行を出す。画面全体を差し替えると、失敗したのが一覧だけなのか画面全体なのかが読み取れない。参照実装: `src/app/customers/page.tsx`
+
+### 組織スコープ
+
+「いまどの組織を見ているか」は**ヘッダーの `OrgSwitcher` が唯一の情報源**。`OrgsContext` の `selectedGroupId` / `selectGroup` を使う。
+
+- **ページ内に組織セレクタを置かない**。同じ意味の選択肢が複数箇所にあると、どれが効いているのか分からなくなる。組織で絞り込む画面は `selectedGroupId` を読むだけにし、対象の組織名は見出しの説明文や「登録先の組織」のような**確認表示**として出す
+- 選択値は `localStorage` に保存し、`memberships` に無い値は自動で先頭の組織にフォールバックする（権限を失った組織に固定されないようにする）
+- 組織スコープを持つ一覧は URL の `?groupId=` に反映する（共有・ブックマーク・戻る操作のため）。URL の値が非メンバーなら選択中の組織で URL を書き直す
+- `/groups/{groupId}` のように特定の組織のページを開いたときは、その組織を選択状態に同期する。逆にそのページで組織を切り替えたら、その組織の同じページへ移動する
+- **同期するのは所属している組織のときだけ**。下位組織のように自分が所属していない組織のページでは選択状態を変えず、ヘッダーも組織名を出さない（別組織を選択中だと主張しない）
+- 選択状態を書き換える API は `selectGroup` だけにし、選択が変わった回数（`scopeVersion`）でリンク由来のスコープと利用者の選択を区別する。「リンクの `groupId` を採用済みか」を ref で覚えると、組織取得の失敗や effect の実行順で取りこぼす
+
+参照実装: `src/context/OrgsContext.tsx`, `src/components/OrgSwitcher.tsx`, `src/app/customers/page.tsx`
+
 ### オンボーディング画面
 
 サインイン直後などアプリのナビゲーション文脈の外にある画面のみ、`bg-surface-muted` の全面背景 + 中央寄せカードで構成する。参照実装: `src/app/register/page.tsx`
@@ -52,15 +67,47 @@ UI を追加・変更するときはこのガイドに従う。クラス文字�
 
 顧客登録のようなアプリ内の CRUD 画面にこのパターンを使わない。
 
+### 複数項目フォーム
+
+項目数が多いフォームは、`Card` の中で「`fieldset` + `legend` のセクション + 2カラムグリッド」に分ける。参照実装: `src/components/CustomerFields.tsx`（`src/app/customers/register/page.tsx` と `src/app/customers/[customerId]/page.tsx` で共有している）
+
+```tsx
+<form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-6">
+  <fieldset disabled={saving}>
+    <legend className="text-subtle text-sm font-medium">基本情報</legend>
+    <div className="mt-3 grid gap-4 sm:grid-cols-2">
+      <TextField label="氏名 *" value={values.name} onChange={update("name")} />
+      <TextField label="建物名" className="sm:col-span-2" ... />
+    </div>
+  </fieldset>
+  {error && <p className="text-danger text-sm">{error}</p>}
+  <div className="flex justify-end">
+    <PrimaryButton type="submit">登録</PrimaryButton>
+  </div>
+</form>
+```
+
+- 入力には `label` 付きの `TextField` / `Select` を使う（`id` は自動生成され label と関連付く）
+- **セクションは `fieldset` + `legend`** にする。`h3` の見出しだけでは支援技術に伝わらず、同じラベル（「氏名」「電話番号」など）が別セクションに現れると区別できない
+- 送信中の無効化は**各入力ではなく `fieldset` の `disabled`** に渡す
+- **必須項目はラベル末尾に ` *`** を付ける。任意項目だけのセクションは `legend` に「（任意）」を付ける
+- 幅を取る項目だけ `className="sm:col-span-2"` で1行に広げる
+- 顧客のように**利用者本人以外の情報**を入力するフォームでは、ブラウザが操作者自身の住所や氏名を埋めないよう全項目に `autoComplete="off"` を明示する
+- 登録画面と編集画面で同じ項目を扱うときは、入力群を `src/components/` のコンポーネントに切り出して共有する。`values` / `onChange` / `disabled` を受け取り、状態はページ側で持つ
+- 検証エラーは**送信ボタンの直前**に `text-danger` のテキストで1件だけ表示する。長いフォームでカードの外や上部に置くと画面外になり、ボタンが反応していないように見える。削除など別操作のエラーはその操作の近くに別で置く
+- 検証とペイロード組み立ては `src/lib/` に置く（例: `buildCustomerPayload`）。サーバー側と共有する判定（日付の妥当性など）も同じモジュールから使う
+
 ## 共通コンポーネント
 
 `src/components/` にあるレイアウト・フォーム部品を使う。
 
 - **PageContainer**: ページのルート。`main` + 余白 + `max-w-3xl`。`centered` で中央寄せ
 - **Card**: `bg-surface` + border + rounded のカード。`as`（`section` / `div`）、`padding`（`md` / `lg`）、`dashed`（空状態用の破線）を指定できる。`href` を渡すと hover 付きの `Link` になる
+- **Field**: `TextField` / `Select` が共有する土台。基底クラス（`FIELD_BASE` / `FIELD_SIZE`）、label ラッパー（`FieldWrapper`）、`id` のフォールバック（`useFieldId`）を持つ。新しい入力部品はクラス文字列を書き写さずこれを使う
 - **TextField**: テキスト入力。`label` を渡すと label 付きのブロックになり、省略するとインラインフォーム用の input 単体になる。`id` は省略すると自動生成され label と関連付く。`onChange` は文字列を受け取る。`className` は常に最外要素に当たる
-- **Select**: セレクト。`size`（`sm` / `md`）を指定できる。`onChange` は文字列を受け取る
+- **Select**: セレクト。`TextField` と同じく `label` を渡すと label 付きのブロックになり、省略するとインラインフォーム用の select 単体になる。`size` の既定 `md` は `TextField` と同じ寸法なので横に並べても揃う。`sm` は一覧の行内などに置くコンパクト版。`id` は省略すると自動生成され label と関連付く。`onChange` は文字列を受け取る
 - **PrimaryButton**: 塗りのプライマリボタン。`size`（`md` = h-11 / `lg` = h-12）を指定できる
+- **PrimaryLink**: `PrimaryButton` と同じ見た目の `Link`（一覧ページから登録ページへ送る CTA などに使う）。クラス文字列は `primaryClassName` で共有している。**ボタンとリンクを1つのコンポーネントに兼用させない**（`href` と `disabled` / `onClick` が同時に受け取れると、渡しても効かない props が型を通ってしまう）
 - **SecondaryButton**: アウトラインボタン。`variant="danger"` で削除などの破壊的操作用になる
 
 ボタンの `type` はデフォルトで `button`。フォーム送信ボタンには `type="submit"` を明示する。

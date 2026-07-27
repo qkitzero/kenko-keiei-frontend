@@ -402,7 +402,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
               onChange={setNewMemberId}
               placeholder="ユーザーID"
               required
-              className="flex-1 text-sm"
+              className="flex-1"
             />
             <Select value={newMemberRole} onChange={setNewMemberRole}>
               {ASSIGNABLE_ROLES.map((r) => (
@@ -411,11 +411,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
                 </option>
               ))}
             </Select>
-            <PrimaryButton
-              type="submit"
-              disabled={addingMember}
-              className="text-sm"
-            >
+            <PrimaryButton type="submit" disabled={addingMember}>
               {addingMember ? "追加中..." : "追加"}
             </PrimaryButton>
           </form>
@@ -464,13 +460,9 @@ function GroupDetail({ groupId }: { groupId: string }) {
               onChange={setNewChildId}
               placeholder="下位組織のID"
               required
-              className="flex-1 text-sm"
+              className="flex-1"
             />
-            <SecondaryButton
-              type="submit"
-              disabled={addingChild}
-              className="text-sm"
-            >
+            <SecondaryButton type="submit" disabled={addingChild}>
               {addingChild ? "追加中..." : "下位組織を追加"}
             </SecondaryButton>
           </form>

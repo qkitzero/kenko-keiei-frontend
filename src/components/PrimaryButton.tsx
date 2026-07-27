@@ -1,8 +1,22 @@
 const BASE =
   "bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50";
 
+const HEIGHT = {
+  md: "h-11",
+  lg: "h-12",
+} as const;
+
+export type PrimarySize = keyof typeof HEIGHT;
+
+export function primaryClassName(
+  size: PrimarySize = "md",
+  className?: string,
+): string {
+  return `${BASE} ${HEIGHT[size]}${className ? ` ${className}` : ""}`;
+}
+
 type PrimaryButtonProps = {
-  size?: "md" | "lg";
+  size?: PrimarySize;
 } & React.ComponentProps<"button">;
 
 export default function PrimaryButton({
@@ -16,7 +30,7 @@ export default function PrimaryButton({
     <button
       {...props}
       type={type}
-      className={`${BASE} ${size === "lg" ? "h-12" : "h-11"}${className ? ` ${className}` : ""}`}
+      className={primaryClassName(size, className)}
     >
       {children}
     </button>

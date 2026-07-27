@@ -95,7 +95,7 @@
         ],
         "tags": ["CustomerService"]
       },
-      "patch": {
+      "put": {
         "operationId": "CustomerService_UpdateCustomer",
         "responses": {
           "200": {
@@ -129,6 +129,34 @@
         ],
         "tags": ["CustomerService"]
       }
+    },
+    "/v1/customers": {
+      "get": {
+        "operationId": "CustomerService_ListCustomers",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListCustomersResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": ["CustomerService"]
+      }
     }
   },
   "definitions": {
@@ -136,6 +164,45 @@
       "type": "object",
       "properties": {
         "name": {
+          "type": "string"
+        },
+        "nameKana": {
+          "type": "string"
+        },
+        "gender": {
+          "$ref": "#/definitions/v1Gender"
+        },
+        "birthDate": {
+          "$ref": "#/definitions/typeDate"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "prefecture": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "street": {
+          "type": "string"
+        },
+        "building": {
+          "type": "string"
+        },
+        "emergencyContactName": {
+          "type": "string"
+        },
+        "emergencyContactRelationship": {
+          "type": "string"
+        },
+        "emergencyContactPhone": {
           "type": "string"
         }
       }
@@ -168,10 +235,74 @@
         }
       }
     },
+    "typeDate": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Year of the date. Must be from 1 to 9999, or 0 to specify a date without\na year."
+        },
+        "month": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Month of a year. Must be from 1 to 12, or 0 to specify a year without a\nmonth and day."
+        },
+        "day": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Day of a month. Must be from 1 to 31 and valid for the year and month, or 0\nto specify a year by itself or a year and month where the day isn't\nsignificant."
+        }
+      },
+      "description": "* A full date, with non-zero year, month, and day values.\n* A month and day, with a zero year (for example, an anniversary).\n* A year on its own, with a zero month and a zero day.\n* A year and month, with a zero day (for example, a credit card expiration\n  date).\n\nRelated types:\n\n* [google.type.TimeOfDay][google.type.TimeOfDay]\n* [google.type.DateTime][google.type.DateTime]\n* [google.protobuf.Timestamp][google.protobuf.Timestamp]",
+      "title": "Represents a whole or partial calendar date, such as a birthday. The time of\nday and time zone are either specified elsewhere or are insignificant. The\ndate is relative to the Gregorian Calendar. This can represent one of the\nfollowing:"
+    },
     "v1CreateCustomerRequest": {
       "type": "object",
       "properties": {
         "name": {
+          "type": "string"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "nameKana": {
+          "type": "string"
+        },
+        "gender": {
+          "$ref": "#/definitions/v1Gender"
+        },
+        "birthDate": {
+          "$ref": "#/definitions/typeDate"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "prefecture": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "street": {
+          "type": "string"
+        },
+        "building": {
+          "type": "string"
+        },
+        "emergencyContactName": {
+          "type": "string"
+        },
+        "emergencyContactRelationship": {
+          "type": "string"
+        },
+        "emergencyContactPhone": {
           "type": "string"
         }
       }
@@ -184,10 +315,7 @@
         }
       }
     },
-    "v1DeleteCustomerResponse": {
-      "type": "object"
-    },
-    "v1GetCustomerResponse": {
+    "v1Customer": {
       "type": "object",
       "properties": {
         "customerId": {
@@ -195,17 +323,89 @@
         },
         "name": {
           "type": "string"
+        },
+        "groupId": {
+          "type": "string"
+        },
+        "nameKana": {
+          "type": "string"
+        },
+        "gender": {
+          "$ref": "#/definitions/v1Gender"
+        },
+        "birthDate": {
+          "$ref": "#/definitions/typeDate"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "postalCode": {
+          "type": "string"
+        },
+        "prefecture": {
+          "type": "string"
+        },
+        "city": {
+          "type": "string"
+        },
+        "street": {
+          "type": "string"
+        },
+        "building": {
+          "type": "string"
+        },
+        "emergencyContactName": {
+          "type": "string"
+        },
+        "emergencyContactRelationship": {
+          "type": "string"
+        },
+        "emergencyContactPhone": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DeleteCustomerResponse": {
+      "type": "object"
+    },
+    "v1Gender": {
+      "type": "string",
+      "enum": [
+        "GENDER_UNSPECIFIED",
+        "GENDER_MALE",
+        "GENDER_FEMALE",
+        "GENDER_OTHER"
+      ],
+      "default": "GENDER_UNSPECIFIED"
+    },
+    "v1GetCustomerResponse": {
+      "type": "object",
+      "properties": {
+        "customer": {
+          "$ref": "#/definitions/v1Customer"
+        }
+      }
+    },
+    "v1ListCustomersResponse": {
+      "type": "object",
+      "properties": {
+        "customers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Customer"
+          }
         }
       }
     },
     "v1UpdateCustomerResponse": {
       "type": "object",
       "properties": {
-        "customerId": {
-          "type": "string"
-        },
-        "name": {
-          "type": "string"
+        "customer": {
+          "$ref": "#/definitions/v1Customer"
         }
       }
     }
