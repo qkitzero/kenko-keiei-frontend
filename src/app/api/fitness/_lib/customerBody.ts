@@ -1,13 +1,26 @@
 import {
   TEXT_MAX_LENGTH,
+  TIMEZONE_TOLERANCE_DAYS,
   isFutureDate,
   isValidCustomerDate,
+  isValidKana,
+  isValidPhone,
+  isValidPostalCode,
+  isValidPrefecture,
+  normalizePhone,
+  normalizePostalCode,
 } from "@/lib/customer";
 import type { components } from "../../../../../gen/customer/v1/customer.schema";
 
 type Schemas = components["schemas"];
 
 type CustomerFields = Schemas["CustomerServiceUpdateCustomerBody"];
+
+type StringFieldKey = {
+  [
+    K in keyof Required<CustomerFields>
+  ]: string extends Required<CustomerFields>[K] ? K : never;
+}[keyof CustomerFields];
 
 const GENDERS = ["GENDER_MALE", "GENDER_FEMALE", "GENDER_OTHER"];
 
@@ -22,7 +35,26 @@ const OPTIONAL_TEXT_FIELDS = [
   "emergencyContactName",
   "emergencyContactRelationship",
   "emergencyContactPhone",
-] as const;
+] as const satisfies readonly StringFieldKey[];
+
+type OptionalTextField = (typeof OPTIONAL_TEXT_FIELDS)[number];
+
+const NORMALIZERS: Partial<
+  Record<OptionalTextField, (value: string) => string>
+> = {
+  phone: normalizePhone,
+  emergencyContactPhone: normalizePhone,
+  postalCode: normalizePostalCode,
+};
+
+const VALIDATORS: Partial<
+  Record<OptionalTextField, (value: string) => boolean>
+> = {
+  phone: isValidPhone,
+  emergencyContactPhone: isValidPhone,
+  postalCode: isValidPostalCode,
+  prefecture: isValidPrefecture,
+};
 
 export type CustomerFieldsResult =
   { ok: true; fields: CustomerFields } | { ok: false; error: string };
@@ -44,7 +76,8 @@ function birthDate(value: unknown): Schemas["typeDate"] | null {
     return null;
   }
   const date = { year, month, day };
-  if (!isValidCustomerDate(date) || isFutureDate(date)) return null;
+  if (!isValidCustomerDate(date)) return null;
+  if (isFutureDate(date, TIMEZONE_TOLERANCE_DAYS)) return null;
   return date;
 }
 
@@ -68,6 +101,9 @@ export function parseCustomerFields(body: unknown): CustomerFieldsResult {
   const nameKana = text(source.nameKana);
   if (!nameKana) return { ok: false, error: "Missing or invalid nameKana" };
   if (nameKana.length > TEXT_MAX_LENGTH) return tooLong("nameKana");
+  if (!isValidKana(nameKana)) {
+    return { ok: false, error: "Missing or invalid nameKana" };
+  }
 
   const gender = text(source.gender);
   if (!gender || !GENDERS.includes(gender)) {
@@ -79,12 +115,17 @@ export function parseCustomerFields(body: unknown): CustomerFieldsResult {
     return { ok: false, error: "Missing or invalid birthDate" };
   }
 
-  const optional: Record<string, string> = {};
+  const optional: Partial<Record<OptionalTextField, string>> = {};
   for (const key of OPTIONAL_TEXT_FIELDS) {
     const value = source[key];
     if (typeof value !== "string") continue;
-    const trimmed = value.trim();
+    const normalize = NORMALIZERS[key];
+    const trimmed = normalize ? normalize(value.trim()) : value.trim();
     if (trimmed.length > TEXT_MAX_LENGTH) return tooLong(key);
+    const validate = VALIDATORS[key];
+    if (trimmed && validate && !validate(trimmed)) {
+      return { ok: false, error: `Missing or invalid ${key}` };
+    }
     optional[key] = trimmed;
   }
 
