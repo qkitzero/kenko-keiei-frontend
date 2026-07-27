@@ -1,6 +1,7 @@
 "use client";
 
 import { useUser } from "@/context/UserContext";
+import { usePathname } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -18,6 +19,9 @@ type OrgsContextType = {
   memberships: OrgMembership[];
   loading: boolean;
   error: boolean;
+  selectedGroupId: string;
+  scopeVersion: number;
+  selectGroup: (groupId: string) => void;
   refreshOrgs: () => Promise<void>;
 };
 
@@ -25,10 +29,36 @@ const OrgsContext = createContext<OrgsContextType>({
   memberships: [],
   loading: true,
   error: false,
+  selectedGroupId: "",
+  scopeVersion: 0,
+  selectGroup: () => {},
   refreshOrgs: async () => {},
 });
 
 export const useOrgs = () => useContext(OrgsContext);
+
+const SELECTED_GROUP_KEY = "kenko-keiei.selectedGroupId";
+
+function readStoredGroupId(): string {
+  if (typeof window === "undefined") return "";
+  try {
+    return window.localStorage.getItem(SELECTED_GROUP_KEY) ?? "";
+  } catch {
+    return "";
+  }
+}
+
+function storeGroupId(groupId: string): void {
+  try {
+    window.localStorage.setItem(SELECTED_GROUP_KEY, groupId);
+  } catch {
+    return;
+  }
+}
+
+export function groupIdFromPathname(pathname: string): string {
+  return /^\/groups\/([^/]+)/.exec(pathname)?.[1] ?? "";
+}
 
 type LoadResult =
   | { ok: true; memberships: OrgMembership[] }
@@ -89,8 +119,47 @@ export const OrgsProvider = ({ children }: { children: React.ReactNode }) => {
 
   const loading = userLoading || loadedFor !== (user ? user.userId : null);
 
+  const isMember = (groupId: string) =>
+    memberships.some(({ group }) => group.groupId === groupId);
+
+  const [chosenGroupId, setChosenGroupId] = useState(readStoredGroupId);
+  const [scopeVersion, setScopeVersion] = useState(0);
+
+  const selectGroup = useCallback((groupId: string) => {
+    setChosenGroupId(groupId);
+    setScopeVersion((version) => version + 1);
+  }, []);
+
+  const pathGroupId = groupIdFromPathname(usePathname());
+  const memberPathGroupId = isMember(pathGroupId) ? pathGroupId : "";
+  const [seenPathGroupId, setSeenPathGroupId] = useState(memberPathGroupId);
+
+  if (seenPathGroupId !== memberPathGroupId) {
+    setSeenPathGroupId(memberPathGroupId);
+    if (memberPathGroupId) selectGroup(memberPathGroupId);
+  }
+
+  const selectedGroupId =
+    (isMember(chosenGroupId) ? chosenGroupId : "") ||
+    memberships[0]?.group.groupId ||
+    "";
+
+  useEffect(() => {
+    if (selectedGroupId) storeGroupId(selectedGroupId);
+  }, [selectedGroupId]);
+
   return (
-    <OrgsContext.Provider value={{ memberships, loading, error, refreshOrgs }}>
+    <OrgsContext.Provider
+      value={{
+        memberships,
+        loading,
+        error,
+        selectedGroupId,
+        scopeVersion,
+        selectGroup,
+        refreshOrgs,
+      }}
+    >
       {children}
     </OrgsContext.Provider>
   );
