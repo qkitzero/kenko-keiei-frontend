@@ -8,6 +8,7 @@ import {
   PREFECTURES,
   TEXT_MAX_LENGTH,
   genderLabel,
+  isValidPrefecture,
   todayInputValue,
 } from "@/lib/customer";
 
@@ -56,6 +57,7 @@ export default function CustomerFields({
             label="性別 *"
             value={values.gender}
             onChange={update("gender")}
+            autoComplete="off"
             required
           >
             <option value="">選択してください</option>
@@ -116,8 +118,14 @@ export default function CustomerFields({
             label="都道府県"
             value={values.prefecture}
             onChange={update("prefecture")}
+            autoComplete="off"
           >
             <option value="">未選択</option>
+            {values.prefecture && !isValidPrefecture(values.prefecture) && (
+              <option value={values.prefecture}>
+                {values.prefecture}（一覧にありません）
+              </option>
+            )}
             {PREFECTURES.map((prefecture) => (
               <option key={prefecture} value={prefecture}>
                 {prefecture}
