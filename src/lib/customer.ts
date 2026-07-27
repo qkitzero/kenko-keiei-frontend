@@ -13,6 +13,7 @@ export const GENDERS: Gender[] = [
 ];
 
 const GENDER_LABELS: Record<string, string> = {
+  GENDER_UNSPECIFIED: "",
   GENDER_MALE: "男性",
   GENDER_FEMALE: "女性",
   GENDER_OTHER: "その他",
@@ -132,12 +133,28 @@ function toHalfWidthDigits(value: string): string {
   );
 }
 
-function normalizePhone(value: string): string {
+export function normalizePhone(value: string): string {
   return toHalfWidthDigits(value).replace(/[-－\s　]/g, "");
 }
 
-function normalizePostalCode(value: string): string {
+export function normalizePostalCode(value: string): string {
   return toHalfWidthDigits(value).replace(/[-－\s　]/g, "");
+}
+
+export function isValidKana(value: string): boolean {
+  return KANA_PATTERN.test(value);
+}
+
+export function isValidPhone(value: string): boolean {
+  return PHONE_PATTERN.test(normalizePhone(value));
+}
+
+export function isValidPostalCode(value: string): boolean {
+  return POSTAL_CODE_PATTERN.test(normalizePostalCode(value));
+}
+
+export function isValidPrefecture(value: string): boolean {
+  return PREFECTURES.includes(value);
 }
 
 function isLeapYear(year: number): boolean {
@@ -171,6 +188,11 @@ function toDateInputValue(date: CustomerDate | undefined): string {
   return `${year}-${month}-${day}`;
 }
 
+export function birthDateLabel(date: CustomerDate | undefined): string {
+  const value = toDateInputValue(date);
+  return value ? value.replaceAll("-", "/") : "";
+}
+
 function toCustomerDate(value: string): CustomerDate | null {
   const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!matched) return null;
@@ -183,15 +205,22 @@ function toCustomerDate(value: string): CustomerDate | null {
   return isValidCustomerDate(date) ? date : null;
 }
 
-export function todayInputValue(): string {
-  const now = new Date();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${now.getFullYear()}-${month}-${day}`;
+function dateInputValueOf(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
 }
 
-export function isFutureDate(date: CustomerDate): boolean {
-  return toDateInputValue(date) > todayInputValue();
+export function todayInputValue(): string {
+  return dateInputValueOf(new Date());
+}
+
+export const TIMEZONE_TOLERANCE_DAYS = 1;
+
+export function isFutureDate(date: CustomerDate, toleranceDays = 0): boolean {
+  const limit = new Date();
+  limit.setDate(limit.getDate() + toleranceDays);
+  return toDateInputValue(date) > dateInputValueOf(limit);
 }
 
 export function customerToForm(customer: Customer): CustomerFormValues {
@@ -219,14 +248,40 @@ export function customerToForm(customer: Customer): CustomerFormValues {
 export function fieldsNeedingInput(customer: Customer): string[] {
   const fields: string[] = [];
   const nameKana = customer.nameKana?.trim() ?? "";
-  if (!nameKana || !KANA_PATTERN.test(nameKana)) fields.push("カナ氏名");
+  if (!nameKana || !isValidKana(nameKana)) fields.push("カナ氏名");
   if (!customer.gender || customer.gender === "GENDER_UNSPECIFIED") {
     fields.push("性別");
   }
   if (!isValidCustomerDate(customer.birthDate)) fields.push("生年月日");
-  if (customer.prefecture && !PREFECTURES.includes(customer.prefecture)) {
+
+  const phone = customer.phone?.trim() ?? "";
+  if (phone && !isValidPhone(phone)) fields.push("電話番号");
+
+  const email = customer.email?.trim() ?? "";
+  if (email.length > TEXT_MAX_LENGTH) fields.push("メールアドレス");
+
+  const postalCode = customer.postalCode?.trim() ?? "";
+  if (postalCode && !isValidPostalCode(postalCode)) fields.push("郵便番号");
+
+  if (customer.prefecture && !isValidPrefecture(customer.prefecture)) {
     fields.push("都道府県");
   }
+
+  for (const [value, label] of [
+    [customer.city, "市区町村"],
+    [customer.street, "番地"],
+    [customer.building, "建物名・部屋番号"],
+    [customer.emergencyContactName, "緊急連絡先の氏名"],
+    [customer.emergencyContactRelationship, "緊急連絡先の続柄"],
+  ] as const) {
+    if ((value?.trim().length ?? 0) > TEXT_MAX_LENGTH) fields.push(label);
+  }
+
+  const emergencyContactPhone = customer.emergencyContactPhone?.trim() ?? "";
+  if (emergencyContactPhone && !isValidPhone(emergencyContactPhone)) {
+    fields.push("緊急連絡先の電話番号");
+  }
+
   return fields;
 }
 
@@ -241,7 +296,7 @@ export function buildCustomerPayload(
 
   const nameKana = values.nameKana.trim();
   if (!nameKana) return { ok: false, error: "カナ氏名を入力してください" };
-  if (!KANA_PATTERN.test(nameKana)) {
+  if (!isValidKana(nameKana)) {
     return {
       ok: false,
       error: "カナ氏名は全角カタカナで入力してください",
@@ -262,7 +317,7 @@ export function buildCustomerPayload(
   }
 
   const phone = normalizePhone(values.phone.trim());
-  if (phone && !PHONE_PATTERN.test(phone)) {
+  if (phone && !isValidPhone(phone)) {
     return {
       ok: false,
       error: "電話番号は0から始まる10桁または11桁で入力してください",
@@ -278,7 +333,7 @@ export function buildCustomerPayload(
   }
 
   const postalCode = normalizePostalCode(values.postalCode.trim());
-  if (postalCode && !POSTAL_CODE_PATTERN.test(postalCode)) {
+  if (postalCode && !isValidPostalCode(postalCode)) {
     return {
       ok: false,
       error: "郵便番号は7桁の数字で入力してください（例: 1000001）",
@@ -286,7 +341,7 @@ export function buildCustomerPayload(
   }
 
   const prefecture = values.prefecture.trim();
-  if (prefecture && !PREFECTURES.includes(prefecture)) {
+  if (prefecture && !isValidPrefecture(prefecture)) {
     return { ok: false, error: "都道府県は一覧から選び直してください" };
   }
 
@@ -306,7 +361,7 @@ export function buildCustomerPayload(
   const emergencyContactPhone = normalizePhone(
     values.emergencyContactPhone.trim(),
   );
-  if (emergencyContactPhone && !PHONE_PATTERN.test(emergencyContactPhone)) {
+  if (emergencyContactPhone && !isValidPhone(emergencyContactPhone)) {
     return {
       ok: false,
       error:

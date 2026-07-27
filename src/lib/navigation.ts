@@ -13,9 +13,9 @@ export const NAV_ITEMS: NavItem[] = [
     activePrefix: "/",
   },
   {
-    label: "顧客登録",
-    description: "新しい顧客を登録します。",
-    href: "/customers/register",
+    label: "顧客",
+    description: "顧客を一覧・登録します。",
+    href: "/customers",
     activePrefix: "/customers",
   },
   {

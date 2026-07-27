@@ -5,7 +5,6 @@ import CustomerFields from "@/components/CustomerFields";
 import PageContainer from "@/components/PageContainer";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
-import Select from "@/components/Select";
 import { useOrgs } from "@/context/OrgsContext";
 import { useUser } from "@/context/UserContext";
 import { ensureOk, errorMessage } from "@/lib/apiError";
@@ -25,11 +24,11 @@ export default function CustomerRegister() {
     memberships,
     loading: orgsLoading,
     error: orgsError,
+    selectedGroupId,
     refreshOrgs,
   } = useOrgs();
 
   const [values, setValues] = useState<CustomerFormValues>(EMPTY_CUSTOMER_FORM);
-  const [selectedGroupId, setSelectedGroupId] = useState("");
   const [loading, setLoading] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [error, setError] = useState("");
@@ -91,7 +90,10 @@ export default function CustomerRegister() {
     );
   }
 
-  const groupId = selectedGroupId || memberships[0].group.groupId;
+  const groupId = selectedGroupId;
+  const orgName =
+    memberships.find(({ group }) => group.groupId === groupId)?.group.name ??
+    "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +130,12 @@ export default function CustomerRegister() {
 
   return (
     <PageContainer>
+      <div>
+        <Link href="/customers" className="text-subtle text-sm hover:underline">
+          ← 顧客一覧
+        </Link>
+      </div>
+
       <section>
         <h1 className="text-foreground text-3xl font-semibold tracking-tight">
           顧客を登録
@@ -140,28 +148,15 @@ export default function CustomerRegister() {
           新しい顧客を登録
         </h2>
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-6">
-          {memberships.length > 1 ? (
-            <Select
-              label="登録先の組織 *"
-              value={groupId}
-              onChange={setSelectedGroupId}
-              disabled={loading}
-              className="sm:max-w-xs"
-            >
-              {memberships.map(({ group }) => (
-                <option key={group.groupId} value={group.groupId}>
-                  {group.name}
-                </option>
-              ))}
-            </Select>
-          ) : (
-            <div>
-              <p className="text-muted text-sm font-medium">登録先の組織</p>
-              <p className="text-foreground mt-1 text-sm">
-                {memberships[0].group.name}
+          <div>
+            <p className="text-muted text-sm font-medium">登録先の組織</p>
+            <p className="text-foreground mt-1 text-sm">{orgName}</p>
+            {memberships.length > 1 && (
+              <p className="text-subtle mt-1 text-xs">
+                ヘッダーの組織メニューで切り替えられます。
               </p>
-            </div>
-          )}
+            )}
+          </div>
 
           <CustomerFields
             values={values}

@@ -2,6 +2,7 @@
 
 import Card from "@/components/Card";
 import CustomerFields from "@/components/CustomerFields";
+import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
 import SecondaryButton from "@/components/SecondaryButton";
 import { useOrgs } from "@/context/OrgsContext";
@@ -22,12 +23,15 @@ import { use, useCallback, useEffect, useState } from "react";
 type LoadResult =
   | { status: "ok"; data: Customer }
   | { status: "not_found" }
+  | { status: "unauthenticated" }
   | { status: "error" };
 
 async function loadCustomer(customerId: string): Promise<LoadResult> {
   const res = await fetch(`/api/fitness/customer/${customerId}`);
   if (!res.ok) {
-    return { status: res.status === 404 ? "not_found" : "error" };
+    if (res.status === 404) return { status: "not_found" };
+    if (res.status === 401) return { status: "unauthenticated" };
+    return { status: "error" };
   }
   const data = await res.json();
   if (!data.customer?.customerId) return { status: "not_found" };
@@ -46,12 +50,19 @@ export default function CustomerDetailPage({
 function CustomerDetail({ customerId }: { customerId: string }) {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
-  const { memberships, loading: orgsLoading, error: orgsError } = useOrgs();
+  const {
+    memberships,
+    loading: orgsLoading,
+    error: orgsError,
+    refreshOrgs,
+  } = useOrgs();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [fetched, setFetched] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [unauthenticated, setUnauthenticated] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [retryingOrgs, setRetryingOrgs] = useState(false);
 
   const [values, setValues] = useState<CustomerFormValues>(EMPTY_CUSTOMER_FORM);
   const [saving, setSaving] = useState(false);
@@ -69,9 +80,12 @@ function CustomerDetail({ customerId }: { customerId: string }) {
       if (result.status === "ok") {
         applyCustomer(result.data);
         setNotFound(false);
+        setUnauthenticated(false);
         setLoadError(false);
       } else if (result.status === "not_found") {
         setNotFound(true);
+      } else if (result.status === "unauthenticated") {
+        setUnauthenticated(true);
       } else {
         setLoadError(true);
       }
@@ -155,7 +169,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         method: "DELETE",
       });
       await ensureOk(res, "顧客の削除に失敗しました");
-      router.push("/customers/register");
+      router.push("/customers");
     }).finally(() => setDeleting(false));
   };
 
@@ -184,12 +198,23 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
           顧客が見つかりません
         </h1>
-        <Link
-          href="/customers/register"
-          className="text-muted text-sm underline"
-        >
-          顧客登録に戻る
+        <Link href="/customers" className="text-muted text-sm underline">
+          顧客一覧に戻る
         </Link>
+      </PageContainer>
+    );
+  }
+
+  if (unauthenticated) {
+    return (
+      <PageContainer centered>
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+          サインインの有効期限が切れました
+        </h1>
+        <p className="text-subtle text-sm">再度サインインしてください。</p>
+        <div className="w-40">
+          <LoginButton />
+        </div>
       </PageContainer>
     );
   }
@@ -201,31 +226,29 @@ function CustomerDetail({ customerId }: { customerId: string }) {
           顧客を読み込めませんでした
         </h1>
         <p className="text-subtle text-sm">時間をおいて再度お試しください。</p>
-        <Link
-          href="/customers/register"
-          className="text-muted text-sm underline"
-        >
-          顧客登録に戻る
+        <Link href="/customers" className="text-muted text-sm underline">
+          顧客一覧に戻る
         </Link>
       </PageContainer>
     );
   }
 
+  const handleRetryOrgs = () => {
+    if (retryingOrgs) return;
+    setRetryingOrgs(true);
+    void refreshOrgs().finally(() => setRetryingOrgs(false));
+  };
+
   const groupId = customer.groupId ?? "";
-  const orgName = orgsError
-    ? `${groupId}（組織名を取得できませんでした）`
-    : (memberships.find((m) => m.group.groupId === groupId)?.group.name ??
-      groupId);
+  const orgName = memberships.find((m) => m.group.groupId === groupId)?.group
+    .name;
   const needsInput = fieldsNeedingInput(customer);
 
   return (
     <PageContainer>
       <div>
-        <Link
-          href="/customers/register"
-          className="text-subtle text-sm hover:underline"
-        >
-          ← 顧客登録
+        <Link href="/customers" className="text-subtle text-sm hover:underline">
+          ← 顧客一覧
         </Link>
       </div>
 
@@ -246,8 +269,27 @@ function CustomerDetail({ customerId }: { customerId: string }) {
             <p className="text-muted text-sm font-medium">所属組織</p>
             {orgsLoading ? (
               <div className="bg-placeholder mt-1 h-5 w-40 animate-pulse rounded" />
-            ) : (
+            ) : orgName ? (
               <p className="text-foreground mt-1 text-sm">{orgName}</p>
+            ) : (
+              <>
+                <p className="text-subtle mt-1 text-sm">
+                  {orgsError
+                    ? "組織名を取得できませんでした"
+                    : "あなたが所属していない組織です"}
+                </p>
+                <p className="text-subtle mt-0.5 truncate text-xs">{groupId}</p>
+                {orgsError && (
+                  <div className="mt-2">
+                    <SecondaryButton
+                      onClick={handleRetryOrgs}
+                      disabled={retryingOrgs}
+                    >
+                      {retryingOrgs ? "再取得中..." : "組織名を再取得"}
+                    </SecondaryButton>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
