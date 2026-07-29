@@ -13,6 +13,7 @@ import {
   EMPTY_CUSTOMER_FORM,
   buildCustomerPayload,
 } from "@/lib/customer";
+import { useOrganizations } from "@/lib/useOrganizations";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -32,6 +33,13 @@ export default function CustomerRegister() {
   const [loading, setLoading] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [error, setError] = useState("");
+  const organizations = useOrganizations(selectedTenantId);
+
+  const [scopedTenantId, setScopedTenantId] = useState(selectedTenantId);
+  if (scopedTenantId !== selectedTenantId) {
+    setScopedTenantId(selectedTenantId);
+    setValues((current) => ({ ...current, organizationId: "" }));
+  }
 
   if (userLoading || tenantsLoading) {
     return (
@@ -162,6 +170,7 @@ export default function CustomerRegister() {
             values={values}
             onChange={setValues}
             disabled={loading}
+            organizations={organizations}
           />
 
           {error && <p className="text-danger text-sm">{error}</p>}

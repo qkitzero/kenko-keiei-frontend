@@ -9,6 +9,7 @@ import {
   normalizePhone,
   normalizePostalCode,
 } from "@/lib/customer";
+import { isValidOrganizationId } from "@/lib/organization";
 import { TEXT_MAX_LENGTH, isTooLong } from "@/lib/text";
 import type { components } from "../../../../../gen/customer/v1/customer.schema";
 
@@ -129,6 +130,14 @@ export function parseCustomerFields(body: unknown): CustomerFieldsResult {
     optional[key] = trimmed;
   }
 
+  const organizationId =
+    typeof source.organizationId === "string"
+      ? source.organizationId.trim()
+      : "";
+  if (organizationId && !isValidOrganizationId(organizationId)) {
+    return { ok: false, error: "Missing or invalid organizationId" };
+  }
+
   return {
     ok: true,
     fields: {
@@ -137,6 +146,7 @@ export function parseCustomerFields(body: unknown): CustomerFieldsResult {
       gender: gender as Schemas["v1Gender"],
       birthDate: parsedBirthDate,
       ...optional,
+      organizationId,
     },
   };
 }

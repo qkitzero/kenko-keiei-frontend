@@ -17,6 +17,7 @@ import {
   customerToForm,
   fieldsNeedingInput,
 } from "@/lib/customer";
+import { useOrganizations } from "@/lib/useOrganizations";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
@@ -72,6 +73,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
   const [deleteError, setDeleteError] = useState("");
   const [switchingActive, setSwitchingActive] = useState(false);
   const [activeError, setActiveError] = useState("");
+  const organizations = useOrganizations(customer?.tenantId ?? "");
 
   const applyCustomer = useCallback((data: Customer) => {
     setCustomer(data);
@@ -309,7 +311,9 @@ function CustomerDetail({ customerId }: { customerId: string }) {
                     ? "テナント名を取得できませんでした"
                     : "あなたが所属していないテナントです"}
                 </p>
-                <p className="text-subtle mt-0.5 truncate text-xs">{tenantId}</p>
+                <p className="text-subtle mt-0.5 truncate text-xs">
+                  {tenantId}
+                </p>
                 {tenantsError && (
                   <div className="mt-2">
                     <SecondaryButton
@@ -335,6 +339,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
             values={values}
             onChange={setValues}
             disabled={saving}
+            organizations={organizations}
           />
 
           {saveError && <p className="text-danger text-sm">{saveError}</p>}

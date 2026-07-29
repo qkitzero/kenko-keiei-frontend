@@ -90,6 +90,7 @@ export type CustomerFormValues = {
   emergencyContactName: string;
   emergencyContactRelationship: string;
   emergencyContactPhone: string;
+  organizationId: string;
 };
 
 export type CustomerPayload = Omit<
@@ -118,6 +119,7 @@ export const EMPTY_CUSTOMER_FORM: CustomerFormValues = {
   emergencyContactName: "",
   emergencyContactRelationship: "",
   emergencyContactPhone: "",
+  organizationId: "",
 };
 
 const KANA_PATTERN = /^[ァ-ヿ 　]+$/;
@@ -241,6 +243,7 @@ export function customerToForm(customer: Customer): CustomerFormValues {
     emergencyContactName: customer.emergencyContactName ?? "",
     emergencyContactRelationship: customer.emergencyContactRelationship ?? "",
     emergencyContactPhone: customer.emergencyContactPhone ?? "",
+    organizationId: customer.organizationId ?? "",
   };
 }
 
@@ -290,7 +293,10 @@ export function buildCustomerPayload(
   const name = values.name.trim();
   if (!name) return { ok: false, error: "氏名を入力してください" };
   if (isTooLong(name)) {
-    return { ok: false, error: `氏名は${TEXT_MAX_LENGTH}文字以内で入力してください` };
+    return {
+      ok: false,
+      error: `氏名は${TEXT_MAX_LENGTH}文字以内で入力してください`,
+    };
   }
 
   const nameKana = values.nameKana.trim();
@@ -302,7 +308,10 @@ export function buildCustomerPayload(
     };
   }
   if (isTooLong(nameKana)) {
-    return { ok: false, error: `カナ氏名は${TEXT_MAX_LENGTH}文字以内で入力してください` };
+    return {
+      ok: false,
+      error: `カナ氏名は${TEXT_MAX_LENGTH}文字以内で入力してください`,
+    };
   }
 
   if (!GENDERS.includes(values.gender as Gender)) {
@@ -353,7 +362,10 @@ export function buildCustomerPayload(
   ];
   for (const [value, label] of longTextFields) {
     if (isTooLong(value)) {
-      return { ok: false, error: `${label}は${TEXT_MAX_LENGTH}文字以内で入力してください` };
+      return {
+        ok: false,
+        error: `${label}は${TEXT_MAX_LENGTH}文字以内で入力してください`,
+      };
     }
   }
 
@@ -385,6 +397,7 @@ export function buildCustomerPayload(
       emergencyContactName: values.emergencyContactName.trim(),
       emergencyContactRelationship: values.emergencyContactRelationship.trim(),
       emergencyContactPhone,
+      organizationId: values.organizationId.trim(),
     },
   };
 }

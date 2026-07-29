@@ -5,6 +5,11 @@ type Schemas = components["schemas"];
 
 export type Organization = Schemas["v1Organization"];
 
+export type OrganizationOptions =
+  | { status: "loading" }
+  | { status: "ok"; organizations: Organization[] }
+  | { status: "error"; retry: () => void };
+
 export type NameResult =
   { ok: true; name: string } | { ok: false; error: string };
 
@@ -28,4 +33,16 @@ const UUID_PATTERN =
 
 export function isValidOrganizationId(value: string): boolean {
   return UUID_PATTERN.test(value.trim());
+}
+
+export function organizationName(
+  options: OrganizationOptions,
+  organizationId: string | undefined,
+): string {
+  if (!organizationId || options.status !== "ok") return "";
+  return (
+    options.organizations.find(
+      (organization) => organization.organizationId === organizationId,
+    )?.name ?? ""
+  );
 }

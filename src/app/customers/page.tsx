@@ -9,6 +9,8 @@ import SecondaryButton from "@/components/SecondaryButton";
 import { useTenantScope, useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
 import { Customer, birthDateLabel, genderLabel } from "@/lib/customer";
+import { organizationName } from "@/lib/organization";
+import { useOrganizations } from "@/lib/useOrganizations";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -79,6 +81,7 @@ function Customers() {
   const [retrying, setRetrying] = useState(false);
 
   const tenantId = useTenantScope();
+  const organizations = useOrganizations(tenantId);
   const includeInactive = searchParams.get("includeInactive") === "true";
   const requestKey = `${reloadKey}:${tenantId}:${includeInactive}`;
   const result = loaded?.key === requestKey ? loaded.result : null;
@@ -264,7 +267,12 @@ function Customers() {
                   )}
                 </p>
                 <p className="text-subtle mt-0.5 truncate text-xs">
-                  {customer.nameKana}
+                  {[
+                    customer.nameKana,
+                    organizationName(organizations, customer.organizationId),
+                  ]
+                    .filter(Boolean)
+                    .join(" ・ ")}
                 </p>
               </div>
               <div className="text-muted shrink-0 text-right text-xs">
