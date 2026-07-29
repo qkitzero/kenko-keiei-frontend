@@ -1,3 +1,4 @@
+import { TEXT_MAX_LENGTH, isTooLong } from "@/lib/text";
 import type { components } from "../../gen/customer/v1/customer.schema";
 
 type Schemas = components["schemas"];
@@ -118,8 +119,6 @@ export const EMPTY_CUSTOMER_FORM: CustomerFormValues = {
   emergencyContactRelationship: "",
   emergencyContactPhone: "",
 };
-
-export const TEXT_MAX_LENGTH = 255;
 
 const KANA_PATTERN = /^[ァ-ヿ 　]+$/;
 const PHONE_PATTERN = /^0\d{9,10}$/;
@@ -258,7 +257,7 @@ export function fieldsNeedingInput(customer: Customer): string[] {
   if (phone && !isValidPhone(phone)) fields.push("電話番号");
 
   const email = customer.email?.trim() ?? "";
-  if (email.length > TEXT_MAX_LENGTH) fields.push("メールアドレス");
+  if (isTooLong(email)) fields.push("メールアドレス");
 
   const postalCode = customer.postalCode?.trim() ?? "";
   if (postalCode && !isValidPostalCode(postalCode)) fields.push("郵便番号");
@@ -274,7 +273,7 @@ export function fieldsNeedingInput(customer: Customer): string[] {
     [customer.emergencyContactName, "緊急連絡先の氏名"],
     [customer.emergencyContactRelationship, "緊急連絡先の続柄"],
   ] as const) {
-    if ((value?.trim().length ?? 0) > TEXT_MAX_LENGTH) fields.push(label);
+    if (isTooLong(value?.trim() ?? "")) fields.push(label);
   }
 
   const emergencyContactPhone = customer.emergencyContactPhone?.trim() ?? "";
@@ -290,8 +289,8 @@ export function buildCustomerPayload(
 ): PayloadResult {
   const name = values.name.trim();
   if (!name) return { ok: false, error: "氏名を入力してください" };
-  if (name.length > TEXT_MAX_LENGTH) {
-    return { ok: false, error: "氏名は255文字以内で入力してください" };
+  if (isTooLong(name)) {
+    return { ok: false, error: `氏名は${TEXT_MAX_LENGTH}文字以内で入力してください` };
   }
 
   const nameKana = values.nameKana.trim();
@@ -302,8 +301,8 @@ export function buildCustomerPayload(
       error: "カナ氏名は全角カタカナで入力してください",
     };
   }
-  if (nameKana.length > TEXT_MAX_LENGTH) {
-    return { ok: false, error: "カナ氏名は255文字以内で入力してください" };
+  if (isTooLong(nameKana)) {
+    return { ok: false, error: `カナ氏名は${TEXT_MAX_LENGTH}文字以内で入力してください` };
   }
 
   if (!GENDERS.includes(values.gender as Gender)) {
@@ -325,10 +324,10 @@ export function buildCustomerPayload(
   }
 
   const email = values.email.trim();
-  if (email.length > TEXT_MAX_LENGTH) {
+  if (isTooLong(email)) {
     return {
       ok: false,
-      error: "メールアドレスは255文字以内で入力してください",
+      error: `メールアドレスは${TEXT_MAX_LENGTH}文字以内で入力してください`,
     };
   }
 
@@ -353,8 +352,8 @@ export function buildCustomerPayload(
     [values.emergencyContactRelationship.trim(), "緊急連絡先の続柄"],
   ];
   for (const [value, label] of longTextFields) {
-    if (value.length > TEXT_MAX_LENGTH) {
-      return { ok: false, error: `${label}は255文字以内で入力してください` };
+    if (isTooLong(value)) {
+      return { ok: false, error: `${label}は${TEXT_MAX_LENGTH}文字以内で入力してください` };
     }
   }
 

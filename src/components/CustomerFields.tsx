@@ -6,11 +6,11 @@ import {
   CustomerFormValues,
   GENDERS,
   PREFECTURES,
-  TEXT_MAX_LENGTH,
   genderLabel,
   isValidPrefecture,
   todayInputValue,
 } from "@/lib/customer";
+import { TEXT_MAX_LENGTH } from "@/lib/text";
 
 type CustomerFieldsProps = {
   values: CustomerFormValues;
