@@ -1,7 +1,7 @@
 import { authorizedRequest } from "@/app/api/_lib/authorizedRequest";
 import { jsonResponse, toStatusResult } from "@/app/api/_lib/response";
-import { parseCustomerFields } from "@/app/api/fitness/_lib/customerBody";
-import { customerClient } from "@/app/api/fitness/client";
+import { organizationClient } from "@/app/api/fitness/client";
+import { buildOrganizationName } from "@/lib/organization";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -21,16 +21,18 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const parsed = parseCustomerFields(body);
+  const parsed = buildOrganizationName(
+    typeof body.name === "string" ? body.name : "",
+  );
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
   const result = await authorizedRequest(req, (accessToken) =>
     toStatusResult(
-      customerClient.POST("/v1/customer", {
+      organizationClient.POST("/v1/organization", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        body: { ...parsed.fields, tenantId },
+        body: { tenantId, name: parsed.name },
       }),
     ),
   );

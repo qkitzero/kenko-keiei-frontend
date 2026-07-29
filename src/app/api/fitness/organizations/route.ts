@@ -1,6 +1,6 @@
 import { authorizedRequest } from "@/app/api/_lib/authorizedRequest";
 import { jsonResponse, toStatusResult } from "@/app/api/_lib/response";
-import { customerClient } from "@/app/api/fitness/client";
+import { organizationClient } from "@/app/api/fitness/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -12,14 +12,11 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const includeInactive =
-    req.nextUrl.searchParams.get("includeInactive") === "true";
-
   const result = await authorizedRequest(req, (accessToken) =>
     toStatusResult(
-      customerClient.GET("/v1/customers", {
+      organizationClient.GET("/v1/organizations", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { query: { tenantId, includeInactive } },
+        params: { query: { tenantId } },
       }),
     ),
   );
