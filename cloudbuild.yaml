@@ -40,6 +40,8 @@ steps:
       - us-central1
       - --memory
       - 512Mi
+      - --min-instances=0
+      - --max-instances=1
       - --allow-unauthenticated
 
 images:
