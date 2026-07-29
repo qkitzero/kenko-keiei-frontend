@@ -1,51 +1,42 @@
 "use client";
 
-import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
-import PrimaryLink from "@/components/PrimaryLink";
+import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
+import TextField from "@/components/TextField";
 import { useTenantScope, useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
-import { Customer, birthDateLabel, genderLabel } from "@/lib/customer";
-import { organizationName } from "@/lib/organization";
-import { useOrganizations } from "@/lib/useOrganizations";
+import { ensureOk, errorMessage } from "@/lib/apiError";
+import { Organization, buildOrganizationName } from "@/lib/organization";
+import { TEXT_MAX_LENGTH } from "@/lib/text";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
 type LoadResult =
-  | { status: "ok"; customers: Customer[] }
+  | { status: "ok"; organizations: Organization[] }
   | { status: "unauthenticated" }
   | { status: "forbidden" }
   | { status: "error" };
 
 type LoadedList = { key: string; result: LoadResult };
 
-async function loadCustomers(
-  tenantId: string,
-  includeInactive: boolean,
-): Promise<LoadResult> {
-  const query = new URLSearchParams({ tenantId });
-  if (includeInactive) query.set("includeInactive", "true");
-  const res = await fetch(`/api/fitness/customers?${query}`);
+async function loadOrganizations(tenantId: string): Promise<LoadResult> {
+  const res = await fetch(
+    `/api/fitness/organizations?tenantId=${encodeURIComponent(tenantId)}`,
+  );
   if (!res.ok) {
     if (res.status === 401) return { status: "unauthenticated" };
     if (res.status === 403) return { status: "forbidden" };
     return { status: "error" };
   }
   const data = await res.json();
-  const customers: Customer[] = (data.customers ?? []).filter(
-    (customer: Customer) => customer.customerId,
+  const organizations: Organization[] = (data.organizations ?? []).filter(
+    (organization: Organization) => organization.organizationId,
   );
-  return { status: "ok", customers };
-}
-
-function listHref(tenantId: string, includeInactive: boolean): string {
-  const query = new URLSearchParams({ tenantId });
-  if (includeInactive) query.set("includeInactive", "true");
-  return `/customers?${query}`;
+  return { status: "ok", organizations };
 }
 
 function PageSkeleton() {
@@ -57,15 +48,15 @@ function PageSkeleton() {
   );
 }
 
-export default function CustomersPage() {
+export default function OrganizationsPage() {
   return (
     <Suspense fallback={<PageSkeleton />}>
-      <Customers />
+      <Organizations />
     </Suspense>
   );
 }
 
-function Customers() {
+function Organizations() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: userLoading } = useUser();
@@ -80,22 +71,26 @@ function Customers() {
   const [reloadKey, setReloadKey] = useState(0);
   const [retrying, setRetrying] = useState(false);
 
+  const [name, setName] = useState("");
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+
   const tenantId = useTenantScope();
-  const organizations = useOrganizations(tenantId);
-  const includeInactive = searchParams.get("includeInactive") === "true";
-  const requestKey = `${reloadKey}:${tenantId}:${includeInactive}`;
+  const requestKey = `${reloadKey}:${tenantId}`;
   const result = loaded?.key === requestKey ? loaded.result : null;
 
   useEffect(() => {
     if (!tenantId || searchParams.get("tenantId") === tenantId) return;
-    router.replace(listHref(tenantId, includeInactive), { scroll: false });
-  }, [tenantId, includeInactive, searchParams, router]);
+    router.replace(`/organizations?tenantId=${encodeURIComponent(tenantId)}`, {
+      scroll: false,
+    });
+  }, [tenantId, searchParams, router]);
 
   useEffect(() => {
     if (!tenantId) return;
     let active = true;
     (async () => {
-      const loadResult = await loadCustomers(tenantId, includeInactive).catch(
+      const loadResult = await loadOrganizations(tenantId).catch(
         () => ({ status: "error" }) as const,
       );
       if (!active) return;
@@ -104,7 +99,37 @@ function Customers() {
     return () => {
       active = false;
     };
-  }, [tenantId, includeInactive, requestKey]);
+  }, [tenantId, requestKey]);
+
+  const handleCreate = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (creating) return;
+
+    const parsed = buildOrganizationName(name);
+    if (!parsed.ok) {
+      setCreateError(parsed.error);
+      return;
+    }
+
+    setCreating(true);
+    setCreateError("");
+    void (async () => {
+      try {
+        const res = await fetch("/api/fitness/organization/create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ tenantId, name: parsed.name }),
+        });
+        await ensureOk(res, "組織の作成に失敗しました");
+        setName("");
+        setReloadKey((key) => key + 1);
+      } catch (err: unknown) {
+        setCreateError(errorMessage(err));
+      } finally {
+        setCreating(false);
+      }
+    })();
+  };
 
   if (userLoading || (user && tenantsLoading)) {
     return <PageSkeleton />;
@@ -114,10 +139,10 @@ function Customers() {
     return (
       <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          顧客
+          組織
         </h1>
         <p className="text-subtle text-sm">
-          顧客を表示するにはサインインしてください。
+          組織を表示するにはサインインしてください。
         </p>
       </PageContainer>
     );
@@ -136,7 +161,7 @@ function Customers() {
           テナント情報を取得できませんでした
         </h1>
         <p className="text-subtle text-sm">
-          対象のテナントを読み込めないため、顧客を表示できません。
+          対象のテナントを読み込めないため、組織を表示できません。
         </p>
         <SecondaryButton onClick={handleRetryTenants} disabled={retrying}>
           {retrying ? "再試行中..." : "再試行"}
@@ -152,7 +177,7 @@ function Customers() {
           対象のテナントがありません
         </h1>
         <p className="text-subtle text-sm">
-          顧客を扱うにはテナントに所属する必要があります。
+          組織を扱うにはテナントに所属する必要があります。
         </p>
         <Link href="/tenants" className="text-muted text-sm underline">
           テナントを管理
@@ -167,45 +192,48 @@ function Customers() {
 
   return (
     <PageContainer>
-      <section className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-            顧客
-          </h1>
-          <p className="text-muted mt-2">
-            {tenantName}に登録されている顧客の一覧です。
+      <section>
+        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
+          組織
+        </h1>
+        <p className="text-muted mt-2">
+          {tenantName}
+          に登録されている組織の一覧です。顧客の所属先として使います。
+        </p>
+        {memberships.length > 1 && (
+          <p className="text-subtle mt-1 text-sm">
+            ヘッダーのテナントメニューで表示するテナントを切り替えられます。
           </p>
-          {memberships.length > 1 && (
-            <p className="text-subtle mt-1 text-sm">
-              ヘッダーのテナントメニューで表示するテナントを切り替えられます。
-            </p>
-          )}
-        </div>
-        <PrimaryLink href="/customers/register" className="shrink-0">
-          顧客を登録
-        </PrimaryLink>
+        )}
       </section>
 
-      <label className="text-muted flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={includeInactive}
-          onChange={(e) =>
-            router.replace(listHref(tenantId, e.target.checked), {
-              scroll: false,
-            })
-          }
-          className="accent-primary size-4 cursor-pointer"
-        />
-        無効な顧客も表示する
-      </label>
+      <Card>
+        <h2 className="text-foreground text-sm font-medium">
+          新しい組織を作成
+        </h2>
+        <form onSubmit={handleCreate} className="mt-4 flex gap-3">
+          <TextField
+            value={name}
+            onChange={setName}
+            placeholder="組織名"
+            maxLength={TEXT_MAX_LENGTH}
+            required
+            className="flex-1"
+          />
+          <PrimaryButton type="submit" disabled={creating}>
+            {creating ? "作成中..." : "作成"}
+          </PrimaryButton>
+        </form>
+        {createError && (
+          <p className="text-danger mt-3 text-sm">{createError}</p>
+        )}
+      </Card>
 
       <section className="flex flex-col gap-3">
         {!result ? (
           <>
-            <div className="bg-placeholder h-20 w-full animate-pulse rounded-2xl" />
-            <div className="bg-placeholder h-20 w-full animate-pulse rounded-2xl" />
-            <div className="bg-placeholder h-20 w-full animate-pulse rounded-2xl" />
+            <div className="bg-placeholder h-16 w-full animate-pulse rounded-2xl" />
+            <div className="bg-placeholder h-16 w-full animate-pulse rounded-2xl" />
           </>
         ) : result.status === "unauthenticated" ? (
           <Card as="div" padding="lg" dashed className="text-center">
@@ -221,13 +249,13 @@ function Customers() {
         ) : result.status === "forbidden" ? (
           <Card as="div" padding="lg" dashed className="text-center">
             <p className="text-muted text-sm">
-              このテナントの顧客を表示する権限がありません。
+              このテナントの組織を表示する権限がありません。
             </p>
           </Card>
         ) : result.status === "error" ? (
           <Card as="div" padding="lg" dashed className="text-center">
             <p className="text-muted text-sm">
-              顧客一覧を読み込めませんでした。時間をおいて再度お試しください。
+              組織一覧を読み込めませんでした。時間をおいて再度お試しください。
             </p>
             <div className="mt-4 flex justify-center">
               <SecondaryButton onClick={() => setReloadKey((key) => key + 1)}>
@@ -235,52 +263,25 @@ function Customers() {
               </SecondaryButton>
             </div>
           </Card>
-        ) : result.customers.length === 0 ? (
+        ) : result.organizations.length === 0 ? (
           <Card as="div" padding="lg" dashed className="text-center">
             <p className="text-muted text-sm">
-              {includeInactive
-                ? "このテナントにはまだ顧客が登録されていません。"
-                : "このテナントに有効な顧客はいません。無効な顧客は上のチェックボックスで表示できます。"}
+              このテナントにはまだ組織が登録されていません。上のフォームから作成してください。
             </p>
-            <Link
-              href="/customers/register"
-              className="text-muted mt-3 inline-block text-sm underline"
-            >
-              顧客を登録
-            </Link>
           </Card>
         ) : (
-          result.customers.map((customer) => (
+          result.organizations.map((organization) => (
             <Card
-              key={customer.customerId}
-              href={`/customers/${customer.customerId}`}
+              key={organization.organizationId}
+              href={`/organizations/${organization.organizationId}`}
               padding="sm"
-              className="flex items-center justify-between gap-4"
             >
-              <div className="min-w-0">
-                <p className="text-foreground flex items-center gap-2 font-medium">
-                  <span className="truncate">{customer.name}</span>
-                  {customer.isActive === false && (
-                    <Badge size="sm" tone="subtle" className="shrink-0">
-                      無効
-                    </Badge>
-                  )}
-                </p>
-                <p className="text-subtle mt-0.5 truncate text-xs">
-                  {[
-                    customer.nameKana,
-                    organizationName(organizations, customer.organizationId),
-                  ]
-                    .filter(Boolean)
-                    .join(" ・ ")}
-                </p>
-              </div>
-              <div className="text-muted shrink-0 text-right text-xs">
-                <p>{genderLabel(customer.gender) || "性別未登録"}</p>
-                <p className="mt-0.5">
-                  {birthDateLabel(customer.birthDate) || "生年月日未登録"}
-                </p>
-              </div>
+              <p className="text-foreground truncate font-medium">
+                {organization.name}
+              </p>
+              <p className="text-subtle mt-0.5 truncate text-xs">
+                {organization.organizationId}
+              </p>
             </Card>
           ))
         )}

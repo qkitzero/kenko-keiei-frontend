@@ -1,10 +1,13 @@
 import { authorizedRequest } from "@/app/api/_lib/authorizedRequest";
 import { jsonResponse, toStatusResult } from "@/app/api/_lib/response";
-import { parseCustomerFields } from "@/app/api/fitness/_lib/customerBody";
 import { customerClient } from "@/app/api/fitness/client";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: NextRequest) {
+type Params = { params: Promise<{ customerId: string }> };
+
+export async function PUT(req: NextRequest, { params }: Params) {
+  const { customerId } = await params;
+
   let body;
   try {
     body = await req.json();
@@ -12,25 +15,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const tenantId =
-    body && typeof body.tenantId === "string" ? body.tenantId.trim() : "";
-  if (!tenantId) {
+  const isActive = body?.isActive;
+  if (typeof isActive !== "boolean") {
     return NextResponse.json(
-      { error: "Missing or invalid tenantId" },
+      { error: "Missing or invalid isActive" },
       { status: 400 },
     );
   }
 
-  const parsed = parseCustomerFields(body);
-  if (!parsed.ok) {
-    return NextResponse.json({ error: parsed.error }, { status: 400 });
-  }
-
   const result = await authorizedRequest(req, (accessToken) =>
     toStatusResult(
-      customerClient.POST("/v1/customer", {
+      customerClient.PUT("/v1/customer/{customerId}/active", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        body: { ...parsed.fields, tenantId },
+        params: { path: { customerId } },
+        body: { isActive },
       }),
     ),
   );

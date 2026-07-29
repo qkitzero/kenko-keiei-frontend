@@ -168,6 +168,54 @@
         "tags": ["CustomerService"]
       }
     },
+    "/v1/customer/{customerId}/active": {
+      "put": {
+        "operationId": "CustomerService_SetCustomerActive",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1SetCustomerActiveResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/rpcStatus"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomerServiceSetCustomerActiveBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "tags": ["CustomerService"]
+      }
+    },
     "/v1/customers": {
       "get": {
         "operationId": "CustomerService_ListCustomers",
@@ -195,11 +243,19 @@
         },
         "parameters": [
           {
-            "name": "groupId",
+            "name": "tenantId",
             "in": "query",
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -209,6 +265,14 @@
   },
   "components": {
     "schemas": {
+      "CustomerServiceSetCustomerActiveBody": {
+        "type": "object",
+        "properties": {
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
       "CustomerServiceUpdateCustomerBody": {
         "type": "object",
         "properties": {
@@ -252,6 +316,9 @@
             "type": "string"
           },
           "emergencyContactPhone": {
+            "type": "string"
+          },
+          "organizationId": {
             "type": "string"
           }
         }
@@ -311,7 +378,7 @@
           "name": {
             "type": "string"
           },
-          "groupId": {
+          "tenantId": {
             "type": "string"
           },
           "nameKana": {
@@ -351,6 +418,9 @@
             "type": "string"
           },
           "emergencyContactPhone": {
+            "type": "string"
+          },
+          "organizationId": {
             "type": "string"
           }
         }
@@ -372,7 +442,7 @@
           "name": {
             "type": "string"
           },
-          "groupId": {
+          "tenantId": {
             "type": "string"
           },
           "nameKana": {
@@ -412,6 +482,12 @@
             "type": "string"
           },
           "emergencyContactPhone": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "organizationId": {
             "type": "string"
           }
         }
@@ -445,6 +521,14 @@
             "items": {
               "$ref": "#/components/schemas/v1Customer"
             }
+          }
+        }
+      },
+      "v1SetCustomerActiveResponse": {
+        "type": "object",
+        "properties": {
+          "customer": {
+            "$ref": "#/components/schemas/v1Customer"
           }
         }
       },

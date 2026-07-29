@@ -8,3 +8,11 @@ export async function ensureOk(res: Response, fallback: string) {
 export function errorMessage(err: unknown) {
   return err instanceof Error ? err.message : "予期しないエラーが発生しました";
 }
+
+export function runWithError(
+  setError: (message: string) => void,
+  fn: () => Promise<void>,
+): Promise<void> {
+  setError("");
+  return fn().catch((err: unknown) => setError(errorMessage(err)));
+}

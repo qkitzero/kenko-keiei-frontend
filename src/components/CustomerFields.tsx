@@ -1,21 +1,24 @@
 "use client";
 
+import SecondaryButton from "@/components/SecondaryButton";
 import Select from "@/components/Select";
 import TextField from "@/components/TextField";
 import {
   CustomerFormValues,
   GENDERS,
   PREFECTURES,
-  TEXT_MAX_LENGTH,
   genderLabel,
   isValidPrefecture,
   todayInputValue,
 } from "@/lib/customer";
+import type { OrganizationOptions } from "@/lib/organization";
+import { TEXT_MAX_LENGTH } from "@/lib/text";
 
 type CustomerFieldsProps = {
   values: CustomerFormValues;
   onChange: (values: CustomerFormValues) => void;
   disabled?: boolean;
+  organizations: OrganizationOptions;
 };
 
 const LEGEND = "text-subtle text-sm font-medium";
@@ -26,9 +29,17 @@ export default function CustomerFields({
   values,
   onChange,
   disabled,
+  organizations,
 }: CustomerFieldsProps) {
   const update = (key: keyof CustomerFormValues) => (value: string) =>
     onChange({ ...values, [key]: value });
+
+  const listed =
+    organizations.status === "ok" ? organizations.organizations : [];
+  const unlisted =
+    organizations.status === "ok" &&
+    values.organizationId !== "" &&
+    !listed.some((o) => o.organizationId === values.organizationId);
 
   return (
     <div className="flex flex-col gap-6">
@@ -76,6 +87,46 @@ export default function CustomerFields({
             autoComplete="off"
             required
           />
+        </div>
+      </fieldset>
+
+      <fieldset disabled={disabled}>
+        <legend className={LEGEND}>所属（任意）</legend>
+        <div className={GRID}>
+          <Select
+            label="所属組織"
+            value={values.organizationId}
+            onChange={update("organizationId")}
+            autoComplete="off"
+            disabled={organizations.status !== "ok"}
+          >
+            <option value="">未選択</option>
+            {unlisted && (
+              <option value={values.organizationId}>
+                選択中の組織（一覧にありません）
+              </option>
+            )}
+            {listed.map((organization) => (
+              <option
+                key={organization.organizationId}
+                value={organization.organizationId}
+              >
+                {organization.name}
+              </option>
+            ))}
+          </Select>
+          {organizations.status === "error" && (
+            <div className="self-end">
+              <p className="text-subtle text-xs">
+                組織を取得できませんでした。
+              </p>
+              <div className="mt-2">
+                <SecondaryButton onClick={organizations.retry}>
+                  組織を再取得
+                </SecondaryButton>
+              </div>
+            </div>
+          )}
         </div>
       </fieldset>
 

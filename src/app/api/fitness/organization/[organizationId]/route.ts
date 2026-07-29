@@ -1,19 +1,19 @@
 import { authorizedRequest } from "@/app/api/_lib/authorizedRequest";
 import { jsonResponse, toStatusResult } from "@/app/api/_lib/response";
-import { parseCustomerFields } from "@/app/api/fitness/_lib/customerBody";
-import { customerClient } from "@/app/api/fitness/client";
+import { organizationClient } from "@/app/api/fitness/client";
+import { buildOrganizationName } from "@/lib/organization";
 import { NextRequest, NextResponse } from "next/server";
 
-type Params = { params: Promise<{ customerId: string }> };
+type Params = { params: Promise<{ organizationId: string }> };
 
 export async function GET(req: NextRequest, { params }: Params) {
-  const { customerId } = await params;
+  const { organizationId } = await params;
 
   const result = await authorizedRequest(req, (accessToken) =>
     toStatusResult(
-      customerClient.GET("/v1/customer/{customerId}", {
+      organizationClient.GET("/v1/organization/{organizationId}", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { path: { customerId } },
+        params: { path: { organizationId } },
       }),
     ),
   );
@@ -22,7 +22,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 }
 
 export async function PUT(req: NextRequest, { params }: Params) {
-  const { customerId } = await params;
+  const { organizationId } = await params;
 
   let body;
   try {
@@ -31,17 +31,19 @@ export async function PUT(req: NextRequest, { params }: Params) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const parsed = parseCustomerFields(body);
+  const parsed = buildOrganizationName(
+    body && typeof body.name === "string" ? body.name : "",
+  );
   if (!parsed.ok) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
   const result = await authorizedRequest(req, (accessToken) =>
     toStatusResult(
-      customerClient.PUT("/v1/customer/{customerId}", {
+      organizationClient.PUT("/v1/organization/{organizationId}", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { path: { customerId } },
-        body: parsed.fields,
+        params: { path: { organizationId } },
+        body: { name: parsed.name },
       }),
     ),
   );
@@ -50,13 +52,13 @@ export async function PUT(req: NextRequest, { params }: Params) {
 }
 
 export async function DELETE(req: NextRequest, { params }: Params) {
-  const { customerId } = await params;
+  const { organizationId } = await params;
 
   const result = await authorizedRequest(req, (accessToken) =>
     toStatusResult(
-      customerClient.DELETE("/v1/customer/{customerId}", {
+      organizationClient.DELETE("/v1/organization/{organizationId}", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { path: { customerId } },
+        params: { path: { organizationId } },
       }),
     ),
   );
