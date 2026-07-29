@@ -5,7 +5,7 @@ import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
 import PrimaryLink from "@/components/PrimaryLink";
 import SecondaryButton from "@/components/SecondaryButton";
-import { useOrgs } from "@/context/OrgsContext";
+import { useTenantScope, useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
 import { Customer, birthDateLabel, genderLabel } from "@/lib/customer";
 import Link from "next/link";
@@ -20,9 +20,9 @@ type LoadResult =
 
 type LoadedList = { key: string; result: LoadResult };
 
-async function loadCustomers(groupId: string): Promise<LoadResult> {
+async function loadCustomers(tenantId: string): Promise<LoadResult> {
   const res = await fetch(
-    `/api/fitness/customers?groupId=${encodeURIComponent(groupId)}`,
+    `/api/fitness/customers?tenantId=${encodeURIComponent(tenantId)}`,
   );
   if (!res.ok) {
     if (res.status === 401) return { status: "unauthenticated" };
@@ -59,44 +59,31 @@ function Customers() {
   const { user, loading: userLoading } = useUser();
   const {
     memberships,
-    loading: orgsLoading,
-    error: orgsError,
-    selectedGroupId,
-    scopeVersion,
-    selectGroup,
-    refreshOrgs,
-  } = useOrgs();
+    loading: tenantsLoading,
+    error: tenantsError,
+    refreshTenants,
+  } = useTenants();
 
   const [loaded, setLoaded] = useState<LoadedList | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [retrying, setRetrying] = useState(false);
-  const [mountScopeVersion] = useState(scopeVersion);
 
-  const linkGroupId = searchParams.get("groupId") ?? "";
-  const linkScoped =
-    scopeVersion === mountScopeVersion &&
-    memberships.some(({ group }) => group.groupId === linkGroupId);
-
-  const groupId = linkScoped ? linkGroupId : selectedGroupId;
-  const requestKey = `${reloadKey}:${groupId}`;
+  const tenantId = useTenantScope();
+  const requestKey = `${reloadKey}:${tenantId}`;
   const result = loaded?.key === requestKey ? loaded.result : null;
 
   useEffect(() => {
-    if (linkScoped && linkGroupId !== selectedGroupId) selectGroup(linkGroupId);
-  }, [linkScoped, linkGroupId, selectedGroupId, selectGroup]);
-
-  useEffect(() => {
-    if (!groupId || searchParams.get("groupId") === groupId) return;
-    router.replace(`/customers?groupId=${encodeURIComponent(groupId)}`, {
+    if (!tenantId || searchParams.get("tenantId") === tenantId) return;
+    router.replace(`/customers?tenantId=${encodeURIComponent(tenantId)}`, {
       scroll: false,
     });
-  }, [groupId, searchParams, router]);
+  }, [tenantId, searchParams, router]);
 
   useEffect(() => {
-    if (!groupId) return;
+    if (!tenantId) return;
     let active = true;
     (async () => {
-      const loadResult = await loadCustomers(groupId).catch(
+      const loadResult = await loadCustomers(tenantId).catch(
         () => ({ status: "error" }) as const,
       );
       if (!active) return;
@@ -105,9 +92,9 @@ function Customers() {
     return () => {
       active = false;
     };
-  }, [groupId, requestKey]);
+  }, [tenantId, requestKey]);
 
-  if (userLoading || (user && orgsLoading)) {
+  if (userLoading || (user && tenantsLoading)) {
     return <PageSkeleton />;
   }
 
@@ -124,22 +111,22 @@ function Customers() {
     );
   }
 
-  if (orgsError) {
-    const handleRetryOrgs = () => {
+  if (tenantsError) {
+    const handleRetryTenants = () => {
       if (retrying) return;
       setRetrying(true);
-      void refreshOrgs().finally(() => setRetrying(false));
+      void refreshTenants().finally(() => setRetrying(false));
     };
 
     return (
       <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          組織情報を取得できませんでした
+          テナント情報を取得できませんでした
         </h1>
         <p className="text-subtle text-sm">
-          対象の組織を読み込めないため、顧客を表示できません。
+          対象のテナントを読み込めないため、顧客を表示できません。
         </p>
-        <SecondaryButton onClick={handleRetryOrgs} disabled={retrying}>
+        <SecondaryButton onClick={handleRetryTenants} disabled={retrying}>
           {retrying ? "再試行中..." : "再試行"}
         </SecondaryButton>
       </PageContainer>
@@ -150,21 +137,21 @@ function Customers() {
     return (
       <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          対象の組織がありません
+          対象のテナントがありません
         </h1>
         <p className="text-subtle text-sm">
-          顧客を扱うには組織に所属する必要があります。
+          顧客を扱うにはテナントに所属する必要があります。
         </p>
-        <Link href="/groups" className="text-muted text-sm underline">
-          組織を管理
+        <Link href="/tenants" className="text-muted text-sm underline">
+          テナントを管理
         </Link>
       </PageContainer>
     );
   }
 
-  const orgName =
-    memberships.find(({ group }) => group.groupId === groupId)?.group.name ??
-    "";
+  const tenantName =
+    memberships.find(({ tenant }) => tenant.tenantId === tenantId)?.tenant
+      .name ?? "";
 
   return (
     <PageContainer>
@@ -174,11 +161,11 @@ function Customers() {
             顧客
           </h1>
           <p className="text-muted mt-2">
-            {orgName}に登録されている顧客の一覧です。
+            {tenantName}に登録されている顧客の一覧です。
           </p>
           {memberships.length > 1 && (
             <p className="text-subtle mt-1 text-sm">
-              ヘッダーの組織メニューで表示する組織を切り替えられます。
+              ヘッダーのテナントメニューで表示するテナントを切り替えられます。
             </p>
           )}
         </div>
@@ -208,7 +195,7 @@ function Customers() {
         ) : result.status === "forbidden" ? (
           <Card as="div" padding="lg" dashed className="text-center">
             <p className="text-muted text-sm">
-              この組織の顧客を表示する権限がありません。
+              このテナントの顧客を表示する権限がありません。
             </p>
           </Card>
         ) : result.status === "error" ? (
@@ -225,7 +212,7 @@ function Customers() {
         ) : result.customers.length === 0 ? (
           <Card as="div" padding="lg" dashed className="text-center">
             <p className="text-muted text-sm">
-              この組織にはまだ顧客が登録されていません。
+              このテナントにはまだ顧客が登録されていません。
             </p>
             <Link
               href="/customers/register"

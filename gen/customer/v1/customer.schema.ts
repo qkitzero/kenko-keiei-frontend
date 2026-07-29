@@ -36,6 +36,22 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/customer/{customerId}/active": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations["CustomerService_SetCustomerActive"];
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/customers": {
     parameters: {
       query?: never;
@@ -56,6 +72,9 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
+    CustomerServiceSetCustomerActiveBody: {
+      isActive?: boolean;
+    };
     CustomerServiceUpdateCustomerBody: {
       name?: string;
       nameKana?: string;
@@ -71,6 +90,7 @@ export interface components {
       emergencyContactName?: string;
       emergencyContactRelationship?: string;
       emergencyContactPhone?: string;
+      organizationId?: string;
     };
     protobufAny: {
       "@type"?: string;
@@ -123,7 +143,7 @@ export interface components {
     };
     v1CreateCustomerRequest: {
       name?: string;
-      groupId?: string;
+      tenantId?: string;
       nameKana?: string;
       gender?: components["schemas"]["v1Gender"];
       birthDate?: components["schemas"]["typeDate"];
@@ -137,6 +157,7 @@ export interface components {
       emergencyContactName?: string;
       emergencyContactRelationship?: string;
       emergencyContactPhone?: string;
+      organizationId?: string;
     };
     v1CreateCustomerResponse: {
       customerId?: string;
@@ -144,7 +165,7 @@ export interface components {
     v1Customer: {
       customerId?: string;
       name?: string;
-      groupId?: string;
+      tenantId?: string;
       nameKana?: string;
       gender?: components["schemas"]["v1Gender"];
       birthDate?: components["schemas"]["typeDate"];
@@ -158,6 +179,8 @@ export interface components {
       emergencyContactName?: string;
       emergencyContactRelationship?: string;
       emergencyContactPhone?: string;
+      isActive?: boolean;
+      organizationId?: string;
     };
     v1DeleteCustomerResponse: Record<string, never>;
     /**
@@ -171,6 +194,9 @@ export interface components {
     };
     v1ListCustomersResponse: {
       customers?: components["schemas"]["v1Customer"][];
+    };
+    v1SetCustomerActiveResponse: {
+      customer?: components["schemas"]["v1Customer"];
     };
     v1UpdateCustomerResponse: {
       customer?: components["schemas"]["v1Customer"];
@@ -314,10 +340,46 @@ export interface operations {
       };
     };
   };
+  CustomerService_SetCustomerActive: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        customerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["CustomerServiceSetCustomerActiveBody"];
+      };
+    };
+    responses: {
+      /** @description A successful response. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["v1SetCustomerActiveResponse"];
+        };
+      };
+      /** @description An unexpected error response. */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["rpcStatus"];
+        };
+      };
+    };
+  };
   CustomerService_ListCustomers: {
     parameters: {
       query?: {
-        groupId?: string;
+        tenantId?: string;
+        includeInactive?: boolean;
       };
       header?: never;
       path?: never;

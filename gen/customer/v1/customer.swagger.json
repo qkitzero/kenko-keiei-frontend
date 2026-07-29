@@ -130,6 +130,42 @@
         "tags": ["CustomerService"]
       }
     },
+    "/v1/customer/{customerId}/active": {
+      "put": {
+        "operationId": "CustomerService_SetCustomerActive",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1SetCustomerActiveResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/CustomerServiceSetCustomerActiveBody"
+            }
+          }
+        ],
+        "tags": ["CustomerService"]
+      }
+    },
     "/v1/customers": {
       "get": {
         "operationId": "CustomerService_ListCustomers",
@@ -149,10 +185,16 @@
         },
         "parameters": [
           {
-            "name": "groupId",
+            "name": "tenantId",
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": ["CustomerService"]
@@ -160,6 +202,14 @@
     }
   },
   "definitions": {
+    "CustomerServiceSetCustomerActiveBody": {
+      "type": "object",
+      "properties": {
+        "isActive": {
+          "type": "boolean"
+        }
+      }
+    },
     "CustomerServiceUpdateCustomerBody": {
       "type": "object",
       "properties": {
@@ -203,6 +253,9 @@
           "type": "string"
         },
         "emergencyContactPhone": {
+          "type": "string"
+        },
+        "organizationId": {
           "type": "string"
         }
       }
@@ -263,7 +316,7 @@
         "name": {
           "type": "string"
         },
-        "groupId": {
+        "tenantId": {
           "type": "string"
         },
         "nameKana": {
@@ -303,6 +356,9 @@
           "type": "string"
         },
         "emergencyContactPhone": {
+          "type": "string"
+        },
+        "organizationId": {
           "type": "string"
         }
       }
@@ -324,7 +380,7 @@
         "name": {
           "type": "string"
         },
-        "groupId": {
+        "tenantId": {
           "type": "string"
         },
         "nameKana": {
@@ -364,6 +420,12 @@
           "type": "string"
         },
         "emergencyContactPhone": {
+          "type": "string"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "organizationId": {
           "type": "string"
         }
       }
@@ -398,6 +460,14 @@
             "type": "object",
             "$ref": "#/definitions/v1Customer"
           }
+        }
+      }
+    },
+    "v1SetCustomerActiveResponse": {
+      "type": "object",
+      "properties": {
+        "customer": {
+          "$ref": "#/definitions/v1Customer"
         }
       }
     },

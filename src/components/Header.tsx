@@ -3,7 +3,7 @@
 import GlobalNav from "@/components/GlobalNav";
 import LoginButton from "@/components/LoginButton";
 import LogoutButton from "@/components/LogoutButton";
-import OrgSwitcher from "@/components/OrgSwitcher";
+import TenantSwitcher from "@/components/TenantSwitcher";
 import { useUser } from "@/context/UserContext";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,7 +42,7 @@ export default function Header() {
       </div>
 
       <div className="flex shrink-0 items-center gap-3">
-        {!loading && user && <OrgSwitcher />}
+        {!loading && user && <TenantSwitcher />}
         <div className="relative" ref={menuRef}>
           {loading ? (
             <div className="bg-placeholder h-8 w-8 animate-pulse rounded-full" />

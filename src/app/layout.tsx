@@ -1,5 +1,5 @@
 import Header from "@/components/Header";
-import { OrgsProvider } from "@/context/OrgsContext";
+import { TenantsProvider } from "@/context/TenantsContext";
 import { UserProvider } from "@/context/UserContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
@@ -32,10 +32,10 @@ export default function RootLayout({
     >
       <body className="bg-background text-foreground flex min-h-full flex-col font-sans">
         <UserProvider>
-          <OrgsProvider>
+          <TenantsProvider>
             <Header />
             {children}
-          </OrgsProvider>
+          </TenantsProvider>
         </UserProvider>
       </body>
     </html>

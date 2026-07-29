@@ -5,7 +5,7 @@ import CustomerFields from "@/components/CustomerFields";
 import PageContainer from "@/components/PageContainer";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
-import { useOrgs } from "@/context/OrgsContext";
+import { useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
 import { ensureOk, errorMessage } from "@/lib/apiError";
 import {
@@ -22,18 +22,18 @@ export default function CustomerRegister() {
   const { user, loading: userLoading } = useUser();
   const {
     memberships,
-    loading: orgsLoading,
-    error: orgsError,
-    selectedGroupId,
-    refreshOrgs,
-  } = useOrgs();
+    loading: tenantsLoading,
+    error: tenantsError,
+    selectedTenantId,
+    refreshTenants,
+  } = useTenants();
 
   const [values, setValues] = useState<CustomerFormValues>(EMPTY_CUSTOMER_FORM);
   const [loading, setLoading] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [error, setError] = useState("");
 
-  if (userLoading || orgsLoading) {
+  if (userLoading || tenantsLoading) {
     return (
       <PageContainer>
         <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
@@ -52,20 +52,20 @@ export default function CustomerRegister() {
     );
   }
 
-  if (orgsError) {
+  if (tenantsError) {
     const handleRetry = () => {
       if (retrying) return;
       setRetrying(true);
-      void refreshOrgs().finally(() => setRetrying(false));
+      void refreshTenants().finally(() => setRetrying(false));
     };
 
     return (
       <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          組織情報を取得できませんでした
+          テナント情報を取得できませんでした
         </h1>
         <p className="text-subtle text-sm">
-          登録先の組織を読み込めないため、顧客を登録できません。
+          登録先のテナントを読み込めないため、顧客を登録できません。
         </p>
         <SecondaryButton onClick={handleRetry} disabled={retrying}>
           {retrying ? "再試行中..." : "再試行"}
@@ -78,22 +78,22 @@ export default function CustomerRegister() {
     return (
       <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          登録先の組織がありません
+          登録先のテナントがありません
         </h1>
         <p className="text-subtle text-sm">
-          顧客を登録するには組織に所属する必要があります。
+          顧客を登録するにはテナントに所属する必要があります。
         </p>
-        <Link href="/groups" className="text-muted text-sm underline">
-          組織を管理
+        <Link href="/tenants" className="text-muted text-sm underline">
+          テナントを管理
         </Link>
       </PageContainer>
     );
   }
 
-  const groupId = selectedGroupId;
-  const orgName =
-    memberships.find(({ group }) => group.groupId === groupId)?.group.name ??
-    "";
+  const tenantId = selectedTenantId;
+  const tenantName =
+    memberships.find(({ tenant }) => tenant.tenantId === tenantId)?.tenant
+      .name ?? "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,7 +112,7 @@ export default function CustomerRegister() {
       const res = await fetch("/api/fitness/customer/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...result.payload, groupId }),
+        body: JSON.stringify({ ...result.payload, tenantId }),
       });
       await ensureOk(res, "顧客の登録に失敗しました");
 
@@ -149,11 +149,11 @@ export default function CustomerRegister() {
         </h2>
         <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-6">
           <div>
-            <p className="text-muted text-sm font-medium">登録先の組織</p>
-            <p className="text-foreground mt-1 text-sm">{orgName}</p>
+            <p className="text-muted text-sm font-medium">登録先のテナント</p>
+            <p className="text-foreground mt-1 text-sm">{tenantName}</p>
             {memberships.length > 1 && (
               <p className="text-subtle mt-1 text-xs">
-                ヘッダーの組織メニューで切り替えられます。
+                ヘッダーのテナントメニューで切り替えられます。
               </p>
             )}
           </div>

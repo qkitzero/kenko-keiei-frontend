@@ -5,9 +5,9 @@ import CustomerFields from "@/components/CustomerFields";
 import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
 import SecondaryButton from "@/components/SecondaryButton";
-import { useOrgs } from "@/context/OrgsContext";
+import { useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
-import { ensureOk, errorMessage } from "@/lib/apiError";
+import { ensureOk, runWithError } from "@/lib/apiError";
 import {
   Customer,
   CustomerFormValues,
@@ -52,17 +52,17 @@ function CustomerDetail({ customerId }: { customerId: string }) {
   const { user, loading: userLoading } = useUser();
   const {
     memberships,
-    loading: orgsLoading,
-    error: orgsError,
-    refreshOrgs,
-  } = useOrgs();
+    loading: tenantsLoading,
+    error: tenantsError,
+    refreshTenants,
+  } = useTenants();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [fetched, setFetched] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [unauthenticated, setUnauthenticated] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [retryingOrgs, setRetryingOrgs] = useState(false);
+  const [retryingTenants, setRetryingTenants] = useState(false);
 
   const [values, setValues] = useState<CustomerFormValues>(EMPTY_CUSTOMER_FORM);
   const [saving, setSaving] = useState(false);
@@ -109,14 +109,6 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     };
   }, [user, userLoading, customerId, applyResult]);
 
-  const run = (
-    setError: (message: string) => void,
-    fn: () => Promise<void>,
-  ) => {
-    setError("");
-    return fn().catch((err: unknown) => setError(errorMessage(err)));
-  };
-
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (saving) return;
@@ -128,7 +120,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     }
 
     setSaving(true);
-    void run(setSaveError, async () => {
+    void runWithError(setSaveError, async () => {
       const res = await fetch(`/api/fitness/customer/${customerId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -164,7 +156,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
       return;
     }
     setDeleting(true);
-    void run(setDeleteError, async () => {
+    void runWithError(setDeleteError, async () => {
       const res = await fetch(`/api/fitness/customer/${customerId}`, {
         method: "DELETE",
       });
@@ -233,15 +225,15 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     );
   }
 
-  const handleRetryOrgs = () => {
-    if (retryingOrgs) return;
-    setRetryingOrgs(true);
-    void refreshOrgs().finally(() => setRetryingOrgs(false));
+  const handleRetryTenants = () => {
+    if (retryingTenants) return;
+    setRetryingTenants(true);
+    void refreshTenants().finally(() => setRetryingTenants(false));
   };
 
-  const groupId = customer.groupId ?? "";
-  const orgName = memberships.find((m) => m.group.groupId === groupId)?.group
-    .name;
+  const tenantId = customer.tenantId ?? "";
+  const tenantName = memberships.find((m) => m.tenant.tenantId === tenantId)
+    ?.tenant.name;
   const needsInput = fieldsNeedingInput(customer);
 
   return (
@@ -266,26 +258,26 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         <h2 className="text-foreground text-sm font-medium">顧客情報</h2>
         <form onSubmit={handleSave} className="mt-4 flex flex-col gap-6">
           <div>
-            <p className="text-muted text-sm font-medium">所属組織</p>
-            {orgsLoading ? (
+            <p className="text-muted text-sm font-medium">所属テナント</p>
+            {tenantsLoading ? (
               <div className="bg-placeholder mt-1 h-5 w-40 animate-pulse rounded" />
-            ) : orgName ? (
-              <p className="text-foreground mt-1 text-sm">{orgName}</p>
+            ) : tenantName ? (
+              <p className="text-foreground mt-1 text-sm">{tenantName}</p>
             ) : (
               <>
                 <p className="text-subtle mt-1 text-sm">
-                  {orgsError
-                    ? "組織名を取得できませんでした"
-                    : "あなたが所属していない組織です"}
+                  {tenantsError
+                    ? "テナント名を取得できませんでした"
+                    : "あなたが所属していないテナントです"}
                 </p>
-                <p className="text-subtle mt-0.5 truncate text-xs">{groupId}</p>
-                {orgsError && (
+                <p className="text-subtle mt-0.5 truncate text-xs">{tenantId}</p>
+                {tenantsError && (
                   <div className="mt-2">
                     <SecondaryButton
-                      onClick={handleRetryOrgs}
-                      disabled={retryingOrgs}
+                      onClick={handleRetryTenants}
+                      disabled={retryingTenants}
                     >
-                      {retryingOrgs ? "再取得中..." : "組織名を再取得"}
+                      {retryingTenants ? "再取得中..." : "テナント名を再取得"}
                     </SecondaryButton>
                   </div>
                 )}

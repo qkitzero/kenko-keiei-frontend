@@ -12,11 +12,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
-  const groupId =
-    body && typeof body.groupId === "string" ? body.groupId.trim() : "";
-  if (!groupId) {
+  const tenantId =
+    body && typeof body.tenantId === "string" ? body.tenantId.trim() : "";
+  if (!tenantId) {
     return NextResponse.json(
-      { error: "Missing or invalid groupId" },
+      { error: "Missing or invalid tenantId" },
       { status: 400 },
     );
   }
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
     toStatusResult(
       client.POST("/v1/customer", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        body: { ...parsed.fields, groupId },
+        body: { ...parsed.fields, tenantId },
       }),
     ),
   );

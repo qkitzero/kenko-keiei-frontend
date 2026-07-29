@@ -4,10 +4,10 @@ import { client } from "@/app/api/fitness/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const groupId = req.nextUrl.searchParams.get("groupId")?.trim() ?? "";
-  if (!groupId) {
+  const tenantId = req.nextUrl.searchParams.get("tenantId")?.trim() ?? "";
+  if (!tenantId) {
     return NextResponse.json(
-      { error: "Missing or invalid groupId" },
+      { error: "Missing or invalid tenantId" },
       { status: 400 },
     );
   }
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
     toStatusResult(
       client.GET("/v1/customers", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { query: { groupId } },
+        params: { query: { tenantId} },
       }),
     ),
   );

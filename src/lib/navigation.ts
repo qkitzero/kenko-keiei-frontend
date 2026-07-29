@@ -19,10 +19,10 @@ export const NAV_ITEMS: NavItem[] = [
     activePrefix: "/customers",
   },
   {
-    label: "組織",
-    description: "所属している組織を管理します。",
-    href: "/groups",
-    activePrefix: "/groups",
+    label: "テナント",
+    description: "所属しているテナントを管理します。",
+    href: "/tenants",
+    activePrefix: "/tenants",
   },
 ];
 
