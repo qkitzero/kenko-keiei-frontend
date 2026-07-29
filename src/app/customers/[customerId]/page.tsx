@@ -1,5 +1,6 @@
 "use client";
 
+import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import CustomerFields from "@/components/CustomerFields";
 import LoginButton from "@/components/LoginButton";
@@ -69,6 +70,8 @@ function CustomerDetail({ customerId }: { customerId: string }) {
   const [saveError, setSaveError] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [switchingActive, setSwitchingActive] = useState(false);
+  const [activeError, setActiveError] = useState("");
 
   const applyCustomer = useCallback((data: Customer) => {
     setCustomer(data);
@@ -109,9 +112,11 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     };
   }, [user, userLoading, customerId, applyResult]);
 
+  const busy = saving || switchingActive;
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    if (saving) return;
+    if (busy) return;
 
     const built = buildCustomerPayload(values);
     if (!built.ok) {
@@ -144,6 +149,38 @@ function CustomerDetail({ customerId }: { customerId: string }) {
       }
       applyCustomer(reloaded.data);
     }).finally(() => setSaving(false));
+  };
+
+  const handleSetActive = (isActive: boolean) => {
+    if (busy) return;
+    setSwitchingActive(true);
+    void runWithError(setActiveError, async () => {
+      const res = await fetch(`/api/fitness/customer/${customerId}/active`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive }),
+      });
+      await ensureOk(
+        res,
+        isActive ? "顧客の有効化に失敗しました" : "顧客の無効化に失敗しました",
+      );
+
+      const data = await res.json().catch(() => null);
+      if (data?.customer?.customerId) {
+        setCustomer(data.customer);
+        return;
+      }
+
+      const reloaded = await loadCustomer(customerId).catch(
+        () => ({ status: "error" }) as const,
+      );
+      if (reloaded.status !== "ok") {
+        throw new Error(
+          "変更は完了しましたが、最新の情報を取得できませんでした。ページを再読み込みしてください。",
+        );
+      }
+      setCustomer(reloaded.data);
+    }).finally(() => setSwitchingActive(false));
   };
 
   const handleDelete = () => {
@@ -231,6 +268,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     void refreshTenants().finally(() => setRetryingTenants(false));
   };
 
+  const isActive = customer.isActive !== false;
   const tenantId = customer.tenantId ?? "";
   const tenantName = memberships.find((m) => m.tenant.tenantId === tenantId)
     ?.tenant.name;
@@ -245,8 +283,9 @@ function CustomerDetail({ customerId }: { customerId: string }) {
       </div>
 
       <section>
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
+        <h1 className="text-foreground flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight">
           {customer.name}
+          {!isActive && <Badge tone="subtle">無効</Badge>}
         </h1>
         <p className="text-muted mt-1 text-sm">{customer.nameKana}</p>
         <p className="text-subtle mt-1 truncate text-xs">
@@ -301,11 +340,38 @@ function CustomerDetail({ customerId }: { customerId: string }) {
           {saveError && <p className="text-danger text-sm">{saveError}</p>}
 
           <div className="flex justify-end">
-            <SecondaryButton type="submit" disabled={saving}>
+            <SecondaryButton type="submit" disabled={busy}>
               {saving ? "保存中..." : "変更を保存"}
             </SecondaryButton>
           </div>
         </form>
+      </Card>
+
+      <Card>
+        <h2 className="text-foreground text-sm font-medium">利用状態</h2>
+        <p className="text-foreground mt-3 text-sm">
+          {isActive ? "有効" : "無効"}
+        </p>
+        {activeError && (
+          <p className="text-danger mt-3 text-sm">{activeError}</p>
+        )}
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <p className="text-subtle text-sm">
+            {isActive
+              ? "無効にすると顧客一覧に表示されなくなります。データは残るのでいつでも有効に戻せます。"
+              : "有効に戻すと顧客一覧に再び表示されます。"}
+          </p>
+          <SecondaryButton
+            onClick={() => handleSetActive(!isActive)}
+            disabled={busy}
+          >
+            {switchingActive
+              ? "変更中..."
+              : isActive
+                ? "無効にする"
+                : "有効にする"}
+          </SecondaryButton>
+        </div>
       </Card>
 
       <Card>
@@ -315,7 +381,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         )}
         <div className="mt-4 flex items-center justify-between gap-4">
           <p className="text-subtle text-sm">
-            この顧客を削除します。元に戻せません。
+            この顧客をデータごと削除します。元に戻せません。一覧から隠すだけなら上の無効化を使ってください。
           </p>
           <SecondaryButton
             variant="danger"

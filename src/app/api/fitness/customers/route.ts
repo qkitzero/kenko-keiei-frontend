@@ -12,11 +12,14 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const includeInactive =
+    req.nextUrl.searchParams.get("includeInactive") === "true";
+
   const result = await authorizedRequest(req, (accessToken) =>
     toStatusResult(
       client.GET("/v1/customers", {
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { query: { tenantId} },
+        params: { query: { tenantId, includeInactive } },
       }),
     ),
   );

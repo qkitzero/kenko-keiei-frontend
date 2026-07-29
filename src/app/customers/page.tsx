@@ -1,5 +1,6 @@
 "use client";
 
+import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
@@ -20,10 +21,13 @@ type LoadResult =
 
 type LoadedList = { key: string; result: LoadResult };
 
-async function loadCustomers(tenantId: string): Promise<LoadResult> {
-  const res = await fetch(
-    `/api/fitness/customers?tenantId=${encodeURIComponent(tenantId)}`,
-  );
+async function loadCustomers(
+  tenantId: string,
+  includeInactive: boolean,
+): Promise<LoadResult> {
+  const query = new URLSearchParams({ tenantId });
+  if (includeInactive) query.set("includeInactive", "true");
+  const res = await fetch(`/api/fitness/customers?${query}`);
   if (!res.ok) {
     if (res.status === 401) return { status: "unauthenticated" };
     if (res.status === 403) return { status: "forbidden" };
@@ -34,6 +38,12 @@ async function loadCustomers(tenantId: string): Promise<LoadResult> {
     (customer: Customer) => customer.customerId,
   );
   return { status: "ok", customers };
+}
+
+function listHref(tenantId: string, includeInactive: boolean): string {
+  const query = new URLSearchParams({ tenantId });
+  if (includeInactive) query.set("includeInactive", "true");
+  return `/customers?${query}`;
 }
 
 function PageSkeleton() {
@@ -69,21 +79,20 @@ function Customers() {
   const [retrying, setRetrying] = useState(false);
 
   const tenantId = useTenantScope();
-  const requestKey = `${reloadKey}:${tenantId}`;
+  const includeInactive = searchParams.get("includeInactive") === "true";
+  const requestKey = `${reloadKey}:${tenantId}:${includeInactive}`;
   const result = loaded?.key === requestKey ? loaded.result : null;
 
   useEffect(() => {
     if (!tenantId || searchParams.get("tenantId") === tenantId) return;
-    router.replace(`/customers?tenantId=${encodeURIComponent(tenantId)}`, {
-      scroll: false,
-    });
-  }, [tenantId, searchParams, router]);
+    router.replace(listHref(tenantId, includeInactive), { scroll: false });
+  }, [tenantId, includeInactive, searchParams, router]);
 
   useEffect(() => {
     if (!tenantId) return;
     let active = true;
     (async () => {
-      const loadResult = await loadCustomers(tenantId).catch(
+      const loadResult = await loadCustomers(tenantId, includeInactive).catch(
         () => ({ status: "error" }) as const,
       );
       if (!active) return;
@@ -92,7 +101,7 @@ function Customers() {
     return () => {
       active = false;
     };
-  }, [tenantId, requestKey]);
+  }, [tenantId, includeInactive, requestKey]);
 
   if (userLoading || (user && tenantsLoading)) {
     return <PageSkeleton />;
@@ -174,6 +183,20 @@ function Customers() {
         </PrimaryLink>
       </section>
 
+      <label className="text-muted flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={includeInactive}
+          onChange={(e) =>
+            router.replace(listHref(tenantId, e.target.checked), {
+              scroll: false,
+            })
+          }
+          className="accent-primary size-4 cursor-pointer"
+        />
+        無効な顧客も表示する
+      </label>
+
       <section className="flex flex-col gap-3">
         {!result ? (
           <>
@@ -212,7 +235,9 @@ function Customers() {
         ) : result.customers.length === 0 ? (
           <Card as="div" padding="lg" dashed className="text-center">
             <p className="text-muted text-sm">
-              このテナントにはまだ顧客が登録されていません。
+              {includeInactive
+                ? "このテナントにはまだ顧客が登録されていません。"
+                : "このテナントに有効な顧客はいません。無効な顧客は上のチェックボックスで表示できます。"}
             </p>
             <Link
               href="/customers/register"
@@ -230,8 +255,13 @@ function Customers() {
               className="flex items-center justify-between gap-4"
             >
               <div className="min-w-0">
-                <p className="text-foreground truncate font-medium">
-                  {customer.name}
+                <p className="text-foreground flex items-center gap-2 font-medium">
+                  <span className="truncate">{customer.name}</span>
+                  {customer.isActive === false && (
+                    <Badge size="sm" tone="subtle" className="shrink-0">
+                      無効
+                    </Badge>
+                  )}
                 </p>
                 <p className="text-subtle mt-0.5 truncate text-xs">
                   {customer.nameKana}
