@@ -20,9 +20,15 @@ export const NAV_ITEMS: NavItem[] = [
   },
   {
     label: "組織",
-    description: "所属している組織を管理します。",
-    href: "/groups",
-    activePrefix: "/groups",
+    description: "顧客の所属先になる組織を管理します。",
+    href: "/organizations",
+    activePrefix: "/organizations",
+  },
+  {
+    label: "テナント",
+    description: "所属しているテナントを管理します。",
+    href: "/tenants",
+    activePrefix: "/tenants",
   },
 ];
 

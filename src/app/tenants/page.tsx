@@ -1,17 +1,18 @@
 "use client";
 
+import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import PageContainer from "@/components/PageContainer";
 import PrimaryButton from "@/components/PrimaryButton";
 import TextField from "@/components/TextField";
-import { useOrgs } from "@/context/OrgsContext";
+import { useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
 import { roleLabel } from "@/lib/roles";
 import { useState } from "react";
 
-export default function Groups() {
+export default function Tenants() {
   const { user, loading: userLoading } = useUser();
-  const { memberships, loading: orgsLoading, refreshOrgs } = useOrgs();
+  const { memberships, loading: tenantsLoading, refreshTenants } = useTenants();
 
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -34,12 +35,12 @@ export default function Groups() {
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
         throw new Error(
-          errData.error || errData.message || "組織の作成に失敗しました",
+          errData.error || errData.message || "テナントの作成に失敗しました",
         );
       }
 
       setName("");
-      await refreshOrgs();
+      await refreshTenants();
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "予期しないエラーが発生しました",
@@ -49,7 +50,7 @@ export default function Groups() {
     }
   };
 
-  if (userLoading || (user && orgsLoading)) {
+  if (userLoading || (user && tenantsLoading)) {
     return (
       <PageContainer>
         <div className="bg-placeholder h-9 w-48 animate-pulse rounded-lg" />
@@ -62,10 +63,10 @@ export default function Groups() {
     return (
       <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          組織
+          テナント
         </h1>
         <p className="text-subtle text-sm">
-          組織を表示するにはサインインしてください。
+          テナントを表示するにはサインインしてください。
         </p>
       </PageContainer>
     );
@@ -75,20 +76,20 @@ export default function Groups() {
     <PageContainer>
       <section>
         <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          組織
+          テナント
         </h1>
-        <p className="text-muted mt-2">所属している組織の一覧です。</p>
+        <p className="text-muted mt-2">所属しているテナントの一覧です。</p>
       </section>
 
       <Card>
         <h2 className="text-foreground text-sm font-medium">
-          新しい組織を作成
+          新しいテナントを作成
         </h2>
         <form onSubmit={handleCreate} className="mt-4 flex gap-3">
           <TextField
             value={name}
             onChange={setName}
-            placeholder="組織名"
+            placeholder="テナント名"
             required
             className="flex-1"
           />
@@ -103,26 +104,24 @@ export default function Groups() {
         {memberships.length === 0 ? (
           <Card as="div" padding="lg" dashed className="text-center">
             <p className="text-muted text-sm">
-              まだ組織に所属していません。上のフォームから作成してください。
+              まだテナントに所属していません。上のフォームから作成してください。
             </p>
           </Card>
         ) : (
-          memberships.map(({ group, role }) => (
+          memberships.map(({ tenant, role }) => (
             <Card
-              key={group.groupId}
-              href={`/groups/${group.groupId}`}
+              key={tenant.tenantId}
+              href={`/tenants/${tenant.tenantId}`}
               padding="sm"
               className="flex items-center justify-between"
             >
               <div>
-                <p className="text-foreground font-medium">{group.name}</p>
+                <p className="text-foreground font-medium">{tenant.name}</p>
                 <p className="text-subtle mt-0.5 truncate text-xs">
-                  {group.groupId}
+                  {tenant.tenantId}
                 </p>
               </div>
-              <span className="border-border text-muted rounded-full border px-3 py-1 text-xs font-medium">
-                {roleLabel(role)}
-              </span>
+              <Badge>{roleLabel(role)}</Badge>
             </Card>
           ))
         )}

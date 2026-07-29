@@ -1,14 +1,15 @@
 "use client";
 
+import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import PageContainer from "@/components/PageContainer";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
 import Select from "@/components/Select";
 import TextField from "@/components/TextField";
-import { useOrgs } from "@/context/OrgsContext";
+import { useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
-import { ensureOk, errorMessage } from "@/lib/apiError";
+import { ensureOk, runWithError } from "@/lib/apiError";
 import {
   ASSIGNABLE_ROLES,
   canManageMembers,
@@ -19,34 +20,49 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 
-type Group = { groupId: string; name: string };
+type Tenant = { tenantId: string; name: string };
 type Member = { userId: string; role: string };
 
-type GroupData = {
-  group: Group;
+type TenantData = {
+  tenant: Tenant;
   members: Member[];
-  children: Group[];
-  parents: Group[];
+  children: Tenant[];
+  parents: Tenant[];
 };
 
 type LoadResult =
-  | { status: "ok"; data: GroupData }
+  | { status: "ok"; data: TenantData }
   | { status: "not_found" }
   | { status: "error" };
 
-async function loadGroupData(groupId: string): Promise<LoadResult> {
-  const [groupRes, membersRes, childrenRes, parentsRes] = await Promise.all([
-    fetch(`/api/group/${groupId}`),
-    fetch(`/api/group/${groupId}/members`),
-    fetch(`/api/group/${groupId}/children`),
-    fetch(`/api/group/${groupId}/parents`),
+type GroupResponse = { groupId?: string; name?: string };
+
+function toTenant(group: GroupResponse | undefined): Tenant | null {
+  if (!group?.groupId) return null;
+  return { tenantId: group.groupId, name: group.name ?? "" };
+}
+
+function toTenants(groups: unknown): Tenant[] {
+  if (!Array.isArray(groups)) return [];
+  return (groups as GroupResponse[]).flatMap((group) => {
+    const tenant = toTenant(group);
+    return tenant ? [tenant] : [];
+  });
+}
+
+async function loadTenantData(tenantId: string): Promise<LoadResult> {
+  const [tenantRes, membersRes, childrenRes, parentsRes] = await Promise.all([
+    fetch(`/api/group/${tenantId}`),
+    fetch(`/api/group/${tenantId}/members`),
+    fetch(`/api/group/${tenantId}/children`),
+    fetch(`/api/group/${tenantId}/parents`),
   ]);
 
-  if (!groupRes.ok) {
-    return { status: groupRes.status === 404 ? "not_found" : "error" };
+  if (!tenantRes.ok) {
+    return { status: tenantRes.status === 404 ? "not_found" : "error" };
   }
-  const group: Group | undefined = (await groupRes.json()).group;
-  if (!group) return { status: "not_found" };
+  const tenant = toTenant((await tenantRes.json()).group);
+  if (!tenant) return { status: "not_found" };
 
   if (!membersRes.ok) {
     return { status: "error" };
@@ -55,32 +71,34 @@ async function loadGroupData(groupId: string): Promise<LoadResult> {
   return {
     status: "ok",
     data: {
-      group,
+      tenant,
       members: (await membersRes.json()).members ?? [],
-      children: childrenRes.ok ? ((await childrenRes.json()).groups ?? []) : [],
-      parents: parentsRes.ok ? ((await parentsRes.json()).groups ?? []) : [],
+      children: childrenRes.ok
+        ? toTenants((await childrenRes.json()).groups)
+        : [],
+      parents: parentsRes.ok ? toTenants((await parentsRes.json()).groups) : [],
     },
   };
 }
 
-export default function GroupDetailPage({
+export default function TenantDetailPage({
   params,
 }: {
-  params: Promise<{ groupId: string }>;
+  params: Promise<{ tenantId: string }>;
 }) {
-  const { groupId } = use(params);
-  return <GroupDetail key={groupId} groupId={groupId} />;
+  const { tenantId } = use(params);
+  return <TenantDetail key={tenantId} tenantId={tenantId} />;
 }
 
-function GroupDetail({ groupId }: { groupId: string }) {
+function TenantDetail({ tenantId }: { tenantId: string }) {
   const router = useRouter();
   const { user, loading: userLoading } = useUser();
-  const { refreshOrgs } = useOrgs();
+  const { refreshTenants } = useTenants();
 
-  const [group, setGroup] = useState<Group | null>(null);
+  const [tenant, setTenant] = useState<Tenant | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
-  const [children, setChildren] = useState<Group[]>([]);
-  const [parents, setParents] = useState<Group[]>([]);
+  const [children, setChildren] = useState<Tenant[]>([]);
+  const [parents, setParents] = useState<Tenant[]>([]);
   const [fetched, setFetched] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState(false);
@@ -100,8 +118,8 @@ function GroupDetail({ groupId }: { groupId: string }) {
 
   const applyResult = useCallback((result: LoadResult) => {
     if (result.status === "ok") {
-      setGroup(result.data.group);
-      setName(result.data.group.name);
+      setTenant(result.data.tenant);
+      setName(result.data.tenant.name);
       setMembers(result.data.members);
       setChildren(result.data.children);
       setParents(result.data.parents);
@@ -115,17 +133,17 @@ function GroupDetail({ groupId }: { groupId: string }) {
   }, []);
 
   const reload = useCallback(async () => {
-    const result = await loadGroupData(groupId).catch(
+    const result = await loadTenantData(tenantId).catch(
       () => ({ status: "error" }) as const,
     );
     applyResult(result);
-  }, [groupId, applyResult]);
+  }, [tenantId, applyResult]);
 
   useEffect(() => {
     if (userLoading || !user) return;
     let active = true;
     (async () => {
-      const result = await loadGroupData(groupId).catch(
+      const result = await loadTenantData(tenantId).catch(
         () => ({ status: "error" }) as const,
       );
       if (!active) return;
@@ -135,46 +153,37 @@ function GroupDetail({ groupId }: { groupId: string }) {
     return () => {
       active = false;
     };
-  }, [user, userLoading, groupId, applyResult]);
-
-  const withError = async (fn: () => Promise<void>) => {
-    setError("");
-    try {
-      await fn();
-    } catch (err: unknown) {
-      setError(errorMessage(err));
-    }
-  };
+  }, [user, userLoading, tenantId, applyResult]);
 
   const handleRename = (e: React.FormEvent) => {
     e.preventDefault();
     if (savingName || !name.trim()) return;
     setSavingName(true);
-    void withError(async () => {
-      const res = await fetch(`/api/group/${groupId}`, {
+    void runWithError(setError, async () => {
+      const res = await fetch(`/api/group/${tenantId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: name.trim() }),
       });
-      await ensureOk(res, "組織名の更新に失敗しました");
+      await ensureOk(res, "テナント名の更新に失敗しました");
       await reload();
-      await refreshOrgs();
+      await refreshTenants();
     }).finally(() => setSavingName(false));
   };
 
-  const handleDeleteGroup = () => {
+  const handleDeleteTenant = () => {
     if (
       !window.confirm(
-        "本当にこの組織を削除しますか？この操作は取り消せません。",
+        "本当にこのテナントを削除しますか？この操作は取り消せません。",
       )
     ) {
       return;
     }
-    void withError(async () => {
-      const res = await fetch(`/api/group/${groupId}`, { method: "DELETE" });
-      await ensureOk(res, "組織の削除に失敗しました");
-      await refreshOrgs();
-      router.push("/groups");
+    void runWithError(setError, async () => {
+      const res = await fetch(`/api/group/${tenantId}`, { method: "DELETE" });
+      await ensureOk(res, "テナントの削除に失敗しました");
+      await refreshTenants();
+      router.push("/tenants");
     });
   };
 
@@ -182,8 +191,8 @@ function GroupDetail({ groupId }: { groupId: string }) {
     e.preventDefault();
     if (addingMember || !newMemberId.trim()) return;
     setAddingMember(true);
-    void withError(async () => {
-      const res = await fetch(`/api/group/${groupId}/members`, {
+    void runWithError(setError, async () => {
+      const res = await fetch(`/api/group/${tenantId}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -199,8 +208,8 @@ function GroupDetail({ groupId }: { groupId: string }) {
   };
 
   const handleRoleChange = (userId: string, role: string) => {
-    void withError(async () => {
-      const res = await fetch(`/api/group/${groupId}/members/${userId}`, {
+    void runWithError(setError, async () => {
+      const res = await fetch(`/api/group/${tenantId}/members/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
@@ -211,8 +220,8 @@ function GroupDetail({ groupId }: { groupId: string }) {
   };
 
   const handleRemoveMember = (userId: string) => {
-    void withError(async () => {
-      const res = await fetch(`/api/group/${groupId}/members/${userId}`, {
+    void runWithError(setError, async () => {
+      const res = await fetch(`/api/group/${tenantId}/members/${userId}`, {
         method: "DELETE",
       });
       await ensureOk(res, "メンバーの削除に失敗しました");
@@ -224,25 +233,25 @@ function GroupDetail({ groupId }: { groupId: string }) {
     e.preventDefault();
     if (addingChild || !newChildId.trim()) return;
     setAddingChild(true);
-    void withError(async () => {
-      const res = await fetch(`/api/group/${groupId}/children`, {
+    void runWithError(setError, async () => {
+      const res = await fetch(`/api/group/${tenantId}/children`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ childGroupId: newChildId.trim() }),
       });
-      await ensureOk(res, "下位組織の追加に失敗しました");
+      await ensureOk(res, "下位テナントの追加に失敗しました");
       setNewChildId("");
       await reload();
     }).finally(() => setAddingChild(false));
   };
 
-  const handleRemoveChild = (childGroupId: string) => {
-    void withError(async () => {
+  const handleRemoveChild = (childTenantId: string) => {
+    void runWithError(setError, async () => {
       const res = await fetch(
-        `/api/group/${groupId}/children/${childGroupId}`,
+        `/api/group/${tenantId}/children/${childTenantId}`,
         { method: "DELETE" },
       );
-      await ensureOk(res, "下位組織の解除に失敗しました");
+      await ensureOk(res, "下位テナントの解除に失敗しました");
       await reload();
     });
   };
@@ -260,7 +269,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
     return (
       <PageContainer centered>
         <p className="text-subtle text-sm">
-          この組織を表示するにはサインインしてください。
+          このテナントを表示するにはサインインしてください。
         </p>
       </PageContainer>
     );
@@ -270,24 +279,24 @@ function GroupDetail({ groupId }: { groupId: string }) {
     return (
       <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          組織が見つかりません
+          テナントが見つかりません
         </h1>
-        <Link href="/groups" className="text-muted text-sm underline">
-          組織一覧に戻る
+        <Link href="/tenants" className="text-muted text-sm underline">
+          テナント一覧に戻る
         </Link>
       </PageContainer>
     );
   }
 
-  if (loadError || !group) {
+  if (loadError || !tenant) {
     return (
       <PageContainer centered>
         <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          組織を読み込めませんでした
+          テナントを読み込めませんでした
         </h1>
         <p className="text-subtle text-sm">時間をおいて再度お試しください。</p>
-        <Link href="/groups" className="text-muted text-sm underline">
-          組織一覧に戻る
+        <Link href="/tenants" className="text-muted text-sm underline">
+          テナント一覧に戻る
         </Link>
       </PageContainer>
     );
@@ -296,20 +305,20 @@ function GroupDetail({ groupId }: { groupId: string }) {
   return (
     <PageContainer>
       <div>
-        <Link href="/groups" className="text-subtle text-sm hover:underline">
-          ← 組織一覧
+        <Link href="/tenants" className="text-subtle text-sm hover:underline">
+          ← テナント一覧
         </Link>
       </div>
 
       <section>
         <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          {group.name}
+          {tenant.name}
         </h1>
-        <p className="text-subtle mt-1 truncate text-xs">{group.groupId}</p>
+        <p className="text-subtle mt-1 truncate text-xs">{tenant.tenantId}</p>
         {myRole && (
-          <span className="border-border text-muted mt-3 inline-block rounded-full border px-3 py-1 text-xs font-medium">
+          <Badge className="mt-3 inline-block">
             あなたのロール: {roleLabel(myRole)}
-          </span>
+          </Badge>
         )}
       </section>
 
@@ -317,7 +326,7 @@ function GroupDetail({ groupId }: { groupId: string }) {
 
       {canManage && (
         <Card>
-          <h2 className="text-foreground text-sm font-medium">組織設定</h2>
+          <h2 className="text-foreground text-sm font-medium">テナント設定</h2>
           <form onSubmit={handleRename} className="mt-4 flex gap-3">
             <TextField
               value={name}
@@ -332,10 +341,10 @@ function GroupDetail({ groupId }: { groupId: string }) {
           {owner && (
             <div className="border-border mt-4 flex items-center justify-between border-t pt-4">
               <p className="text-subtle text-sm">
-                この組織を削除します。元に戻せません。
+                このテナントを削除します。元に戻せません。
               </p>
-              <SecondaryButton variant="danger" onClick={handleDeleteGroup}>
-                組織を削除
+              <SecondaryButton variant="danger" onClick={handleDeleteTenant}>
+                テナントを削除
               </SecondaryButton>
             </div>
           )}
@@ -420,26 +429,26 @@ function GroupDetail({ groupId }: { groupId: string }) {
 
       <Card>
         <h2 className="text-foreground text-sm font-medium">
-          下位組織 ({children.length})
+          下位テナント ({children.length})
         </h2>
         {children.length === 0 ? (
-          <p className="text-subtle mt-3 text-sm">下位組織はありません。</p>
+          <p className="text-subtle mt-3 text-sm">下位テナントはありません。</p>
         ) : (
           <ul className="mt-4 flex flex-col gap-2">
             {children.map((c) => (
               <li
-                key={c.groupId}
+                key={c.tenantId}
                 className="border-border flex items-center justify-between gap-3 rounded-xl border px-4 py-3"
               >
                 <Link
-                  href={`/groups/${c.groupId}`}
+                  href={`/tenants/${c.tenantId}`}
                   className="text-foreground truncate text-sm hover:underline"
                 >
                   {c.name}
                 </Link>
                 {canManage && (
                   <button
-                    onClick={() => handleRemoveChild(c.groupId)}
+                    onClick={() => handleRemoveChild(c.tenantId)}
                     className="text-subtle hover:text-danger text-xs"
                   >
                     解除
@@ -458,12 +467,12 @@ function GroupDetail({ groupId }: { groupId: string }) {
             <TextField
               value={newChildId}
               onChange={setNewChildId}
-              placeholder="下位組織のID"
+              placeholder="下位テナントのID"
               required
               className="flex-1"
             />
             <SecondaryButton type="submit" disabled={addingChild}>
-              {addingChild ? "追加中..." : "下位組織を追加"}
+              {addingChild ? "追加中..." : "下位テナントを追加"}
             </SecondaryButton>
           </form>
         )}
@@ -472,16 +481,16 @@ function GroupDetail({ groupId }: { groupId: string }) {
       {parents.length > 0 && (
         <Card>
           <h2 className="text-foreground text-sm font-medium">
-            上位組織 ({parents.length})
+            上位テナント ({parents.length})
           </h2>
           <ul className="mt-4 flex flex-col gap-2">
             {parents.map((p) => (
               <li
-                key={p.groupId}
+                key={p.tenantId}
                 className="border-border rounded-xl border px-4 py-3"
               >
                 <Link
-                  href={`/groups/${p.groupId}`}
+                  href={`/tenants/${p.tenantId}`}
                   className="text-foreground truncate text-sm hover:underline"
                 >
                   {p.name}

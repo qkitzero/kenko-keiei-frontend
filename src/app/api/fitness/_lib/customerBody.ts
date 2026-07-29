@@ -1,5 +1,4 @@
 import {
-  TEXT_MAX_LENGTH,
   TIMEZONE_TOLERANCE_DAYS,
   isFutureDate,
   isValidCustomerDate,
@@ -10,6 +9,8 @@ import {
   normalizePhone,
   normalizePostalCode,
 } from "@/lib/customer";
+import { isValidOrganizationId } from "@/lib/organization";
+import { TEXT_MAX_LENGTH, isTooLong } from "@/lib/text";
 import type { components } from "../../../../../gen/customer/v1/customer.schema";
 
 type Schemas = components["schemas"];
@@ -96,11 +97,11 @@ export function parseCustomerFields(body: unknown): CustomerFieldsResult {
 
   const name = text(source.name);
   if (!name) return { ok: false, error: "Missing or invalid name" };
-  if (name.length > TEXT_MAX_LENGTH) return tooLong("name");
+  if (isTooLong(name)) return tooLong("name");
 
   const nameKana = text(source.nameKana);
   if (!nameKana) return { ok: false, error: "Missing or invalid nameKana" };
-  if (nameKana.length > TEXT_MAX_LENGTH) return tooLong("nameKana");
+  if (isTooLong(nameKana)) return tooLong("nameKana");
   if (!isValidKana(nameKana)) {
     return { ok: false, error: "Missing or invalid nameKana" };
   }
@@ -121,12 +122,20 @@ export function parseCustomerFields(body: unknown): CustomerFieldsResult {
     if (typeof value !== "string") continue;
     const normalize = NORMALIZERS[key];
     const trimmed = normalize ? normalize(value.trim()) : value.trim();
-    if (trimmed.length > TEXT_MAX_LENGTH) return tooLong(key);
+    if (isTooLong(trimmed)) return tooLong(key);
     const validate = VALIDATORS[key];
     if (trimmed && validate && !validate(trimmed)) {
       return { ok: false, error: `Missing or invalid ${key}` };
     }
     optional[key] = trimmed;
+  }
+
+  const organizationId =
+    typeof source.organizationId === "string"
+      ? source.organizationId.trim()
+      : "";
+  if (organizationId && !isValidOrganizationId(organizationId)) {
+    return { ok: false, error: "Missing or invalid organizationId" };
   }
 
   return {
@@ -137,6 +146,7 @@ export function parseCustomerFields(body: unknown): CustomerFieldsResult {
       gender: gender as Schemas["v1Gender"],
       birthDate: parsedBirthDate,
       ...optional,
+      organizationId,
     },
   };
 }

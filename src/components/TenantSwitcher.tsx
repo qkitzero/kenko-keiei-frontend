@@ -1,14 +1,14 @@
 "use client";
 
-import { groupIdFromPathname, useOrgs } from "@/context/OrgsContext";
+import { tenantIdFromPathname, useTenants } from "@/context/TenantsContext";
 import { roleLabel } from "@/lib/roles";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export default function OrgSwitcher() {
-  const { memberships, loading, error, selectedGroupId, selectGroup } =
-    useOrgs();
+export default function TenantSwitcher() {
+  const { memberships, loading, error, selectedTenantId, selectTenant } =
+    useTenants();
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
@@ -24,17 +24,17 @@ export default function OrgSwitcher() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const pathGroupId = groupIdFromPathname(pathname);
-  const shownGroupId = pathGroupId || selectedGroupId;
-  const activeOrg = memberships.find(
-    ({ group }) => group.groupId === shownGroupId,
-  )?.group;
+  const pathTenantId = tenantIdFromPathname(pathname);
+  const shownTenantId = pathTenantId || selectedTenantId;
+  const activeTenant = memberships.find(
+    ({ tenant }) => tenant.tenantId === shownTenantId,
+  )?.tenant;
 
-  const handleSelect = (groupId: string) => {
-    selectGroup(groupId);
+  const handleSelect = (tenantId: string) => {
+    selectTenant(tenantId);
     setOpen(false);
-    if (pathGroupId) {
-      router.push(`/groups/${groupId}`);
+    if (pathTenantId) {
+      router.push(`/tenants/${tenantId}`);
     }
   };
 
@@ -50,9 +50,9 @@ export default function OrgSwitcher() {
         className="border-border text-foreground hover:bg-hover flex max-w-[14rem] cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
       >
         <span className="text-subtle hidden shrink-0 text-xs font-normal sm:inline">
-          組織
+          テナント
         </span>
-        <span className="truncate">{activeOrg?.name ?? "—"}</span>
+        <span className="truncate">{activeTenant?.name ?? "—"}</span>
         <span className="text-subtle text-xs">▾</span>
       </button>
 
@@ -61,28 +61,28 @@ export default function OrgSwitcher() {
           {memberships.length === 0 ? (
             <p className="text-subtle px-3 py-2 text-xs">
               {error
-                ? "組織情報を取得できませんでした。"
-                : "所属している組織はありません。"}
+                ? "テナント情報を取得できませんでした。"
+                : "所属しているテナントはありません。"}
             </p>
           ) : (
             <>
               <p className="text-subtle px-3 py-2 text-xs">
-                表示中の組織を切り替えます。
+                表示中のテナントを切り替えます。
               </p>
               <div className="max-h-72 overflow-y-auto">
-                {memberships.map(({ group, role }) => {
-                  const isActive = group.groupId === selectedGroupId;
+                {memberships.map(({ tenant, role }) => {
+                  const isActive = tenant.tenantId === selectedTenantId;
                   return (
                     <button
-                      key={group.groupId}
-                      onClick={() => handleSelect(group.groupId)}
+                      key={tenant.tenantId}
+                      onClick={() => handleSelect(tenant.tenantId)}
                       aria-current={isActive ? "true" : undefined}
                       className={`hover:bg-hover flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
                         isActive ? "bg-hover" : ""
                       }`}
                     >
                       <span className="text-foreground truncate text-sm">
-                        {group.name}
+                        {tenant.name}
                       </span>
                       <span className="text-subtle flex shrink-0 items-center gap-1.5 text-xs">
                         {roleLabel(role)}
@@ -103,11 +103,11 @@ export default function OrgSwitcher() {
           <div className="bg-border my-1 h-px" />
 
           <Link
-            href="/groups"
+            href="/tenants"
             onClick={() => setOpen(false)}
             className="text-foreground hover:bg-hover block rounded-lg px-3 py-2 text-sm transition-colors"
           >
-            組織を管理
+            テナントを管理
           </Link>
         </div>
       )}

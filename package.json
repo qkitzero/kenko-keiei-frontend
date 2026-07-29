@@ -10,13 +10,15 @@
     "generate:auth:openapi": "swagger2openapi ./gen/auth/v1/auth.swagger.json -o ./gen/auth/v1/auth.openapi.json",
     "generate:user:openapi": "swagger2openapi ./gen/user/v1/user.swagger.json -o ./gen/user/v1/user.openapi.json",
     "generate:group:openapi": "swagger2openapi ./gen/group/v1/group.swagger.json -o ./gen/group/v1/group.openapi.json",
-    "generate:fitness:openapi": "swagger2openapi ./gen/customer/v1/customer.swagger.json -o ./gen/customer/v1/customer.openapi.json",
-    "generate:openapi": "npm run generate:auth:openapi && npm run generate:user:openapi && npm run generate:group:openapi && npm run generate:fitness:openapi",
+    "generate:customer:openapi": "swagger2openapi ./gen/customer/v1/customer.swagger.json -o ./gen/customer/v1/customer.openapi.json",
+    "generate:organization:openapi": "swagger2openapi ./gen/organization/v1/organization.swagger.json -o ./gen/organization/v1/organization.openapi.json",
+    "generate:openapi": "npm run generate:auth:openapi && npm run generate:user:openapi && npm run generate:group:openapi && npm run generate:customer:openapi && npm run generate:organization:openapi",
     "generate:auth:schema": "openapi-typescript ./gen/auth/v1/auth.openapi.json -o ./gen/auth/v1/auth.schema.ts",
     "generate:user:schema": "openapi-typescript ./gen/user/v1/user.openapi.json -o ./gen/user/v1/user.schema.ts",
     "generate:group:schema": "openapi-typescript ./gen/group/v1/group.openapi.json -o ./gen/group/v1/group.schema.ts",
-    "generate:fitness:schema": "openapi-typescript ./gen/customer/v1/customer.openapi.json -o ./gen/customer/v1/customer.schema.ts",
-    "generate:schema": "npm run generate:auth:schema && npm run generate:user:schema && npm run generate:group:schema && npm run generate:fitness:schema",
+    "generate:customer:schema": "openapi-typescript ./gen/customer/v1/customer.openapi.json -o ./gen/customer/v1/customer.schema.ts",
+    "generate:organization:schema": "openapi-typescript ./gen/organization/v1/organization.openapi.json -o ./gen/organization/v1/organization.schema.ts",
+    "generate:schema": "npm run generate:auth:schema && npm run generate:user:schema && npm run generate:group:schema && npm run generate:customer:schema && npm run generate:organization:schema",
     "generate:all": "npm run generate:buf && npm run generate:openapi && npm run generate:schema",
     "dev": "next dev",
     "build": "next build",
@@ -26,7 +28,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "next": "16.2.9",
+    "next": "16.2.11",
     "openapi-fetch": "^0.17.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"
