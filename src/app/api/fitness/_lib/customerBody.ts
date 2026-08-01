@@ -3,7 +3,7 @@ import {
   isValidPrefecture,
   normalizePostalCode,
 } from "@/lib/address";
-import { isValidPhone, normalizePhone } from "@/lib/contact";
+import { isValidEmail, isValidPhone, normalizePhone } from "@/lib/contact";
 import {
   TIMEZONE_TOLERANCE_DAYS,
   isFutureDate,
@@ -54,6 +54,7 @@ const VALIDATORS: Partial<
 > = {
   phone: isValidPhone,
   emergencyContactPhone: isValidPhone,
+  email: isValidEmail,
   postalCode: isValidPostalCode,
   prefecture: isValidPrefecture,
 };

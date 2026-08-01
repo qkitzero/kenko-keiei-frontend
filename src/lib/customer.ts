@@ -3,7 +3,7 @@ import {
   isValidPrefecture,
   normalizePostalCode,
 } from "@/lib/address";
-import { isValidPhone, normalizePhone } from "@/lib/contact";
+import { isValidEmail, isValidPhone, normalizePhone } from "@/lib/contact";
 import { TEXT_MAX_LENGTH, isTooLong } from "@/lib/text";
 import type { components } from "../../gen/customer/v1/customer.schema";
 
@@ -188,7 +188,7 @@ export function fieldsNeedingInput(customer: Customer): string[] {
   if (phone && !isValidPhone(phone)) fields.push("電話番号");
 
   const email = customer.email?.trim() ?? "";
-  if (isTooLong(email)) fields.push("メールアドレス");
+  if (email && !isValidEmail(email)) fields.push("メールアドレス");
 
   const postalCode = customer.postalCode?.trim() ?? "";
   if (postalCode && !isValidPostalCode(postalCode)) fields.push("郵便番号");
@@ -267,6 +267,13 @@ export function buildCustomerPayload(
       error: `メールアドレスは${TEXT_MAX_LENGTH}文字以内で入力してください`,
     };
   }
+  if (email && !isValidEmail(email)) {
+    return {
+      ok: false,
+      error: "メールアドレスは taro@example.com の形式で入力してください",
+    };
+  }
+
   const postalCode = normalizePostalCode(values.postalCode.trim());
   if (postalCode && !isValidPostalCode(postalCode)) {
     return {
