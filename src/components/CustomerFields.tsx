@@ -3,12 +3,11 @@
 import SecondaryButton from "@/components/SecondaryButton";
 import Select from "@/components/Select";
 import TextField from "@/components/TextField";
+import { PREFECTURES, isValidPrefecture } from "@/lib/address";
 import {
   CustomerFormValues,
   GENDERS,
-  PREFECTURES,
   genderLabel,
-  isValidPrefecture,
   todayInputValue,
 } from "@/lib/customer";
 import type { OrganizationOptions } from "@/lib/organization";

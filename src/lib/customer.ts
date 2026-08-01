@@ -1,3 +1,9 @@
+import {
+  isValidPostalCode,
+  isValidPrefecture,
+  normalizePostalCode,
+} from "@/lib/address";
+import { isValidPhone, normalizePhone } from "@/lib/contact";
 import { TEXT_MAX_LENGTH, isTooLong } from "@/lib/text";
 import type { components } from "../../gen/customer/v1/customer.schema";
 
@@ -24,56 +30,6 @@ export function genderLabel(gender: string | undefined): string {
   if (!gender) return "";
   return GENDER_LABELS[gender] ?? gender;
 }
-
-export const PREFECTURES = [
-  "北海道",
-  "青森県",
-  "岩手県",
-  "宮城県",
-  "秋田県",
-  "山形県",
-  "福島県",
-  "茨城県",
-  "栃木県",
-  "群馬県",
-  "埼玉県",
-  "千葉県",
-  "東京都",
-  "神奈川県",
-  "新潟県",
-  "富山県",
-  "石川県",
-  "福井県",
-  "山梨県",
-  "長野県",
-  "岐阜県",
-  "静岡県",
-  "愛知県",
-  "三重県",
-  "滋賀県",
-  "京都府",
-  "大阪府",
-  "兵庫県",
-  "奈良県",
-  "和歌山県",
-  "鳥取県",
-  "島根県",
-  "岡山県",
-  "広島県",
-  "山口県",
-  "徳島県",
-  "香川県",
-  "愛媛県",
-  "高知県",
-  "福岡県",
-  "佐賀県",
-  "長崎県",
-  "熊本県",
-  "大分県",
-  "宮崎県",
-  "鹿児島県",
-  "沖縄県",
-];
 
 export type CustomerFormValues = {
   name: string;
@@ -123,39 +79,11 @@ export const EMPTY_CUSTOMER_FORM: CustomerFormValues = {
 };
 
 const KANA_PATTERN = /^[ァ-ヿ 　]+$/;
-const PHONE_PATTERN = /^0\d{9,10}$/;
-const POSTAL_CODE_PATTERN = /^\d{7}$/;
 
 const MONTH_LENGTHS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-function toHalfWidthDigits(value: string): string {
-  return value.replace(/[０-９]/g, (char) =>
-    String.fromCharCode(char.charCodeAt(0) - 0xfee0),
-  );
-}
-
-export function normalizePhone(value: string): string {
-  return toHalfWidthDigits(value).replace(/[-－\s　]/g, "");
-}
-
-export function normalizePostalCode(value: string): string {
-  return toHalfWidthDigits(value).replace(/[-－\s　]/g, "");
-}
-
 export function isValidKana(value: string): boolean {
   return KANA_PATTERN.test(value);
-}
-
-export function isValidPhone(value: string): boolean {
-  return PHONE_PATTERN.test(normalizePhone(value));
-}
-
-export function isValidPostalCode(value: string): boolean {
-  return POSTAL_CODE_PATTERN.test(normalizePostalCode(value));
-}
-
-export function isValidPrefecture(value: string): boolean {
-  return PREFECTURES.includes(value);
 }
 
 function isLeapYear(year: number): boolean {
@@ -339,7 +267,6 @@ export function buildCustomerPayload(
       error: `メールアドレスは${TEXT_MAX_LENGTH}文字以内で入力してください`,
     };
   }
-
   const postalCode = normalizePostalCode(values.postalCode.trim());
   if (postalCode && !isValidPostalCode(postalCode)) {
     return {
