@@ -1,13 +1,14 @@
 import {
+  isValidPostalCode,
+  isValidPrefecture,
+  normalizePostalCode,
+} from "@/lib/address";
+import { isValidEmail, isValidPhone, normalizePhone } from "@/lib/contact";
+import {
   TIMEZONE_TOLERANCE_DAYS,
   isFutureDate,
   isValidCustomerDate,
   isValidKana,
-  isValidPhone,
-  isValidPostalCode,
-  isValidPrefecture,
-  normalizePhone,
-  normalizePostalCode,
 } from "@/lib/customer";
 import { isValidOrganizationId } from "@/lib/organization";
 import { TEXT_MAX_LENGTH, isTooLong } from "@/lib/text";
@@ -53,6 +54,7 @@ const VALIDATORS: Partial<
 > = {
   phone: isValidPhone,
   emergencyContactPhone: isValidPhone,
+  email: isValidEmail,
   postalCode: isValidPostalCode,
   prefecture: isValidPrefecture,
 };
