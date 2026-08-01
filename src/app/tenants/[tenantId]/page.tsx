@@ -6,6 +6,7 @@ import PageContainer from "@/components/PageContainer";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
 import Select from "@/components/Select";
+import TenantProfileCard from "@/components/TenantProfileCard";
 import TextField from "@/components/TextField";
 import { useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
@@ -115,6 +116,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   const myRole = members.find((m) => m.userId === user?.userId)?.role;
   const canManage = canManageMembers(myRole);
   const owner = isOwner(myRole);
+  const isMember = myRole !== undefined;
 
   const applyResult = useCallback((result: LoadResult) => {
     if (result.status === "ok") {
@@ -350,6 +352,8 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
           )}
         </Card>
       )}
+
+      {isMember && <TenantProfileCard tenantId={tenantId} />}
 
       <Card>
         <h2 className="text-foreground text-sm font-medium">
