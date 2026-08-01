@@ -47,6 +47,8 @@ UI を追加・変更するときはこのガイドに従う。クラス文字�
 - **テナント**: user-service の group。利用者が所属する単位で、`/tenants` で管理する。識別子は `tenantId`（BFF の `/api/group/*` は上流の API 名に合わせて `group` のまま）
 - **組織**: fitness-service の Organization。テナント配下にあり顧客の所属先になる。`/organizations` で管理する。識別子は `organizationId`
 
+テナントの実体は user-service にあるが、**テナントの住所・連絡先（テナントプロフィール）は fitness-service が持つ**。BFF も `/api/fitness/tenant/{tenantId}/profile` で user-service 由来の `/api/group/*` とは別系統になる。テナント詳細ページの「テナント情報」カードがこれを扱い、未登録のテナントでは上流が 404 を返すのでエラーではなく空のフォームとして表示する（非メンバーも同じ 404 なので、カード自体は `memberships` で出し分ける）。参照実装: `src/components/TenantProfileCard.tsx`
+
 ### テナントスコープ
 
 「いまどのテナントを見ているか」は**ヘッダーの `TenantSwitcher` が唯一の情報源**。`TenantsContext` の `selectedTenantId` / `selectTenant` を使う。
@@ -118,6 +120,7 @@ UI を追加・変更するときはこのガイドに従う。クラス文字�
 - **Field**: `TextField` / `Select` が共有する土台。基底クラス（`FIELD_BASE` / `FIELD_SIZE`）、label ラッパー（`FieldWrapper`）、`id` のフォールバック（`useFieldId`）を持つ。新しい入力部品はクラス文字列を書き写さずこれを使う
 - **TextField**: テキスト入力。`label` を渡すと label 付きのブロックになり、省略するとインラインフォーム用の input 単体になる。`id` は省略すると自動生成され label と関連付く。`onChange` は文字列を受け取る。`className` は常に最外要素に当たる
 - **Select**: セレクト。`TextField` と同じく `label` を渡すと label 付きのブロックになり、省略するとインラインフォーム用の select 単体になる。`size` の既定 `md` は `TextField` と同じ寸法なので横に並べても揃う。`sm` は一覧の行内などに置くコンパクト版。`id` は省略すると自動生成され label と関連付く。`onChange` は文字列を受け取る
+- **TextArea**: 複数行テキスト入力。`TextField` と同じ props の形（`label` / `onChange` は文字列 / `id` は自動生成）で、`rows` の既定は 3。改行を含められる項目（メモなど）に使う
 - **PrimaryButton**: 塗りのプライマリボタン。`size`（`md` = h-11 / `lg` = h-12）を指定できる
 - **PrimaryLink**: `PrimaryButton` と同じ見た目の `Link`（一覧ページから登録ページへ送る CTA などに使う）。クラス文字列は `primaryClassName` で共有している。**ボタンとリンクを1つのコンポーネントに兼用させない**（`href` と `disabled` / `onClick` が同時に受け取れると、渡しても効かない props が型を通ってしまう）
 - **SecondaryButton**: アウトラインボタン。`variant="danger"` で削除などの破壊的操作用になる
