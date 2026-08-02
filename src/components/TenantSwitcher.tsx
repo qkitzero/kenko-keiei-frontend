@@ -2,6 +2,7 @@
 
 import ManageTenantsLink from "@/components/ManageTenantsLink";
 import { tenantIdFromPathname, useTenants } from "@/context/TenantsContext";
+import { TENANT_NAV_ITEM } from "@/lib/navigation";
 import { roleLabel } from "@/lib/roles";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -52,11 +53,15 @@ export default function TenantSwitcher() {
     }
   };
 
+  const prefetchTenants = () => router.prefetch(TENANT_NAV_ITEM.href);
+
   return (
     <div className="relative" ref={ref}>
       <button
         ref={buttonRef}
         onClick={() => setOpen(!open)}
+        onPointerEnter={prefetchTenants}
+        onFocus={prefetchTenants}
         aria-expanded={open}
         className="border-border text-foreground hover:bg-hover flex max-w-[14rem] cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
       >
