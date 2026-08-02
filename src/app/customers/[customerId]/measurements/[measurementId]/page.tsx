@@ -2,9 +2,13 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import DangerZone from "@/components/DangerZone";
 import LoginButton from "@/components/LoginButton";
 import MeasurementFields from "@/components/MeasurementFields";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageMessage from "@/components/PageMessage";
+import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
 import { useUser } from "@/context/UserContext";
@@ -20,7 +24,6 @@ import {
 import { useCustomerName } from "@/lib/useCustomerName";
 import { useMeasurementItems } from "@/lib/useMeasurementItems";
 import { isSameId } from "@/lib/uuid";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -137,99 +140,60 @@ function MeasurementDetail({
   );
 
   if (userLoading) {
-    return (
-      <PageContainer>
-        <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
-        <div className="bg-placeholder h-64 w-full animate-pulse rounded-2xl" />
-      </PageContainer>
-    );
+    return <PageSkeleton width="detail" />;
   }
 
   if (!user) {
     return (
-      <PageContainer centered>
-        <p className="text-subtle text-sm">
-          この測定を表示するにはサインインしてください。
-        </p>
-      </PageContainer>
+      <PageMessage message="この測定を表示するにはサインインしてください。" />
     );
   }
 
   if (!fetched || items.status === "loading") {
-    return (
-      <PageContainer>
-        <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
-        <div className="bg-placeholder h-64 w-full animate-pulse rounded-2xl" />
-      </PageContainer>
-    );
+    return <PageSkeleton width="detail" />;
   }
 
   if (unauthenticated || items.status === "unauthenticated") {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          サインインの有効期限が切れました
-        </h1>
-        <p className="text-subtle text-sm">再度サインインしてください。</p>
-        <div className="w-40">
-          <LoginButton />
-        </div>
-      </PageContainer>
+      <PageMessage
+        title="サインインの有効期限が切れました"
+        message="再度サインインしてください。"
+        action={<LoginButton />}
+      />
     );
   }
 
   if (notFound) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          測定が見つかりません
-        </h1>
-        <Link
-          href={`/customers/${customerId}`}
-          className="text-muted text-sm underline"
-        >
-          顧客詳細に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="測定が見つかりません"
+        link={{ href: `/customers/${customerId}`, label: "顧客詳細に戻る" }}
+      />
     );
   }
 
   if (loadError || !measurement) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          測定を読み込めませんでした
-        </h1>
-        <p className="text-subtle text-sm">時間をおいて再度お試しください。</p>
-        <Link
-          href={`/customers/${customerId}`}
-          className="text-muted text-sm underline"
-        >
-          顧客詳細に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="測定を読み込めませんでした"
+        message="時間をおいて再度お試しください。"
+        link={{ href: `/customers/${customerId}`, label: "顧客詳細に戻る" }}
+      />
     );
   }
 
   if (items.status === "error" || !initial) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          測定項目を取得できませんでした
-        </h1>
-        <p className="text-subtle text-sm">
-          測定項目を読み込めないため、測定を表示できません。
-        </p>
-        {items.status === "error" && (
-          <SecondaryButton onClick={items.retry}>再試行</SecondaryButton>
-        )}
-        <Link
-          href={`/customers/${customerId}`}
-          className="text-muted text-sm underline"
-        >
-          顧客詳細に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="測定項目を取得できませんでした"
+        message="測定項目を読み込めないため、測定を表示できません。"
+        action={
+          items.status === "error" && (
+            <SecondaryButton onClick={items.retry}>再試行</SecondaryButton>
+          )
+        }
+        link={{ href: `/customers/${customerId}`, label: "顧客詳細に戻る" }}
+      />
     );
   }
 
@@ -308,36 +272,33 @@ function MeasurementDetail({
   };
 
   return (
-    <PageContainer>
-      <div>
-        <Link
-          href={`/customers/${customerId}`}
-          className="text-subtle text-sm hover:underline"
-        >
-          ← 顧客詳細
-        </Link>
-      </div>
+    <PageContainer width="detail">
+      <PageHeader
+        backHref={`/customers/${customerId}`}
+        backLabel="顧客詳細"
+        title={dateLabel(measurement.measuredOn) || "測定日未登録"}
+        meta={isDraft && <Badge tone="subtle">下書き</Badge>}
+        description={[
+          customerName,
+          `測定時 ${measurement.ageAtMeasurement ?? 0}歳`,
+        ]
+          .filter(Boolean)
+          .join(" ・ ")}
+      />
 
-      <section>
-        <h1 className="text-foreground flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight">
-          {dateLabel(measurement.measuredOn) || "測定日未登録"}
-          {isDraft && <Badge tone="subtle">下書き</Badge>}
-        </h1>
-        <p className="text-muted mt-1 text-sm">
-          {[customerName, `測定時 ${measurement.ageAtMeasurement ?? 0}歳`]
-            .filter(Boolean)
-            .join(" ・ ")}
-        </p>
-        <p className="text-subtle mt-1 truncate text-xs">
-          {measurement.measurementId}
-        </p>
-      </section>
-
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">測定結果</h2>
+      <Card title="測定結果">
+        <dl className="mb-6">
+          <dt className="text-muted text-sm font-medium">測定 ID</dt>
+          <dd className="text-subtle mt-1 truncate font-mono text-xs">
+            {measurement.measurementId}
+          </dd>
+        </dl>
         <form
-          onSubmit={(e) => e.preventDefault()}
-          className="mt-4 flex flex-col gap-6"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!isDraft) handleSave(false);
+          }}
+          className="flex flex-col gap-6"
         >
           {dataLoss && dataLoss.unknownItemIds.length > 0 && (
             <p className="text-danger text-sm">
@@ -364,7 +325,7 @@ function MeasurementDetail({
 
           {saveError && <p className="text-danger text-sm">{saveError}</p>}
 
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             {isDraft ? (
               <>
                 <SecondaryButton
@@ -378,26 +339,19 @@ function MeasurementDetail({
                 </PrimaryButton>
               </>
             ) : (
-              <SecondaryButton
-                onClick={() => handleSave(false)}
-                disabled={busy}
-              >
+              <PrimaryButton type="submit" disabled={busy}>
                 {saving === "final" ? "保存中..." : "変更を保存"}
-              </SecondaryButton>
+              </PrimaryButton>
             )}
           </div>
         </form>
       </Card>
 
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">測定の削除</h2>
-        {deleteError && (
-          <p className="text-danger mt-3 text-sm">{deleteError}</p>
-        )}
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <p className="text-subtle text-sm">
-            この測定をデータごと削除します。元に戻せません。
-          </p>
+      <DangerZone
+        title="測定の削除"
+        description="この測定をデータごと削除します。元に戻せません。"
+        error={deleteError}
+        action={
           <SecondaryButton
             variant="danger"
             onClick={handleDelete}
@@ -405,8 +359,8 @@ function MeasurementDetail({
           >
             {deleting ? "削除中..." : "測定を削除"}
           </SecondaryButton>
-        </div>
-      </Card>
+        }
+      />
     </PageContainer>
   );
 }
