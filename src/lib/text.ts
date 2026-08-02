@@ -2,8 +2,8 @@ export const TEXT_MAX_LENGTH = 255;
 
 const CONTROL_CHAR_PATTERN = /\p{Cc}/u;
 
-export function isTooLong(value: string): boolean {
-  return [...value].length > TEXT_MAX_LENGTH;
+export function isTooLong(value: string, max = TEXT_MAX_LENGTH): boolean {
+  return [...value].length > max;
 }
 
 export function hasControlChar(value: string): boolean {
@@ -22,4 +22,8 @@ export function toHalfWidthDigits(value: string): string {
   return value.replace(/[０-９]/g, (char) =>
     String.fromCharCode(char.charCodeAt(0) - 0xfee0),
   );
+}
+
+export function toHalfWidthNumber(value: string): string {
+  return toHalfWidthDigits(value).replace(/[．。]/g, ".");
 }
