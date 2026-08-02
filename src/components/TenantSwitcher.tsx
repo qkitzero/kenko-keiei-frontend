@@ -1,8 +1,8 @@
 "use client";
 
+import ManageTenantsLink from "@/components/ManageTenantsLink";
 import { tenantIdFromPathname, useTenants } from "@/context/TenantsContext";
 import { roleLabel } from "@/lib/roles";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -102,13 +102,7 @@ export default function TenantSwitcher() {
 
           <div className="bg-border my-1 h-px" />
 
-          <Link
-            href="/tenants"
-            onClick={() => setOpen(false)}
-            className="text-foreground hover:bg-hover block rounded-lg px-3 py-2 text-sm transition-colors"
-          >
-            テナントを管理
-          </Link>
+          <ManageTenantsLink onClick={() => setOpen(false)} />
         </div>
       )}
     </div>
