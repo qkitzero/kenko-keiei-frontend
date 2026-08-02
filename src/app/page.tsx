@@ -1,72 +1,177 @@
 "use client";
 
-import Card from "@/components/Card";
+import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageSkeleton from "@/components/PageSkeleton";
+import PrimaryLink from "@/components/PrimaryLink";
+import SecondaryButton from "@/components/SecondaryButton";
+import StateCard from "@/components/StateCard";
+import StatTile from "@/components/StatTile";
+import { useTenantScope, useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
-import { FEATURE_NAV_ITEMS } from "@/lib/navigation";
+import { APP_NAME } from "@/lib/app";
+import { useResource, type ResourceState } from "@/lib/useResource";
+import { Suspense, useState } from "react";
 
-export default function Home() {
-  const { user, loading } = useUser();
+const GRID = "grid gap-4 sm:grid-cols-2 lg:grid-cols-3";
 
-  if (loading) {
+const selectCount = (body: unknown) => (body as { count?: number }).count ?? 0;
+
+function toTileState(state: ResourceState<number>) {
+  if (state.status === "loading") return { status: "loading" } as const;
+  if (state.status === "ok") {
+    return { status: "ok", value: state.data } as const;
+  }
+  return { status: "error" } as const;
+}
+
+function TenantSummary({
+  tenantId,
+  tenantTile,
+}: {
+  tenantId: string;
+  tenantTile: React.ReactNode;
+}) {
+  const query = encodeURIComponent(tenantId);
+  const customers = useResource(
+    `/api/fitness/customers/count?tenantId=${query}`,
+    selectCount,
+  );
+  const organizations = useResource(
+    `/api/fitness/organizations/count?tenantId=${query}`,
+    selectCount,
+  );
+
+  if (
+    customers.status === "unauthenticated" ||
+    organizations.status === "unauthenticated"
+  ) {
     return (
-      <PageContainer>
-        <div className="bg-placeholder h-9 w-64 animate-pulse rounded-lg" />
-        <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-      </PageContainer>
+      <StateCard
+        message="サインインの有効期限が切れました。再度サインインしてください。"
+        action={<LoginButton />}
+      />
     );
+  }
+
+  return (
+    <div className={GRID}>
+      <StatTile
+        label="顧客"
+        href="/customers"
+        state={toTileState(customers)}
+        unit="人"
+      />
+      <StatTile
+        label="組織"
+        href="/organizations"
+        state={toTileState(organizations)}
+      />
+      {tenantTile}
+    </div>
+  );
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<PageSkeleton />}>
+      <Home />
+    </Suspense>
+  );
+}
+
+function Home() {
+  const { user, loading: userLoading } = useUser();
+  const {
+    memberships,
+    loading: tenantsLoading,
+    error: tenantsError,
+    refreshTenants,
+  } = useTenants();
+  const tenantId = useTenantScope();
+  const [retrying, setRetrying] = useState(false);
+
+  if (userLoading || (user && tenantsLoading)) {
+    return <PageSkeleton />;
   }
 
   if (!user) {
     return (
       <PageContainer centered>
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          健康経営管理システム
+        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+          {APP_NAME}
         </h1>
-        <p className="text-muted">健康経営ポータル</p>
-        <p className="text-subtle mt-2 text-sm">
-          右上のログインボタンからサインインしてください。
+        <p className="text-muted text-sm">
+          利用するにはサインインしてください。
         </p>
+        <LoginButton />
       </PageContainer>
     );
   }
 
+  if (tenantsError) {
+    const handleRetryTenants = () => {
+      if (retrying) return;
+      setRetrying(true);
+      void refreshTenants().finally(() => setRetrying(false));
+    };
+
+    return (
+      <PageContainer centered>
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
+          テナント情報を取得できませんでした
+        </h1>
+        <p className="text-subtle text-sm">
+          所属しているテナントを読み込めないため、状況を表示できません。
+        </p>
+        <SecondaryButton onClick={handleRetryTenants} disabled={retrying}>
+          {retrying ? "再試行中..." : "再試行"}
+        </SecondaryButton>
+      </PageContainer>
+    );
+  }
+
+  const tenantName =
+    memberships.find(({ tenant }) => tenant.tenantId === tenantId)?.tenant
+      .name ?? "";
+
+  const tenantTile = (
+    <StatTile
+      label="所属テナント"
+      href="/tenants"
+      state={{ status: "ok", value: memberships.length }}
+    />
+  );
+
   return (
     <PageContainer>
-      <section>
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          おかえりなさい、{user.displayName}さん。
-        </h1>
-        <p className="text-muted mt-2">健康経営ポータル</p>
-      </section>
+      <PageHeader
+        title="ホーム"
+        description={
+          tenantName
+            ? `${tenantName}のデータを表示しています。`
+            : "テナントを作成すると、顧客や組織を登録できます。"
+        }
+        actions={
+          tenantId && (
+            <PrimaryLink href="/customers/register">顧客を登録</PrimaryLink>
+          )
+        }
+      />
 
-      <Card>
-        <h2 className="text-subtle text-sm font-medium">はじめに</h2>
-        <p className="text-muted mt-3 text-sm">
-          サインインしています。健康・生産性に関する機能は、準備が整い次第ここに表示されます。
-        </p>
-      </Card>
+      {tenantId ? (
+        <TenantSummary tenantId={tenantId} tenantTile={tenantTile} />
+      ) : (
+        <div className={GRID}>{tenantTile}</div>
+      )}
 
-      <section>
-        <h2 className="text-subtle text-sm font-medium">機能</h2>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          {FEATURE_NAV_ITEMS.map((item) => (
-            <Card
-              key={item.href}
-              href={item.href}
-              className="flex items-center justify-between gap-4"
-            >
-              <div>
-                <p className="text-foreground font-medium">{item.label}</p>
-                <p className="text-muted mt-1 text-sm">{item.description}</p>
-              </div>
-              <span className="text-subtle" aria-hidden>
-                →
-              </span>
-            </Card>
-          ))}
-        </div>
-      </section>
+      {memberships.length === 0 && (
+        <StateCard
+          message="まだテナントに所属していません。テナントを作成すると顧客や組織を登録できます。"
+          action={<PrimaryLink href="/tenants">テナントを管理</PrimaryLink>}
+        />
+      )}
     </PageContainer>
   );
 }
