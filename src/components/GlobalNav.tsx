@@ -1,5 +1,6 @@
 "use client";
 
+import ManageTenantsLink from "@/components/ManageTenantsLink";
 import {
   GLOBAL_NAV_ITEMS,
   isNavItemActive,
@@ -229,6 +230,15 @@ export default function GlobalNav() {
                   />
                 ))}
               </nav>
+              <div className="bg-border mx-2 h-px" />
+              <div className="p-2">
+                <ManageTenantsLink
+                  onClick={() => {
+                    skipFocusRestoreRef.current = true;
+                    setIsDrawerOpen(false);
+                  }}
+                />
+              </div>
             </div>
           </div>,
           document.body,
