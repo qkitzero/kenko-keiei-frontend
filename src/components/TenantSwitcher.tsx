@@ -13,6 +13,7 @@ export default function TenantSwitcher() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -23,6 +24,19 @@ export default function TenantSwitcher() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !event.isComposing) {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   const pathTenantId = tenantIdFromPathname(pathname);
   const shownTenantId = pathTenantId || selectedTenantId;
@@ -45,6 +59,7 @@ export default function TenantSwitcher() {
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={buttonRef}
         onClick={() => setOpen(!open)}
         aria-expanded={open}
         className="border-border text-foreground hover:bg-hover flex max-w-[14rem] cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
@@ -58,6 +73,10 @@ export default function TenantSwitcher() {
 
       {open && (
         <div className="border-border bg-surface absolute right-0 mt-2 min-w-64 rounded-xl border p-2 shadow-lg">
+          <ManageTenantsLink onClick={() => setOpen(false)} />
+
+          <div className="bg-border my-1 h-px" />
+
           {memberships.length === 0 ? (
             <p className="text-subtle px-3 py-2 text-xs">
               {error
@@ -99,10 +118,6 @@ export default function TenantSwitcher() {
               </div>
             </>
           )}
-
-          <div className="bg-border my-1 h-px" />
-
-          <ManageTenantsLink onClick={() => setOpen(false)} />
         </div>
       )}
     </div>
