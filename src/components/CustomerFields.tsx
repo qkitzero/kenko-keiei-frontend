@@ -4,12 +4,8 @@ import SecondaryButton from "@/components/SecondaryButton";
 import Select from "@/components/Select";
 import TextField from "@/components/TextField";
 import { PREFECTURES, isValidPrefecture } from "@/lib/address";
-import {
-  CustomerFormValues,
-  GENDERS,
-  genderLabel,
-  todayInputValue,
-} from "@/lib/customer";
+import { CustomerFormValues, GENDERS, genderLabel } from "@/lib/customer";
+import { todayInputValue } from "@/lib/date";
 import type { OrganizationOptions } from "@/lib/organization";
 import { TEXT_MAX_LENGTH } from "@/lib/text";
 

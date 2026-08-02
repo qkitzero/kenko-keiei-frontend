@@ -9,7 +9,8 @@ import PrimaryLink from "@/components/PrimaryLink";
 import SecondaryButton from "@/components/SecondaryButton";
 import { useTenantScope, useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
-import { Customer, birthDateLabel, genderLabel } from "@/lib/customer";
+import { Customer, genderLabel } from "@/lib/customer";
+import { dateLabel } from "@/lib/date";
 import { organizationName } from "@/lib/organization";
 import { useOrganizations } from "@/lib/useOrganizations";
 import Link from "next/link";
@@ -273,7 +274,7 @@ function Customers() {
               <div className="text-muted shrink-0 text-right text-xs">
                 <p>{genderLabel(customer.gender) || "性別未登録"}</p>
                 <p className="mt-0.5">
-                  {birthDateLabel(customer.birthDate) || "生年月日未登録"}
+                  {dateLabel(customer.birthDate) || "生年月日未登録"}
                 </p>
               </div>
             </Card>
