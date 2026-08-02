@@ -1,0 +1,149 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "measurementitem/v1/measurement_item.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "MeasurementItemService"
+    }
+  ],
+  "paths": {
+    "/v1/measurement-items": {
+      "get": {
+        "operationId": "MeasurementItemService_ListMeasurementItems",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1ListMeasurementItemsResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/rpcStatus"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["MeasurementItemService"]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "protobufAny": {
+        "type": "object",
+        "properties": {
+          "@type": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": {}
+      },
+      "rpcStatus": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/protobufAny"
+            }
+          }
+        }
+      },
+      "v1Category": {
+        "type": "string",
+        "enum": [
+          "CATEGORY_UNSPECIFIED",
+          "CATEGORY_VITAL",
+          "CATEGORY_PHYSIQUE",
+          "CATEGORY_BODY_COMPOSITION",
+          "CATEGORY_MOTOR_FUNCTION"
+        ],
+        "default": "CATEGORY_UNSPECIFIED"
+      },
+      "v1ListMeasurementItemsResponse": {
+        "type": "object",
+        "properties": {
+          "measurementItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v1MeasurementItem"
+            }
+          }
+        }
+      },
+      "v1MeasurementItem": {
+        "type": "object",
+        "properties": {
+          "measurementItemId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "category": {
+            "$ref": "#/components/schemas/v1Category"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/v1Unit"
+          },
+          "trialCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "bilateral": {
+            "type": "boolean"
+          },
+          "valueType": {
+            "$ref": "#/components/schemas/v1ValueType"
+          }
+        }
+      },
+      "v1Unit": {
+        "type": "string",
+        "enum": [
+          "UNIT_UNSPECIFIED",
+          "UNIT_KG",
+          "UNIT_CM",
+          "UNIT_SEC",
+          "UNIT_COUNT",
+          "UNIT_MMHG",
+          "UNIT_PERCENT",
+          "UNIT_BPM"
+        ],
+        "default": "UNIT_UNSPECIFIED"
+      },
+      "v1ValueType": {
+        "type": "string",
+        "enum": [
+          "VALUE_TYPE_UNSPECIFIED",
+          "VALUE_TYPE_NUMERIC",
+          "VALUE_TYPE_PAIRED",
+          "VALUE_TYPE_CHOICE"
+        ],
+        "default": "VALUE_TYPE_UNSPECIFIED"
+      }
+    }
+  }
+}

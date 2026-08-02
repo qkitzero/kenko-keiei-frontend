@@ -1,4 +1,5 @@
 import { TEXT_MAX_LENGTH, hasControlChar, isTooLong } from "@/lib/text";
+import { isValidUuid } from "@/lib/uuid";
 import type { components } from "../../gen/organization/v1/organization.schema";
 
 type Schemas = components["schemas"];
@@ -28,11 +29,8 @@ export function buildOrganizationName(value: string): NameResult {
   return { ok: true, name };
 }
 
-const UUID_PATTERN =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 export function isValidOrganizationId(value: string): boolean {
-  return UUID_PATTERN.test(value.trim());
+  return isValidUuid(value);
 }
 
 export function organizationName(

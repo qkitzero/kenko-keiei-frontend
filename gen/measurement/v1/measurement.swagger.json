@@ -1,0 +1,384 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "measurement/v1/measurement.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "MeasurementService"
+    }
+  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "paths": {
+    "/v1/customer/{customerId}/measurement": {
+      "post": {
+        "operationId": "MeasurementService_CreateMeasurement",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1CreateMeasurementResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MeasurementServiceCreateMeasurementBody"
+            }
+          }
+        ],
+        "tags": ["MeasurementService"]
+      }
+    },
+    "/v1/customer/{customerId}/measurements": {
+      "get": {
+        "operationId": "MeasurementService_ListMeasurements",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListMeasurementsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "customerId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": ["MeasurementService"]
+      }
+    },
+    "/v1/measurement/{measurementId}": {
+      "get": {
+        "operationId": "MeasurementService_GetMeasurement",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetMeasurementResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "measurementId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": ["MeasurementService"]
+      },
+      "delete": {
+        "operationId": "MeasurementService_DeleteMeasurement",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeleteMeasurementResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "measurementId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": ["MeasurementService"]
+      },
+      "put": {
+        "operationId": "MeasurementService_UpdateMeasurement",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpdateMeasurementResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "measurementId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/MeasurementServiceUpdateMeasurementBody"
+            }
+          }
+        ],
+        "tags": ["MeasurementService"]
+      }
+    }
+  },
+  "definitions": {
+    "MeasurementServiceCreateMeasurementBody": {
+      "type": "object",
+      "properties": {
+        "measuredOn": {
+          "$ref": "#/definitions/typeDate"
+        },
+        "measuredBy": {
+          "type": "string"
+        },
+        "isDraft": {
+          "type": "boolean"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1MeasurementEntry"
+          }
+        }
+      }
+    },
+    "MeasurementServiceUpdateMeasurementBody": {
+      "type": "object",
+      "properties": {
+        "measuredOn": {
+          "$ref": "#/definitions/typeDate"
+        },
+        "measuredBy": {
+          "type": "string"
+        },
+        "isDraft": {
+          "type": "boolean"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1MeasurementEntry"
+          }
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "typeDate": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Year of the date. Must be from 1 to 9999, or 0 to specify a date without\na year."
+        },
+        "month": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Month of a year. Must be from 1 to 12, or 0 to specify a year without a\nmonth and day."
+        },
+        "day": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Day of a month. Must be from 1 to 31 and valid for the year and month, or 0\nto specify a year by itself or a year and month where the day isn't\nsignificant."
+        }
+      },
+      "description": "* A full date, with non-zero year, month, and day values.\n* A month and day, with a zero year (for example, an anniversary).\n* A year on its own, with a zero month and a zero day.\n* A year and month, with a zero day (for example, a credit card expiration\n  date).\n\nRelated types:\n\n* [google.type.TimeOfDay][google.type.TimeOfDay]\n* [google.type.DateTime][google.type.DateTime]\n* [google.protobuf.Timestamp][google.protobuf.Timestamp]",
+      "title": "Represents a whole or partial calendar date, such as a birthday. The time of\nday and time zone are either specified elsewhere or are insignificant. The\ndate is relative to the Gregorian Calendar. This can represent one of the\nfollowing:"
+    },
+    "v1CreateMeasurementResponse": {
+      "type": "object",
+      "properties": {
+        "measurementId": {
+          "type": "string"
+        }
+      }
+    },
+    "v1DeleteMeasurementResponse": {
+      "type": "object"
+    },
+    "v1GetMeasurementResponse": {
+      "type": "object",
+      "properties": {
+        "measurement": {
+          "$ref": "#/definitions/v1Measurement"
+        }
+      }
+    },
+    "v1ListMeasurementsResponse": {
+      "type": "object",
+      "properties": {
+        "measurements": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1Measurement"
+          }
+        }
+      }
+    },
+    "v1Measurement": {
+      "type": "object",
+      "properties": {
+        "measurementId": {
+          "type": "string"
+        },
+        "customerId": {
+          "type": "string"
+        },
+        "measuredOn": {
+          "$ref": "#/definitions/typeDate"
+        },
+        "measuredBy": {
+          "type": "string"
+        },
+        "ageAtMeasurement": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "updatedBy": {
+          "type": "string"
+        },
+        "isDraft": {
+          "type": "boolean"
+        },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1MeasurementEntry"
+          }
+        }
+      }
+    },
+    "v1MeasurementEntry": {
+      "type": "object",
+      "properties": {
+        "measurementItemId": {
+          "type": "string"
+        },
+        "unmeasurable": {
+          "type": "boolean"
+        },
+        "note": {
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1MeasurementValue"
+          }
+        }
+      }
+    },
+    "v1MeasurementValue": {
+      "type": "object",
+      "properties": {
+        "trialIndex": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "side": {
+          "$ref": "#/definitions/v1Side"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "valueSecondary": {
+          "type": "number",
+          "format": "double"
+        },
+        "valueChoice": {
+          "type": "string"
+        }
+      }
+    },
+    "v1Side": {
+      "type": "string",
+      "enum": ["SIDE_UNSPECIFIED", "SIDE_NONE", "SIDE_LEFT", "SIDE_RIGHT"],
+      "default": "SIDE_UNSPECIFIED"
+    },
+    "v1UpdateMeasurementResponse": {
+      "type": "object",
+      "properties": {
+        "measurement": {
+          "$ref": "#/definitions/v1Measurement"
+        }
+      }
+    }
+  }
+}

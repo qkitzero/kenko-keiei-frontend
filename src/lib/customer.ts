@@ -4,6 +4,12 @@ import {
   normalizePostalCode,
 } from "@/lib/address";
 import { isValidEmail, isValidPhone, normalizePhone } from "@/lib/contact";
+import {
+  dateInputValue,
+  isFutureDate,
+  isValidDate,
+  toDateValue,
+} from "@/lib/date";
 import { TEXT_MAX_LENGTH, isTooLong } from "@/lib/text";
 import type { components } from "../../gen/customer/v1/customer.schema";
 
@@ -80,76 +86,8 @@ export const EMPTY_CUSTOMER_FORM: CustomerFormValues = {
 
 const KANA_PATTERN = /^[ァ-ヿ 　]+$/;
 
-const MONTH_LENGTHS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
 export function isValidKana(value: string): boolean {
   return KANA_PATTERN.test(value);
-}
-
-function isLeapYear(year: number): boolean {
-  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-}
-
-export function isValidCustomerDate(date: CustomerDate | undefined): boolean {
-  const year = date?.year ?? 0;
-  const month = date?.month ?? 0;
-  const day = date?.day ?? 0;
-  if (
-    !Number.isInteger(year) ||
-    !Number.isInteger(month) ||
-    !Number.isInteger(day)
-  ) {
-    return false;
-  }
-  if (year < 1 || year > 9999 || month < 1 || month > 12 || day < 1) {
-    return false;
-  }
-  const maxDay =
-    month === 2 && isLeapYear(year) ? 29 : MONTH_LENGTHS[month - 1];
-  return day <= maxDay;
-}
-
-function toDateInputValue(date: CustomerDate | undefined): string {
-  if (!isValidCustomerDate(date)) return "";
-  const year = String(date?.year ?? 0).padStart(4, "0");
-  const month = String(date?.month ?? 0).padStart(2, "0");
-  const day = String(date?.day ?? 0).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-export function birthDateLabel(date: CustomerDate | undefined): string {
-  const value = toDateInputValue(date);
-  return value ? value.replaceAll("-", "/") : "";
-}
-
-function toCustomerDate(value: string): CustomerDate | null {
-  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!matched) return null;
-
-  const date = {
-    year: Number(matched[1]),
-    month: Number(matched[2]),
-    day: Number(matched[3]),
-  };
-  return isValidCustomerDate(date) ? date : null;
-}
-
-function dateInputValueOf(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
-export function todayInputValue(): string {
-  return dateInputValueOf(new Date());
-}
-
-export const TIMEZONE_TOLERANCE_DAYS = 1;
-
-export function isFutureDate(date: CustomerDate, toleranceDays = 0): boolean {
-  const limit = new Date();
-  limit.setDate(limit.getDate() + toleranceDays);
-  return toDateInputValue(date) > dateInputValueOf(limit);
 }
 
 export function customerToForm(customer: Customer): CustomerFormValues {
@@ -160,7 +98,7 @@ export function customerToForm(customer: Customer): CustomerFormValues {
       customer.gender && customer.gender !== "GENDER_UNSPECIFIED"
         ? customer.gender
         : "",
-    birthDate: toDateInputValue(customer.birthDate),
+    birthDate: dateInputValue(customer.birthDate),
     phone: customer.phone ?? "",
     email: customer.email ?? "",
     postalCode: customer.postalCode ?? "",
@@ -182,7 +120,7 @@ export function fieldsNeedingInput(customer: Customer): string[] {
   if (!customer.gender || customer.gender === "GENDER_UNSPECIFIED") {
     fields.push("性別");
   }
-  if (!isValidCustomerDate(customer.birthDate)) fields.push("生年月日");
+  if (!isValidDate(customer.birthDate)) fields.push("生年月日");
 
   const phone = customer.phone?.trim() ?? "";
   if (phone && !isValidPhone(phone)) fields.push("電話番号");
@@ -246,7 +184,7 @@ export function buildCustomerPayload(
     return { ok: false, error: "性別を選択してください" };
   }
 
-  const birthDate = toCustomerDate(values.birthDate);
+  const birthDate = toDateValue(values.birthDate);
   if (!birthDate) return { ok: false, error: "生年月日を入力してください" };
   if (isFutureDate(birthDate)) {
     return { ok: false, error: "生年月日に未来の日付は指定できません" };
