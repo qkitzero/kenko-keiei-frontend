@@ -4,6 +4,7 @@ import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import CustomerFields from "@/components/CustomerFields";
 import LoginButton from "@/components/LoginButton";
+import MeasurementHistory from "@/components/MeasurementHistory";
 import PageContainer from "@/components/PageContainer";
 import SecondaryButton from "@/components/SecondaryButton";
 import { useTenants } from "@/context/TenantsContext";
@@ -352,6 +353,8 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         </form>
       </Card>
 
+      <MeasurementHistory customerId={customerId} />
+
       <Card>
         <h2 className="text-foreground text-sm font-medium">利用状態</h2>
         <p className="text-foreground mt-3 text-sm">
@@ -386,7 +389,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         )}
         <div className="mt-4 flex items-center justify-between gap-4">
           <p className="text-subtle text-sm">
-            この顧客をデータごと削除します。元に戻せません。一覧から隠すだけなら上の無効化を使ってください。
+            この顧客をデータごと削除します。元に戻せません。一覧から隠すだけなら上の無効化を使ってください。測定履歴がある顧客は削除できません。
           </p>
           <SecondaryButton
             variant="danger"
