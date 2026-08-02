@@ -1,14 +1,11 @@
 "use client";
 
-import ManageTenantsLink from "@/components/ManageTenantsLink";
-import {
-  GLOBAL_NAV_ITEMS,
-  isNavItemActive,
-  type NavItem,
-} from "@/lib/navigation";
+import NavIcon from "@/components/NavIcon";
+import { APP_NAME } from "@/lib/app";
+import { NAV_ITEMS, isNavItemActive, type NavItem } from "@/lib/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 const emptySubscribe = () => () => {};
@@ -16,12 +13,10 @@ const emptySubscribe = () => () => {};
 function NavLink({
   item,
   pathname,
-  className,
   onClick,
 }: {
   item: NavItem;
   pathname: string;
-  className: string;
   onClick?: () => void;
 }) {
   const active = isNavItemActive(pathname, item);
@@ -32,44 +27,85 @@ function NavLink({
       aria-current={
         pathname === item.href ? "page" : active ? "true" : undefined
       }
-      className={`rounded-lg text-sm font-medium transition-colors ${
+      className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors ${
         active
-          ? "bg-hover text-foreground"
+          ? "bg-primary-subtle text-primary"
           : "text-muted hover:bg-hover hover:text-foreground"
-      } ${className}`}
+      }`}
     >
+      <NavIcon name={item.icon} className="size-4 shrink-0" />
       {item.label}
     </Link>
   );
 }
 
-export default function GlobalNav() {
+function NavList({
+  pathname,
+  onNavigate,
+}: {
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  return (
+    <nav
+      aria-label="メインナビゲーション"
+      className="flex flex-col gap-0.5 px-2 py-2"
+    >
+      {NAV_ITEMS.map((item) => (
+        <NavLink
+          key={item.href}
+          item={item}
+          pathname={pathname}
+          onClick={onNavigate}
+        />
+      ))}
+    </nav>
+  );
+}
+
+function NavSkeleton() {
+  return (
+    <div className="flex flex-col gap-0.5 px-2 py-2" aria-hidden>
+      {NAV_ITEMS.map((item) => (
+        <div key={item.href} className="flex h-9 items-center px-2.5">
+          <div className="bg-placeholder h-4 w-24 animate-pulse rounded" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+type SidebarProps = {
+  ready: boolean;
+  open: boolean;
+  onClose: () => void;
+  openButtonRef: React.RefObject<HTMLButtonElement | null>;
+};
+
+export default function Sidebar({
+  ready,
+  open,
+  onClose,
+  openButtonRef,
+}: SidebarProps) {
   const pathname = usePathname();
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [prevPathname, setPrevPathname] = useState(pathname);
   const isClient = useSyncExternalStore(
     emptySubscribe,
     () => true,
     () => false,
   );
   const panelRef = useRef<HTMLDivElement>(null);
-  const openButtonRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const wasOpenRef = useRef(false);
   const lastPathnameRef = useRef(pathname);
   const skipFocusRestoreRef = useRef(false);
 
-  if (prevPathname !== pathname) {
-    setPrevPathname(pathname);
-    setIsDrawerOpen(false);
-  }
-
   useEffect(() => {
-    if (!isDrawerOpen) return;
+    if (!open) return;
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape" && !event.isComposing) {
-        setIsDrawerOpen(false);
+        onClose();
         return;
       }
       if (event.key !== "Tab") return;
@@ -95,9 +131,7 @@ export default function GlobalNav() {
 
     const mediaQuery = window.matchMedia("(min-width: 768px)");
     function handleMediaChange(event: MediaQueryListEvent) {
-      if (event.matches) {
-        setIsDrawerOpen(false);
-      }
+      if (event.matches) onClose();
     }
 
     const originalOverflow = document.body.style.overflow;
@@ -109,10 +143,10 @@ export default function GlobalNav() {
       document.removeEventListener("keydown", handleKeyDown);
       mediaQuery.removeEventListener("change", handleMediaChange);
     };
-  }, [isDrawerOpen]);
+  }, [open, onClose]);
 
   useEffect(() => {
-    if (isDrawerOpen) {
+    if (open) {
       wasOpenRef.current = true;
       closeButtonRef.current?.focus();
     } else if (wasOpenRef.current) {
@@ -126,58 +160,41 @@ export default function GlobalNav() {
       skipFocusRestoreRef.current = false;
     }
     lastPathnameRef.current = pathname;
-  }, [isDrawerOpen, pathname]);
+  }, [open, pathname, openButtonRef]);
+
+  const handleNavigate = () => {
+    skipFocusRestoreRef.current = true;
+    onClose();
+  };
 
   return (
     <>
-      <nav
-        aria-label="グローバルナビゲーション"
-        className="hidden shrink-0 items-center gap-1 md:flex"
-      >
-        {GLOBAL_NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.href}
-            item={item}
-            pathname={pathname}
-            className="px-3 py-1.5"
-          />
-        ))}
-      </nav>
+      <aside className="border-border bg-surface fixed inset-y-0 left-0 z-20 hidden w-56 flex-col border-r md:flex">
+        <div className="flex h-14 shrink-0 items-center px-4">
+          <Link
+            href="/"
+            className="text-foreground truncate text-sm font-semibold tracking-tight"
+          >
+            {APP_NAME}
+          </Link>
+        </div>
+        {ready ? <NavList pathname={pathname} /> : <NavSkeleton />}
+      </aside>
 
-      <button
-        ref={openButtonRef}
-        onClick={() => setIsDrawerOpen((open) => !open)}
-        aria-label="メニュー"
-        aria-expanded={isDrawerOpen}
-        aria-controls="global-nav-drawer"
-        className="text-foreground hover:bg-hover flex h-8 w-8 shrink-0 cursor-pointer items-center justify-center rounded-lg transition-colors md:hidden"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          className="h-5 w-5"
-          aria-hidden
-        >
-          <path d="M4 6h16M4 12h16M4 18h16" />
-        </svg>
-      </button>
-
-      {isClient &&
+      {ready &&
+        isClient &&
         createPortal(
           <div
-            id="global-nav-drawer"
-            inert={!isDrawerOpen}
+            id="app-nav-drawer"
+            inert={!open}
             className={`fixed inset-0 z-30 transition-[visibility] duration-200 md:hidden ${
-              isDrawerOpen ? "visible" : "pointer-events-none invisible"
+              open ? "visible" : "pointer-events-none invisible"
             }`}
           >
             <div
-              onClick={() => setIsDrawerOpen(false)}
+              onClick={onClose}
               className={`bg-foreground/40 absolute inset-0 transition-opacity duration-200 ${
-                isDrawerOpen ? "opacity-100" : "opacity-0"
+                open ? "opacity-100" : "opacity-0"
               }`}
             />
             <div
@@ -186,18 +203,18 @@ export default function GlobalNav() {
               aria-modal="true"
               aria-label="メニュー"
               className={`border-border bg-surface absolute inset-y-0 left-0 flex w-64 flex-col border-r shadow-lg transition-transform duration-200 ${
-                isDrawerOpen ? "translate-x-0" : "-translate-x-full"
+                open ? "translate-x-0" : "-translate-x-full"
               }`}
             >
-              <div className="flex items-center justify-between px-4 py-4">
-                <span className="text-foreground text-sm font-semibold">
-                  メニュー
+              <div className="border-border flex h-14 shrink-0 items-center justify-between border-b px-4">
+                <span className="text-foreground truncate text-sm font-semibold">
+                  {APP_NAME}
                 </span>
                 <button
                   ref={closeButtonRef}
-                  onClick={() => setIsDrawerOpen(false)}
+                  onClick={onClose}
                   aria-label="メニューを閉じる"
-                  className="text-foreground hover:bg-hover flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg transition-colors"
+                  className="text-muted hover:bg-hover hover:text-foreground flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-md transition-colors"
                 >
                   <svg
                     viewBox="0 0 24 24"
@@ -205,40 +222,14 @@ export default function GlobalNav() {
                     stroke="currentColor"
                     strokeWidth="2"
                     strokeLinecap="round"
-                    className="h-5 w-5"
+                    className="size-4"
                     aria-hidden
                   >
                     <path d="M6 6l12 12M18 6L6 18" />
                   </svg>
                 </button>
               </div>
-              <div className="bg-border h-px" />
-              <nav
-                aria-label="グローバルナビゲーション"
-                className="flex flex-col gap-1 p-2"
-              >
-                {GLOBAL_NAV_ITEMS.map((item) => (
-                  <NavLink
-                    key={item.href}
-                    item={item}
-                    pathname={pathname}
-                    className="px-3 py-2"
-                    onClick={() => {
-                      skipFocusRestoreRef.current = true;
-                      setIsDrawerOpen(false);
-                    }}
-                  />
-                ))}
-              </nav>
-              <div className="bg-border mx-2 h-px" />
-              <div className="p-2">
-                <ManageTenantsLink
-                  onClick={() => {
-                    skipFocusRestoreRef.current = true;
-                    setIsDrawerOpen(false);
-                  }}
-                />
-              </div>
+              <NavList pathname={pathname} onNavigate={handleNavigate} />
             </div>
           </div>,
           document.body,

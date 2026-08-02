@@ -1,12 +1,11 @@
+export type NavIconName = "home" | "customers" | "organizations" | "tenants";
+
 export type NavItem = {
   label: string;
   description: string;
   href: string;
   activePrefix: string;
-};
-
-type FeatureNavItem = NavItem & {
-  globalNav: boolean;
+  icon: NavIconName;
 };
 
 const HOME_NAV_ITEM: NavItem = {
@@ -14,38 +13,34 @@ const HOME_NAV_ITEM: NavItem = {
   description: "健康経営ポータルのホームです。",
   href: "/",
   activePrefix: "/",
+  icon: "home",
 };
 
-export const TENANT_NAV_ITEM: FeatureNavItem = {
-  label: "テナント",
-  description: "所属しているテナントを管理します。",
-  href: "/tenants",
-  activePrefix: "/tenants",
-  globalNav: false,
-};
-
-export const FEATURE_NAV_ITEMS: FeatureNavItem[] = [
+export const FEATURE_NAV_ITEMS: NavItem[] = [
   {
     label: "顧客",
     description: "顧客を一覧・登録します。",
     href: "/customers",
     activePrefix: "/customers",
-    globalNav: true,
+    icon: "customers",
   },
   {
     label: "組織",
     description: "顧客の所属先になる組織を管理します。",
     href: "/organizations",
     activePrefix: "/organizations",
-    globalNav: true,
+    icon: "organizations",
   },
-  TENANT_NAV_ITEM,
+  {
+    label: "テナント",
+    description: "所属しているテナントを管理します。",
+    href: "/tenants",
+    activePrefix: "/tenants",
+    icon: "tenants",
+  },
 ];
 
-export const GLOBAL_NAV_ITEMS: NavItem[] = [
-  HOME_NAV_ITEM,
-  ...FEATURE_NAV_ITEMS.filter((item) => item.globalNav),
-];
+export const NAV_ITEMS: NavItem[] = [HOME_NAV_ITEM, ...FEATURE_NAV_ITEMS];
 
 export function isNavItemActive(pathname: string, item: NavItem): boolean {
   return (
