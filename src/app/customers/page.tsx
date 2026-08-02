@@ -2,6 +2,7 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import Checkbox from "@/components/Checkbox";
 import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
 import PrimaryLink from "@/components/PrimaryLink";
@@ -186,19 +187,13 @@ function Customers() {
         </PrimaryLink>
       </section>
 
-      <label className="text-muted flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={includeInactive}
-          onChange={(e) =>
-            router.replace(listHref(tenantId, e.target.checked), {
-              scroll: false,
-            })
-          }
-          className="accent-primary size-4 cursor-pointer"
-        />
-        無効な顧客も表示する
-      </label>
+      <Checkbox
+        label="無効な顧客も表示する"
+        checked={includeInactive}
+        onChange={(checked) =>
+          router.replace(listHref(tenantId, checked), { scroll: false })
+        }
+      />
 
       <section className="flex flex-col gap-3">
         {!result ? (
