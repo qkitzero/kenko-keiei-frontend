@@ -2,13 +2,32 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import DataTable, { type Column } from "@/components/DataTable";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
+import StateCard from "@/components/StateCard";
 import TextField from "@/components/TextField";
-import { useTenants } from "@/context/TenantsContext";
+import { useTenants, type TenantMembership } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
 import { roleLabel } from "@/lib/roles";
 import { useState } from "react";
+
+const TENANT_COLUMNS: Column<TenantMembership>[] = [
+  { header: "テナント名", cell: ({ tenant }) => tenant.name },
+  {
+    header: "ID",
+    cell: ({ tenant }) => (
+      <span className="text-subtle font-mono text-xs">{tenant.tenantId}</span>
+    ),
+  },
+  {
+    header: "ロール",
+    cell: ({ role }) => <Badge size="sm">{roleLabel(role)}</Badge>,
+    align: "end",
+  },
+];
 
 export default function Tenants() {
   const { user, loading: userLoading } = useUser();
@@ -51,18 +70,13 @@ export default function Tenants() {
   };
 
   if (userLoading || (user && tenantsLoading)) {
-    return (
-      <PageContainer>
-        <div className="bg-placeholder h-9 w-48 animate-pulse rounded-lg" />
-        <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-      </PageContainer>
-    );
+    return <PageSkeleton />;
   }
 
   if (!user) {
     return (
       <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
           テナント
         </h1>
         <p className="text-subtle text-sm">
@@ -74,24 +88,20 @@ export default function Tenants() {
 
   return (
     <PageContainer>
-      <section>
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          テナント
-        </h1>
-        <p className="text-muted mt-2">所属しているテナントの一覧です。</p>
-      </section>
+      <PageHeader
+        title="テナント"
+        description="所属しているテナントの一覧です。顧客と組織はテナントごとに管理します。"
+      />
 
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">
-          新しいテナントを作成
-        </h2>
-        <form onSubmit={handleCreate} className="mt-4 flex gap-3">
+      <Card title="新しいテナントを作成">
+        <form onSubmit={handleCreate} className="flex gap-2">
           <TextField
             value={name}
             onChange={setName}
             placeholder="テナント名"
+            aria-label="テナント名"
             required
-            className="flex-1"
+            className="max-w-sm flex-1"
           />
           <PrimaryButton type="submit" disabled={creating}>
             {creating ? "作成中..." : "作成"}
@@ -100,32 +110,21 @@ export default function Tenants() {
         {error && <p className="text-danger mt-3 text-sm">{error}</p>}
       </Card>
 
-      <section className="flex flex-col gap-3">
-        {memberships.length === 0 ? (
-          <Card as="div" padding="lg" dashed className="text-center">
-            <p className="text-muted text-sm">
-              まだテナントに所属していません。上のフォームから作成してください。
-            </p>
-          </Card>
-        ) : (
-          memberships.map(({ tenant, role }) => (
-            <Card
-              key={tenant.tenantId}
-              href={`/tenants/${tenant.tenantId}`}
-              padding="sm"
-              className="flex items-center justify-between"
-            >
-              <div>
-                <p className="text-foreground font-medium">{tenant.name}</p>
-                <p className="text-subtle mt-0.5 truncate text-xs">
-                  {tenant.tenantId}
-                </p>
-              </div>
-              <Badge>{roleLabel(role)}</Badge>
-            </Card>
-          ))
-        )}
-      </section>
+      <div className="flex flex-col gap-3">
+        <p className="text-subtle text-sm tabular-nums">
+          {memberships.length}件
+        </p>
+        <DataTable
+          caption="所属テナント一覧"
+          columns={TENANT_COLUMNS}
+          rows={memberships}
+          rowKey={({ tenant }) => tenant.tenantId}
+          rowHref={({ tenant }) => `/tenants/${tenant.tenantId}`}
+          empty={
+            <StateCard message="まだテナントに所属していません。上のフォームから作成してください。" />
+          }
+        />
+      </div>
     </PageContainer>
   );
 }

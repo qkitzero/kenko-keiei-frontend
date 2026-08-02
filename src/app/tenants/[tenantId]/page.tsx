@@ -2,10 +2,18 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import DangerZone from "@/components/DangerZone";
+import DataTable, { type Column } from "@/components/DataTable";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageMessage from "@/components/PageMessage";
+import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
+import SectionHeader from "@/components/SectionHeader";
 import Select from "@/components/Select";
+import StateCard from "@/components/StateCard";
+import TenantProfileCard from "@/components/TenantProfileCard";
 import TextField from "@/components/TextField";
 import { useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
@@ -102,7 +110,10 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   const [fetched, setFetched] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [error, setError] = useState("");
+  const [renameError, setRenameError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [memberError, setMemberError] = useState("");
+  const [childError, setChildError] = useState("");
 
   const [name, setName] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -115,6 +126,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   const myRole = members.find((m) => m.userId === user?.userId)?.role;
   const canManage = canManageMembers(myRole);
   const owner = isOwner(myRole);
+  const isMember = myRole !== undefined;
 
   const applyResult = useCallback((result: LoadResult) => {
     if (result.status === "ok") {
@@ -159,7 +171,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
     e.preventDefault();
     if (savingName || !name.trim()) return;
     setSavingName(true);
-    void runWithError(setError, async () => {
+    void runWithError(setRenameError, async () => {
       const res = await fetch(`/api/group/${tenantId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -179,7 +191,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
     ) {
       return;
     }
-    void runWithError(setError, async () => {
+    void runWithError(setDeleteError, async () => {
       const res = await fetch(`/api/group/${tenantId}`, { method: "DELETE" });
       await ensureOk(res, "テナントの削除に失敗しました");
       await refreshTenants();
@@ -191,7 +203,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
     e.preventDefault();
     if (addingMember || !newMemberId.trim()) return;
     setAddingMember(true);
-    void runWithError(setError, async () => {
+    void runWithError(setMemberError, async () => {
       const res = await fetch(`/api/group/${tenantId}/members`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -208,7 +220,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   };
 
   const handleRoleChange = (userId: string, role: string) => {
-    void runWithError(setError, async () => {
+    void runWithError(setMemberError, async () => {
       const res = await fetch(`/api/group/${tenantId}/members/${userId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -220,7 +232,14 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   };
 
   const handleRemoveMember = (userId: string) => {
-    void runWithError(setError, async () => {
+    if (
+      !window.confirm(
+        "このメンバーをテナントから外しますか？この操作は取り消せません。",
+      )
+    ) {
+      return;
+    }
+    void runWithError(setMemberError, async () => {
       const res = await fetch(`/api/group/${tenantId}/members/${userId}`, {
         method: "DELETE",
       });
@@ -233,7 +252,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
     e.preventDefault();
     if (addingChild || !newChildId.trim()) return;
     setAddingChild(true);
-    void runWithError(setError, async () => {
+    void runWithError(setChildError, async () => {
       const res = await fetch(`/api/group/${tenantId}/children`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -246,7 +265,10 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   };
 
   const handleRemoveChild = (childTenantId: string) => {
-    void runWithError(setError, async () => {
+    if (!window.confirm("この下位テナントとの紐付けを解除しますか？")) {
+      return;
+    }
+    void runWithError(setChildError, async () => {
       const res = await fetch(
         `/api/group/${tenantId}/children/${childTenantId}`,
         { method: "DELETE" },
@@ -257,248 +279,262 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   };
 
   if (userLoading || (user && !fetched)) {
-    return (
-      <PageContainer>
-        <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
-        <div className="bg-placeholder h-64 w-full animate-pulse rounded-2xl" />
-      </PageContainer>
-    );
+    return <PageSkeleton width="detail" />;
   }
 
   if (!user) {
     return (
-      <PageContainer centered>
-        <p className="text-subtle text-sm">
-          このテナントを表示するにはサインインしてください。
-        </p>
-      </PageContainer>
+      <PageMessage message="このテナントを表示するにはサインインしてください。" />
     );
   }
 
   if (notFound) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          テナントが見つかりません
-        </h1>
-        <Link href="/tenants" className="text-muted text-sm underline">
-          テナント一覧に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="テナントが見つかりません"
+        link={{ href: "/tenants", label: "テナント一覧に戻る" }}
+      />
     );
   }
 
   if (loadError || !tenant) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          テナントを読み込めませんでした
-        </h1>
-        <p className="text-subtle text-sm">時間をおいて再度お試しください。</p>
-        <Link href="/tenants" className="text-muted text-sm underline">
-          テナント一覧に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="テナントを読み込めませんでした"
+        message="時間をおいて再度お試しください。"
+        link={{ href: "/tenants", label: "テナント一覧に戻る" }}
+      />
     );
   }
 
-  return (
-    <PageContainer>
-      <div>
-        <Link href="/tenants" className="text-subtle text-sm hover:underline">
-          ← テナント一覧
+  const memberColumns: Column<Member>[] = [
+    {
+      header: "ユーザー ID",
+      cell: (member) => (
+        <span className="font-mono text-xs">
+          {member.userId}
+          {member.userId === user.userId && (
+            <span className="text-subtle font-sans"> (あなた)</span>
+          )}
+        </span>
+      ),
+    },
+    {
+      header: "ロール",
+      cell: (member) =>
+        canManage && !isOwner(member.role) ? (
+          <Select
+            size="sm"
+            aria-label={`${member.userId}のロール`}
+            value={member.role}
+            onChange={(role) => handleRoleChange(member.userId, role)}
+          >
+            {ASSIGNABLE_ROLES.map((r) => (
+              <option key={r} value={r}>
+                {roleLabel(r)}
+              </option>
+            ))}
+          </Select>
+        ) : (
+          <span className="text-muted text-xs">{roleLabel(member.role)}</span>
+        ),
+      align: "end",
+    },
+  ];
+
+  if (canManage && members.some((member) => !isOwner(member.role))) {
+    memberColumns.push({
+      header: "操作",
+      cell: (member) =>
+        isOwner(member.role) ? null : (
+          <SecondaryButton
+            size="sm"
+            variant="danger"
+            onClick={() => handleRemoveMember(member.userId)}
+          >
+            削除
+          </SecondaryButton>
+        ),
+      align: "end",
+    });
+  }
+
+  const childColumns: Column<Tenant>[] = [
+    {
+      header: "テナント名",
+      cell: (child) => (
+        <Link
+          href={`/tenants/${child.tenantId}`}
+          className="text-foreground font-medium hover:underline"
+        >
+          {child.name}
         </Link>
-      </div>
+      ),
+    },
+  ];
 
-      <section>
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          {tenant.name}
-        </h1>
-        <p className="text-subtle mt-1 truncate text-xs">{tenant.tenantId}</p>
-        {myRole && (
-          <Badge className="mt-3 inline-block">
-            あなたのロール: {roleLabel(myRole)}
-          </Badge>
-        )}
-      </section>
+  if (canManage) {
+    childColumns.push({
+      header: "操作",
+      cell: (child) => (
+        <SecondaryButton
+          size="sm"
+          onClick={() => handleRemoveChild(child.tenantId)}
+        >
+          解除
+        </SecondaryButton>
+      ),
+      align: "end",
+    });
+  }
 
-      {error && <p className="text-danger text-sm">{error}</p>}
+  const parentColumns: Column<Tenant>[] = [
+    {
+      header: "テナント名",
+      cell: (parent) => (
+        <Link
+          href={`/tenants/${parent.tenantId}`}
+          className="text-foreground font-medium hover:underline"
+        >
+          {parent.name}
+        </Link>
+      ),
+    },
+  ];
 
-      {canManage && (
-        <Card>
-          <h2 className="text-foreground text-sm font-medium">テナント設定</h2>
-          <form onSubmit={handleRename} className="mt-4 flex gap-3">
+  return (
+    <PageContainer width="detail">
+      <PageHeader
+        backHref="/tenants"
+        backLabel="テナント一覧"
+        title={tenant.name}
+        meta={myRole && <Badge>{roleLabel(myRole)}</Badge>}
+      />
+
+      <Card title="テナント設定">
+        <dl>
+          <dt className="text-muted text-sm font-medium">テナント ID</dt>
+          <dd className="text-subtle mt-1 truncate font-mono text-xs">
+            {tenant.tenantId}
+          </dd>
+        </dl>
+        {canManage && (
+          <form onSubmit={handleRename} className="mt-6 flex gap-2">
             <TextField
               value={name}
               onChange={setName}
+              aria-label="テナント名"
               required
-              className="flex-1"
+              className="max-w-sm flex-1"
             />
             <SecondaryButton type="submit" disabled={savingName}>
               {savingName ? "保存中..." : "名前を更新"}
             </SecondaryButton>
           </form>
-          {owner && (
-            <div className="border-border mt-4 flex items-center justify-between border-t pt-4">
-              <p className="text-subtle text-sm">
-                このテナントを削除します。元に戻せません。
-              </p>
-              <SecondaryButton variant="danger" onClick={handleDeleteTenant}>
-                テナントを削除
+        )}
+        {renameError && (
+          <p className="text-danger mt-3 text-sm">{renameError}</p>
+        )}
+      </Card>
+
+      {isMember && <TenantProfileCard tenantId={tenantId} />}
+
+      <section className="flex flex-col gap-3">
+        <SectionHeader title="メンバー" count={members.length} />
+        <DataTable
+          caption="メンバー一覧"
+          columns={memberColumns}
+          rows={members}
+          rowKey={(member) => member.userId}
+          empty={<StateCard message="メンバーはいません。" />}
+        />
+        {memberError && <p className="text-danger text-sm">{memberError}</p>}
+        {canManage && (
+          <Card padding="sm">
+            <form
+              onSubmit={handleAddMember}
+              className="flex flex-wrap items-end gap-2"
+            >
+              <TextField
+                label="ユーザー ID"
+                value={newMemberId}
+                onChange={setNewMemberId}
+                required
+                className="min-w-56 flex-1"
+              />
+              <Select
+                label="ロール"
+                value={newMemberRole}
+                onChange={setNewMemberRole}
+              >
+                {ASSIGNABLE_ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {roleLabel(r)}
+                  </option>
+                ))}
+              </Select>
+              <PrimaryButton type="submit" disabled={addingMember}>
+                {addingMember ? "追加中..." : "メンバーを追加"}
+              </PrimaryButton>
+            </form>
+          </Card>
+        )}
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <SectionHeader title="下位テナント" count={children.length} />
+        <DataTable
+          caption="下位テナント一覧"
+          columns={childColumns}
+          rows={children}
+          rowKey={(child) => child.tenantId}
+          empty={<StateCard message="下位テナントはありません。" />}
+        />
+        {childError && <p className="text-danger text-sm">{childError}</p>}
+        {canManage && (
+          <Card padding="sm">
+            <form
+              onSubmit={handleAddChild}
+              className="flex flex-wrap items-end gap-2"
+            >
+              <TextField
+                label="下位テナントの ID"
+                value={newChildId}
+                onChange={setNewChildId}
+                required
+                className="min-w-56 flex-1"
+              />
+              <SecondaryButton type="submit" disabled={addingChild}>
+                {addingChild ? "追加中..." : "下位テナントを追加"}
               </SecondaryButton>
-            </div>
-          )}
-        </Card>
-      )}
-
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">
-          メンバー ({members.length})
-        </h2>
-        <ul className="mt-4 flex flex-col gap-2">
-          {members.map((m) => {
-            const rowIsOwner = isOwner(m.role);
-            return (
-              <li
-                key={m.userId}
-                className="border-border flex items-center justify-between gap-3 rounded-xl border px-4 py-3"
-              >
-                <span className="text-foreground truncate text-sm">
-                  {m.userId}
-                  {m.userId === user.userId && (
-                    <span className="text-subtle"> (あなた)</span>
-                  )}
-                </span>
-                <div className="flex items-center gap-2">
-                  {canManage && !rowIsOwner ? (
-                    <Select
-                      size="sm"
-                      value={m.role}
-                      onChange={(role) => handleRoleChange(m.userId, role)}
-                    >
-                      {ASSIGNABLE_ROLES.map((r) => (
-                        <option key={r} value={r}>
-                          {roleLabel(r)}
-                        </option>
-                      ))}
-                    </Select>
-                  ) : (
-                    <span className="text-muted text-xs">
-                      {roleLabel(m.role)}
-                    </span>
-                  )}
-                  {canManage && !rowIsOwner && (
-                    <button
-                      onClick={() => handleRemoveMember(m.userId)}
-                      className="text-subtle hover:text-danger text-xs"
-                    >
-                      削除
-                    </button>
-                  )}
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-
-        {canManage && (
-          <form
-            onSubmit={handleAddMember}
-            className="border-border mt-4 flex gap-2 border-t pt-4"
-          >
-            <TextField
-              value={newMemberId}
-              onChange={setNewMemberId}
-              placeholder="ユーザーID"
-              required
-              className="flex-1"
-            />
-            <Select value={newMemberRole} onChange={setNewMemberRole}>
-              {ASSIGNABLE_ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {roleLabel(r)}
-                </option>
-              ))}
-            </Select>
-            <PrimaryButton type="submit" disabled={addingMember}>
-              {addingMember ? "追加中..." : "追加"}
-            </PrimaryButton>
-          </form>
+            </form>
+          </Card>
         )}
-      </Card>
-
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">
-          下位テナント ({children.length})
-        </h2>
-        {children.length === 0 ? (
-          <p className="text-subtle mt-3 text-sm">下位テナントはありません。</p>
-        ) : (
-          <ul className="mt-4 flex flex-col gap-2">
-            {children.map((c) => (
-              <li
-                key={c.tenantId}
-                className="border-border flex items-center justify-between gap-3 rounded-xl border px-4 py-3"
-              >
-                <Link
-                  href={`/tenants/${c.tenantId}`}
-                  className="text-foreground truncate text-sm hover:underline"
-                >
-                  {c.name}
-                </Link>
-                {canManage && (
-                  <button
-                    onClick={() => handleRemoveChild(c.tenantId)}
-                    className="text-subtle hover:text-danger text-xs"
-                  >
-                    解除
-                  </button>
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-
-        {canManage && (
-          <form
-            onSubmit={handleAddChild}
-            className="border-border mt-4 flex gap-2 border-t pt-4"
-          >
-            <TextField
-              value={newChildId}
-              onChange={setNewChildId}
-              placeholder="下位テナントのID"
-              required
-              className="flex-1"
-            />
-            <SecondaryButton type="submit" disabled={addingChild}>
-              {addingChild ? "追加中..." : "下位テナントを追加"}
-            </SecondaryButton>
-          </form>
-        )}
-      </Card>
+      </section>
 
       {parents.length > 0 && (
-        <Card>
-          <h2 className="text-foreground text-sm font-medium">
-            上位テナント ({parents.length})
-          </h2>
-          <ul className="mt-4 flex flex-col gap-2">
-            {parents.map((p) => (
-              <li
-                key={p.tenantId}
-                className="border-border rounded-xl border px-4 py-3"
-              >
-                <Link
-                  href={`/tenants/${p.tenantId}`}
-                  className="text-foreground truncate text-sm hover:underline"
-                >
-                  {p.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </Card>
+        <section className="flex flex-col gap-3">
+          <SectionHeader title="上位テナント" count={parents.length} />
+          <DataTable
+            caption="上位テナント一覧"
+            columns={parentColumns}
+            rows={parents}
+            rowKey={(parent) => parent.tenantId}
+          />
+        </section>
+      )}
+
+      {owner && (
+        <DangerZone
+          title="テナントの削除"
+          description="このテナントを削除します。元に戻せません。"
+          error={deleteError}
+          action={
+            <SecondaryButton variant="danger" onClick={handleDeleteTenant}>
+              テナントを削除
+            </SecondaryButton>
+          }
+        />
       )}
     </PageContainer>
   );

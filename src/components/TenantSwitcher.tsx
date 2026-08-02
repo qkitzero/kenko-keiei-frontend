@@ -1,10 +1,11 @@
 "use client";
 
+import { MENU_ITEM, MENU_PANEL, MENU_TRIGGER } from "@/components/menu";
 import { tenantIdFromPathname, useTenants } from "@/context/TenantsContext";
 import { roleLabel } from "@/lib/roles";
-import Link from "next/link";
+import { useDismissableMenu } from "@/lib/useDismissableMenu";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 export default function TenantSwitcher() {
   const { memberships, loading, error, selectedTenantId, selectTenant } =
@@ -12,17 +13,8 @@ export default function TenantSwitcher() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const close = useCallback(() => setOpen(false), []);
+  const { containerRef, triggerRef } = useDismissableMenu(open, close);
 
   const pathTenantId = tenantIdFromPathname(pathname);
   const shownTenantId = pathTenantId || selectedTenantId;
@@ -38,35 +30,42 @@ export default function TenantSwitcher() {
     }
   };
 
-  if (loading) {
-    return <div className="bg-placeholder h-7 w-32 animate-pulse rounded-lg" />;
-  }
-
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative" ref={containerRef}>
       <button
+        ref={triggerRef}
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className="border-border text-foreground hover:bg-hover flex max-w-[14rem] cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
+        className={`${MENU_TRIGGER} max-w-56 gap-1.5`}
       >
-        <span className="text-subtle hidden shrink-0 text-xs font-normal sm:inline">
+        <span className="text-subtle sr-only shrink-0 text-xs font-normal sm:not-sr-only">
           テナント
         </span>
-        <span className="truncate">{activeTenant?.name ?? "—"}</span>
-        <span className="text-subtle text-xs">▾</span>
+        {loading ? (
+          <span className="bg-placeholder h-3.5 w-20 animate-pulse rounded" />
+        ) : (
+          <span className="truncate">{activeTenant?.name ?? "—"}</span>
+        )}
+        <span className="text-subtle text-xs" aria-hidden>
+          ▾
+        </span>
       </button>
 
       {open && (
-        <div className="border-border bg-surface absolute right-0 mt-2 min-w-64 rounded-xl border p-2 shadow-lg">
-          {memberships.length === 0 ? (
-            <p className="text-subtle px-3 py-2 text-xs">
+        <div className={MENU_PANEL}>
+          {loading ? (
+            <p className="text-subtle px-2.5 py-2 text-xs">
+              テナント情報を読み込んでいます。
+            </p>
+          ) : memberships.length === 0 ? (
+            <p className="text-subtle px-2.5 py-2 text-xs">
               {error
                 ? "テナント情報を取得できませんでした。"
                 : "所属しているテナントはありません。"}
             </p>
           ) : (
             <>
-              <p className="text-subtle px-3 py-2 text-xs">
+              <p className="text-subtle px-2.5 py-1.5 text-xs">
                 表示中のテナントを切り替えます。
               </p>
               <div className="max-h-72 overflow-y-auto">
@@ -77,11 +76,9 @@ export default function TenantSwitcher() {
                       key={tenant.tenantId}
                       onClick={() => handleSelect(tenant.tenantId)}
                       aria-current={isActive ? "true" : undefined}
-                      className={`hover:bg-hover flex w-full cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-left transition-colors ${
-                        isActive ? "bg-hover" : ""
-                      }`}
+                      className={`${MENU_ITEM} ${isActive ? "bg-hover" : ""}`}
                     >
-                      <span className="text-foreground truncate text-sm">
+                      <span className="text-foreground truncate">
                         {tenant.name}
                       </span>
                       <span className="text-subtle flex shrink-0 items-center gap-1.5 text-xs">
@@ -99,16 +96,6 @@ export default function TenantSwitcher() {
               </div>
             </>
           )}
-
-          <div className="bg-border my-1 h-px" />
-
-          <Link
-            href="/tenants"
-            onClick={() => setOpen(false)}
-            className="text-foreground hover:bg-hover block rounded-lg px-3 py-2 text-sm transition-colors"
-          >
-            テナントを管理
-          </Link>
         </div>
       )}
     </div>

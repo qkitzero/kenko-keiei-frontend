@@ -1,15 +1,20 @@
 "use client";
 
 import Badge from "@/components/Badge";
-import Card from "@/components/Card";
+import Checkbox from "@/components/Checkbox";
+import DataTable, { type Column } from "@/components/DataTable";
 import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryLink from "@/components/PrimaryLink";
 import SecondaryButton from "@/components/SecondaryButton";
+import StateCard from "@/components/StateCard";
 import { useTenantScope, useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
-import { Customer, birthDateLabel, genderLabel } from "@/lib/customer";
-import { organizationName } from "@/lib/organization";
+import { Customer, genderLabel } from "@/lib/customer";
+import { dateLabel } from "@/lib/date";
+import { organizationName, type OrganizationOptions } from "@/lib/organization";
 import { useOrganizations } from "@/lib/useOrganizations";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -48,13 +53,52 @@ function listHref(tenantId: string, includeInactive: boolean): string {
   return `/customers?${query}`;
 }
 
-function PageSkeleton() {
-  return (
-    <PageContainer>
-      <div className="bg-placeholder h-9 w-48 animate-pulse rounded-lg" />
-      <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-    </PageContainer>
-  );
+function organizationCell(
+  organizations: OrganizationOptions,
+  organizationId: string | undefined,
+) {
+  if (!organizationId) return "—";
+  if (organizations.status === "loading") {
+    return (
+      <span className="bg-placeholder inline-block h-4 w-24 animate-pulse rounded align-middle" />
+    );
+  }
+  if (organizations.status === "error") {
+    return <span className="text-subtle">取得できませんでした</span>;
+  }
+  return organizationName(organizations, organizationId) || "—";
+}
+
+function customerColumns(
+  organizations: OrganizationOptions,
+): Column<Customer>[] {
+  return [
+    {
+      header: "氏名",
+      cell: (customer) => (
+        <span className="flex items-center gap-2">
+          {customer.name}
+          {customer.isActive === false && (
+            <Badge size="sm" tone="subtle">
+              無効
+            </Badge>
+          )}
+        </span>
+      ),
+    },
+    { header: "カナ", cell: (customer) => customer.nameKana },
+    {
+      header: "組織",
+      cell: (customer) =>
+        organizationCell(organizations, customer.organizationId),
+    },
+    { header: "性別", cell: (customer) => genderLabel(customer.gender) || "—" },
+    {
+      header: "生年月日",
+      cell: (customer) => dateLabel(customer.birthDate) || "—",
+      align: "end",
+    },
+  ];
 }
 
 export default function CustomersPage() {
@@ -113,7 +157,7 @@ function Customers() {
   if (!user) {
     return (
       <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
           顧客
         </h1>
         <p className="text-subtle text-sm">
@@ -132,7 +176,7 @@ function Customers() {
 
     return (
       <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
           テナント情報を取得できませんでした
         </h1>
         <p className="text-subtle text-sm">
@@ -148,7 +192,7 @@ function Customers() {
   if (memberships.length === 0) {
     return (
       <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
           対象のテナントがありません
         </h1>
         <p className="text-subtle text-sm">
@@ -167,124 +211,76 @@ function Customers() {
 
   return (
     <PageContainer>
-      <section className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-            顧客
-          </h1>
-          <p className="text-muted mt-2">
-            {tenantName}に登録されている顧客の一覧です。
+      <PageHeader
+        title="顧客"
+        description={`${tenantName}に登録されている顧客の一覧です。`}
+        actions={
+          <PrimaryLink href="/customers/register">顧客を登録</PrimaryLink>
+        }
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-subtle text-sm tabular-nums">
+            {result?.status === "ok" && `${result.customers.length}件`}
           </p>
-          {memberships.length > 1 && (
-            <p className="text-subtle mt-1 text-sm">
-              ヘッダーのテナントメニューで表示するテナントを切り替えられます。
+          {organizations.status === "error" && (
+            <p className="text-subtle flex items-center gap-2 text-sm">
+              組織名を取得できませんでした。
+              <SecondaryButton size="sm" onClick={organizations.retry}>
+                再取得
+              </SecondaryButton>
             </p>
           )}
         </div>
-        <PrimaryLink href="/customers/register" className="shrink-0">
-          顧客を登録
-        </PrimaryLink>
-      </section>
-
-      <label className="text-muted flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
+        <Checkbox
+          label="無効な顧客も表示する"
           checked={includeInactive}
-          onChange={(e) =>
-            router.replace(listHref(tenantId, e.target.checked), {
-              scroll: false,
-            })
+          onChange={(checked) =>
+            router.replace(listHref(tenantId, checked), { scroll: false })
           }
-          className="accent-primary size-4 cursor-pointer"
         />
-        無効な顧客も表示する
-      </label>
+      </div>
 
-      <section className="flex flex-col gap-3">
-        {!result ? (
-          <>
-            <div className="bg-placeholder h-20 w-full animate-pulse rounded-2xl" />
-            <div className="bg-placeholder h-20 w-full animate-pulse rounded-2xl" />
-            <div className="bg-placeholder h-20 w-full animate-pulse rounded-2xl" />
-          </>
-        ) : result.status === "unauthenticated" ? (
-          <Card as="div" padding="lg" dashed className="text-center">
-            <p className="text-muted text-sm">
-              サインインの有効期限が切れました。再度サインインしてください。
-            </p>
-            <div className="mt-4 flex justify-center">
-              <div className="w-40">
-                <LoginButton />
-              </div>
-            </div>
-          </Card>
-        ) : result.status === "forbidden" ? (
-          <Card as="div" padding="lg" dashed className="text-center">
-            <p className="text-muted text-sm">
-              このテナントの顧客を表示する権限がありません。
-            </p>
-          </Card>
-        ) : result.status === "error" ? (
-          <Card as="div" padding="lg" dashed className="text-center">
-            <p className="text-muted text-sm">
-              顧客一覧を読み込めませんでした。時間をおいて再度お試しください。
-            </p>
-            <div className="mt-4 flex justify-center">
-              <SecondaryButton onClick={() => setReloadKey((key) => key + 1)}>
-                再試行
-              </SecondaryButton>
-            </div>
-          </Card>
-        ) : result.customers.length === 0 ? (
-          <Card as="div" padding="lg" dashed className="text-center">
-            <p className="text-muted text-sm">
-              {includeInactive
-                ? "このテナントにはまだ顧客が登録されていません。"
-                : "このテナントに有効な顧客はいません。無効な顧客は上のチェックボックスで表示できます。"}
-            </p>
-            <Link
-              href="/customers/register"
-              className="text-muted mt-3 inline-block text-sm underline"
-            >
-              顧客を登録
-            </Link>
-          </Card>
-        ) : (
-          result.customers.map((customer) => (
-            <Card
-              key={customer.customerId}
-              href={`/customers/${customer.customerId}`}
-              padding="sm"
-              className="flex items-center justify-between gap-4"
-            >
-              <div className="min-w-0">
-                <p className="text-foreground flex items-center gap-2 font-medium">
-                  <span className="truncate">{customer.name}</span>
-                  {customer.isActive === false && (
-                    <Badge size="sm" tone="subtle" className="shrink-0">
-                      無効
-                    </Badge>
-                  )}
-                </p>
-                <p className="text-subtle mt-0.5 truncate text-xs">
-                  {[
-                    customer.nameKana,
-                    organizationName(organizations, customer.organizationId),
-                  ]
-                    .filter(Boolean)
-                    .join(" ・ ")}
-                </p>
-              </div>
-              <div className="text-muted shrink-0 text-right text-xs">
-                <p>{genderLabel(customer.gender) || "性別未登録"}</p>
-                <p className="mt-0.5">
-                  {birthDateLabel(customer.birthDate) || "生年月日未登録"}
-                </p>
-              </div>
-            </Card>
-          ))
-        )}
-      </section>
+      {!result ? (
+        <div className="bg-placeholder h-64 w-full animate-pulse rounded-lg" />
+      ) : result.status === "unauthenticated" ? (
+        <StateCard
+          message="サインインの有効期限が切れました。再度サインインしてください。"
+          action={<LoginButton />}
+        />
+      ) : result.status === "forbidden" ? (
+        <StateCard message="このテナントの顧客を表示する権限がありません。" />
+      ) : result.status === "error" ? (
+        <StateCard
+          message="顧客一覧を読み込めませんでした。時間をおいて再度お試しください。"
+          action={
+            <SecondaryButton onClick={() => setReloadKey((key) => key + 1)}>
+              再試行
+            </SecondaryButton>
+          }
+        />
+      ) : (
+        <DataTable
+          caption="顧客一覧"
+          columns={customerColumns(organizations)}
+          rows={result.customers}
+          rowKey={(customer) => customer.customerId ?? ""}
+          rowHref={(customer) => `/customers/${customer.customerId}`}
+          empty={
+            <StateCard
+              message={
+                includeInactive
+                  ? "このテナントにはまだ顧客が登録されていません。"
+                  : "このテナントに有効な顧客はいません。無効な顧客は上のチェックボックスで表示できます。"
+              }
+              action={
+                <PrimaryLink href="/customers/register">顧客を登録</PrimaryLink>
+              }
+            />
+          }
+        />
+      )}
     </PageContainer>
   );
 }

@@ -1,14 +1,11 @@
 import {
-  TIMEZONE_TOLERANCE_DAYS,
-  isFutureDate,
-  isValidCustomerDate,
-  isValidKana,
-  isValidPhone,
   isValidPostalCode,
   isValidPrefecture,
-  normalizePhone,
   normalizePostalCode,
-} from "@/lib/customer";
+} from "@/lib/address";
+import { isValidEmail, isValidPhone, normalizePhone } from "@/lib/contact";
+import { isValidKana } from "@/lib/customer";
+import { TIMEZONE_TOLERANCE_DAYS, isFutureDate, isValidDate } from "@/lib/date";
 import { isValidOrganizationId } from "@/lib/organization";
 import { TEXT_MAX_LENGTH, isTooLong } from "@/lib/text";
 import type { components } from "../../../../../gen/customer/v1/customer.schema";
@@ -53,6 +50,7 @@ const VALIDATORS: Partial<
 > = {
   phone: isValidPhone,
   emergencyContactPhone: isValidPhone,
+  email: isValidEmail,
   postalCode: isValidPostalCode,
   prefecture: isValidPrefecture,
 };
@@ -77,7 +75,7 @@ function birthDate(value: unknown): Schemas["typeDate"] | null {
     return null;
   }
   const date = { year, month, day };
-  if (!isValidCustomerDate(date)) return null;
+  if (!isValidDate(date)) return null;
   if (isFutureDate(date, TIMEZONE_TOLERANCE_DAYS)) return null;
   return date;
 }

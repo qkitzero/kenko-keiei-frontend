@@ -1,8 +1,12 @@
 "use client";
 
 import Card from "@/components/Card";
+import DangerZone from "@/components/DangerZone";
 import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageMessage from "@/components/PageMessage";
+import PageSkeleton from "@/components/PageSkeleton";
 import SecondaryButton from "@/components/SecondaryButton";
 import TextField from "@/components/TextField";
 import { useTenants } from "@/context/TenantsContext";
@@ -10,7 +14,6 @@ import { useUser } from "@/context/UserContext";
 import { ensureOk, runWithError } from "@/lib/apiError";
 import { Organization, buildOrganizationName } from "@/lib/organization";
 import { TEXT_MAX_LENGTH } from "@/lib/text";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 
@@ -182,62 +185,41 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
   };
 
   if (userLoading || (user && !fetched)) {
-    return (
-      <PageContainer>
-        <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
-        <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-      </PageContainer>
-    );
+    return <PageSkeleton width="detail" />;
   }
 
   if (!user) {
     return (
-      <PageContainer centered>
-        <p className="text-subtle text-sm">
-          この組織を表示するにはサインインしてください。
-        </p>
-      </PageContainer>
+      <PageMessage message="この組織を表示するにはサインインしてください。" />
     );
   }
 
   if (notFound) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          組織が見つかりません
-        </h1>
-        <Link href="/organizations" className="text-muted text-sm underline">
-          組織一覧に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="組織が見つかりません"
+        link={{ href: "/organizations", label: "組織一覧に戻る" }}
+      />
     );
   }
 
   if (unauthenticated) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          サインインの有効期限が切れました
-        </h1>
-        <p className="text-subtle text-sm">再度サインインしてください。</p>
-        <div className="w-40">
-          <LoginButton />
-        </div>
-      </PageContainer>
+      <PageMessage
+        title="サインインの有効期限が切れました"
+        message="再度サインインしてください。"
+        action={<LoginButton />}
+      />
     );
   }
 
   if (loadError || !organization) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          組織を読み込めませんでした
-        </h1>
-        <p className="text-subtle text-sm">時間をおいて再度お試しください。</p>
-        <Link href="/organizations" className="text-muted text-sm underline">
-          組織一覧に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="組織を読み込めませんでした"
+        message="時間をおいて再度お試しください。"
+        link={{ href: "/organizations", label: "組織一覧に戻る" }}
+      />
     );
   }
 
@@ -252,57 +234,54 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
   )?.tenant.name;
 
   return (
-    <PageContainer>
-      <div>
-        <Link
-          href="/organizations"
-          className="text-subtle text-sm hover:underline"
-        >
-          ← 組織一覧
-        </Link>
-      </div>
+    <PageContainer width="detail">
+      <PageHeader
+        backHref="/organizations"
+        backLabel="組織一覧"
+        title={organization.name ?? ""}
+      />
 
-      <section>
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          {organization.name}
-        </h1>
-        <p className="text-subtle mt-1 truncate text-xs">
-          {organization.organizationId}
-        </p>
-      </section>
+      <Card title="組織設定">
+        <dl className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt className="text-muted text-sm font-medium">所属テナント</dt>
+            {tenantsLoading ? (
+              <dd className="bg-placeholder mt-1 h-5 w-40 animate-pulse rounded" />
+            ) : tenantName ? (
+              <dd className="text-foreground mt-1 text-sm">{tenantName}</dd>
+            ) : (
+              <dd className="mt-1">
+                <p className="text-subtle text-sm">
+                  {tenantsError
+                    ? "テナント名を取得できませんでした"
+                    : "あなたが所属していないテナントです"}
+                </p>
+                <p className="text-subtle mt-0.5 truncate font-mono text-xs">
+                  {organization.tenantId}
+                </p>
+                {tenantsError && (
+                  <div className="mt-2">
+                    <SecondaryButton
+                      size="sm"
+                      onClick={handleRetryTenants}
+                      disabled={retryingTenants}
+                    >
+                      {retryingTenants ? "再取得中..." : "テナント名を再取得"}
+                    </SecondaryButton>
+                  </div>
+                )}
+              </dd>
+            )}
+          </div>
+          <div>
+            <dt className="text-muted text-sm font-medium">組織 ID</dt>
+            <dd className="text-subtle mt-1 truncate font-mono text-xs">
+              {organization.organizationId}
+            </dd>
+          </div>
+        </dl>
 
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">組織設定</h2>
-        <div className="mt-4">
-          <p className="text-muted text-sm font-medium">所属テナント</p>
-          {tenantsLoading ? (
-            <div className="bg-placeholder mt-1 h-5 w-40 animate-pulse rounded" />
-          ) : tenantName ? (
-            <p className="text-foreground mt-1 text-sm">{tenantName}</p>
-          ) : (
-            <>
-              <p className="text-subtle mt-1 text-sm">
-                {tenantsError
-                  ? "テナント名を取得できませんでした"
-                  : "あなたが所属していないテナントです"}
-              </p>
-              <p className="text-subtle mt-0.5 truncate text-xs">
-                {organization.tenantId}
-              </p>
-              {tenantsError && (
-                <div className="mt-2">
-                  <SecondaryButton
-                    onClick={handleRetryTenants}
-                    disabled={retryingTenants}
-                  >
-                    {retryingTenants ? "再取得中..." : "テナント名を再取得"}
-                  </SecondaryButton>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-        <form onSubmit={handleRename} className="mt-4 flex gap-3">
+        <form onSubmit={handleRename} className="mt-6 flex gap-2">
           <TextField
             value={name}
             onChange={setName}
@@ -310,7 +289,7 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
             placeholder="組織名"
             aria-label="組織名"
             required
-            className="flex-1"
+            className="max-w-sm flex-1"
           />
           <SecondaryButton type="submit" disabled={savingName}>
             {savingName ? "保存中..." : "名前を更新"}
@@ -319,15 +298,11 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
         {saveError && <p className="text-danger mt-3 text-sm">{saveError}</p>}
       </Card>
 
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">組織の削除</h2>
-        {deleteError && (
-          <p className="text-danger mt-3 text-sm">{deleteError}</p>
-        )}
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <p className="text-subtle text-sm">
-            この組織を削除します。元に戻せません。顧客が所属している組織は削除できません。
-          </p>
+      <DangerZone
+        title="組織の削除"
+        description="この組織を削除します。元に戻せません。顧客が所属している組織は削除できません。"
+        error={deleteError}
+        action={
           <SecondaryButton
             variant="danger"
             onClick={handleDelete}
@@ -335,8 +310,8 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
           >
             {deleting ? "削除中..." : "組織を削除"}
           </SecondaryButton>
-        </div>
-      </Card>
+        }
+      />
     </PageContainer>
   );
 }

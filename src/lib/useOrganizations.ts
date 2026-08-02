@@ -18,6 +18,8 @@ async function loadOrganizations(tenantId: string): Promise<FetchResult> {
   return { status: "ok", organizations };
 }
 
+const NO_TENANT: OrganizationOptions = { status: "ok", organizations: [] };
+
 export function useOrganizations(tenantId: string): OrganizationOptions {
   const [loaded, setLoaded] = useState<{
     key: string;
@@ -44,6 +46,7 @@ export function useOrganizations(tenantId: string): OrganizationOptions {
     };
   }, [tenantId, requestKey]);
 
+  if (!tenantId) return NO_TENANT;
   if (loaded?.key !== requestKey) return { status: "loading" };
   return loaded.result.status === "ok"
     ? loaded.result

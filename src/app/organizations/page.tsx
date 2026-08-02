@@ -1,10 +1,14 @@
 "use client";
 
 import Card from "@/components/Card";
+import DataTable, { type Column } from "@/components/DataTable";
 import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
+import StateCard from "@/components/StateCard";
 import TextField from "@/components/TextField";
 import { useTenantScope, useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
@@ -23,6 +27,19 @@ type LoadResult =
 
 type LoadedList = { key: string; result: LoadResult };
 
+const ORGANIZATION_COLUMNS: Column<Organization>[] = [
+  { header: "組織名", cell: (organization) => organization.name },
+  {
+    header: "ID",
+    cell: (organization) => (
+      <span className="text-subtle font-mono text-xs">
+        {organization.organizationId}
+      </span>
+    ),
+    align: "end",
+  },
+];
+
 async function loadOrganizations(tenantId: string): Promise<LoadResult> {
   const res = await fetch(
     `/api/fitness/organizations?tenantId=${encodeURIComponent(tenantId)}`,
@@ -37,15 +54,6 @@ async function loadOrganizations(tenantId: string): Promise<LoadResult> {
     (organization: Organization) => organization.organizationId,
   );
   return { status: "ok", organizations };
-}
-
-function PageSkeleton() {
-  return (
-    <PageContainer>
-      <div className="bg-placeholder h-9 w-48 animate-pulse rounded-lg" />
-      <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-    </PageContainer>
-  );
 }
 
 export default function OrganizationsPage() {
@@ -138,7 +146,7 @@ function Organizations() {
   if (!user) {
     return (
       <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
           組織
         </h1>
         <p className="text-subtle text-sm">
@@ -157,7 +165,7 @@ function Organizations() {
 
     return (
       <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
           テナント情報を取得できませんでした
         </h1>
         <p className="text-subtle text-sm">
@@ -173,7 +181,7 @@ function Organizations() {
   if (memberships.length === 0) {
     return (
       <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
           対象のテナントがありません
         </h1>
         <p className="text-subtle text-sm">
@@ -192,33 +200,21 @@ function Organizations() {
 
   return (
     <PageContainer>
-      <section>
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          組織
-        </h1>
-        <p className="text-muted mt-2">
-          {tenantName}
-          に登録されている組織の一覧です。顧客の所属先として使います。
-        </p>
-        {memberships.length > 1 && (
-          <p className="text-subtle mt-1 text-sm">
-            ヘッダーのテナントメニューで表示するテナントを切り替えられます。
-          </p>
-        )}
-      </section>
+      <PageHeader
+        title="組織"
+        description={`${tenantName}に登録されている組織の一覧です。顧客の所属先として使います。`}
+      />
 
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">
-          新しい組織を作成
-        </h2>
-        <form onSubmit={handleCreate} className="mt-4 flex gap-3">
+      <Card title="新しい組織を作成">
+        <form onSubmit={handleCreate} className="flex gap-2">
           <TextField
             value={name}
             onChange={setName}
             placeholder="組織名"
+            aria-label="組織名"
             maxLength={TEXT_MAX_LENGTH}
             required
-            className="flex-1"
+            className="max-w-sm flex-1"
           />
           <PrimaryButton type="submit" disabled={creating}>
             {creating ? "作成中..." : "作成"}
@@ -229,63 +225,44 @@ function Organizations() {
         )}
       </Card>
 
-      <section className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
+        <p className="text-subtle text-sm tabular-nums">
+          {result?.status === "ok" && `${result.organizations.length}件`}
+        </p>
+
         {!result ? (
-          <>
-            <div className="bg-placeholder h-16 w-full animate-pulse rounded-2xl" />
-            <div className="bg-placeholder h-16 w-full animate-pulse rounded-2xl" />
-          </>
+          <div className="bg-placeholder h-48 w-full animate-pulse rounded-lg" />
         ) : result.status === "unauthenticated" ? (
-          <Card as="div" padding="lg" dashed className="text-center">
-            <p className="text-muted text-sm">
-              サインインの有効期限が切れました。再度サインインしてください。
-            </p>
-            <div className="mt-4 flex justify-center">
-              <div className="w-40">
-                <LoginButton />
-              </div>
-            </div>
-          </Card>
+          <StateCard
+            message="サインインの有効期限が切れました。再度サインインしてください。"
+            action={<LoginButton />}
+          />
         ) : result.status === "forbidden" ? (
-          <Card as="div" padding="lg" dashed className="text-center">
-            <p className="text-muted text-sm">
-              このテナントの組織を表示する権限がありません。
-            </p>
-          </Card>
+          <StateCard message="このテナントの組織を表示する権限がありません。" />
         ) : result.status === "error" ? (
-          <Card as="div" padding="lg" dashed className="text-center">
-            <p className="text-muted text-sm">
-              組織一覧を読み込めませんでした。時間をおいて再度お試しください。
-            </p>
-            <div className="mt-4 flex justify-center">
+          <StateCard
+            message="組織一覧を読み込めませんでした。時間をおいて再度お試しください。"
+            action={
               <SecondaryButton onClick={() => setReloadKey((key) => key + 1)}>
                 再試行
               </SecondaryButton>
-            </div>
-          </Card>
-        ) : result.organizations.length === 0 ? (
-          <Card as="div" padding="lg" dashed className="text-center">
-            <p className="text-muted text-sm">
-              このテナントにはまだ組織が登録されていません。上のフォームから作成してください。
-            </p>
-          </Card>
+            }
+          />
         ) : (
-          result.organizations.map((organization) => (
-            <Card
-              key={organization.organizationId}
-              href={`/organizations/${organization.organizationId}`}
-              padding="sm"
-            >
-              <p className="text-foreground truncate font-medium">
-                {organization.name}
-              </p>
-              <p className="text-subtle mt-0.5 truncate text-xs">
-                {organization.organizationId}
-              </p>
-            </Card>
-          ))
+          <DataTable
+            caption="組織一覧"
+            columns={ORGANIZATION_COLUMNS}
+            rows={result.organizations}
+            rowKey={(organization) => organization.organizationId ?? ""}
+            rowHref={(organization) =>
+              `/organizations/${organization.organizationId}`
+            }
+            empty={
+              <StateCard message="このテナントにはまだ組織が登録されていません。上のフォームから作成してください。" />
+            }
+          />
         )}
-      </section>
+      </div>
     </PageContainer>
   );
 }

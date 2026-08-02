@@ -1,0 +1,366 @@
+"use client";
+
+import Badge from "@/components/Badge";
+import Card from "@/components/Card";
+import DangerZone from "@/components/DangerZone";
+import LoginButton from "@/components/LoginButton";
+import MeasurementFields from "@/components/MeasurementFields";
+import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageMessage from "@/components/PageMessage";
+import PageSkeleton from "@/components/PageSkeleton";
+import PrimaryButton from "@/components/PrimaryButton";
+import SecondaryButton from "@/components/SecondaryButton";
+import { useUser } from "@/context/UserContext";
+import { ensureOk, runWithError } from "@/lib/apiError";
+import { dateLabel } from "@/lib/date";
+import {
+  buildMeasurementPayload,
+  measurementDataLoss,
+  measurementToForm,
+  type Measurement,
+  type MeasurementFormValues,
+} from "@/lib/measurement";
+import { useCustomerName } from "@/lib/useCustomerName";
+import { useMeasurementItems } from "@/lib/useMeasurementItems";
+import { isSameId } from "@/lib/uuid";
+import { useRouter } from "next/navigation";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
+
+type LoadResult =
+  | { status: "ok"; data: Measurement }
+  | { status: "not_found" }
+  | { status: "unauthenticated" }
+  | { status: "error" };
+
+async function loadMeasurement(measurementId: string): Promise<LoadResult> {
+  const res = await fetch(`/api/fitness/measurement/${measurementId}`);
+  if (!res.ok) {
+    if (res.status === 404) return { status: "not_found" };
+    if (res.status === 401) return { status: "unauthenticated" };
+    return { status: "error" };
+  }
+  const data = await res.json();
+  if (!data.measurement?.measurementId) return { status: "not_found" };
+  return { status: "ok", data: data.measurement };
+}
+
+export default function MeasurementDetailPage({
+  params,
+}: {
+  params: Promise<{ customerId: string; measurementId: string }>;
+}) {
+  const { customerId, measurementId } = use(params);
+  return (
+    <MeasurementDetail
+      key={measurementId}
+      customerId={customerId}
+      measurementId={measurementId}
+    />
+  );
+}
+
+function MeasurementDetail({
+  customerId,
+  measurementId,
+}: {
+  customerId: string;
+  measurementId: string;
+}) {
+  const router = useRouter();
+  const { user, loading: userLoading } = useUser();
+  const items = useMeasurementItems();
+  const customerName = useCustomerName(customerId);
+
+  const [measurement, setMeasurement] = useState<Measurement | null>(null);
+  const [fetched, setFetched] = useState(false);
+  const [notFound, setNotFound] = useState(false);
+  const [unauthenticated, setUnauthenticated] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+
+  const [edited, setEdited] = useState<MeasurementFormValues | null>(null);
+  const [saving, setSaving] = useState<"draft" | "final" | null>(null);
+  const [saveError, setSaveError] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const applyResult = useCallback(
+    (result: LoadResult) => {
+      if (result.status === "ok") {
+        if (!isSameId(result.data.customerId, customerId)) {
+          setNotFound(true);
+          return;
+        }
+        setMeasurement(result.data);
+        setEdited(null);
+        setNotFound(false);
+        setUnauthenticated(false);
+        setLoadError(false);
+      } else if (result.status === "not_found") {
+        setNotFound(true);
+      } else if (result.status === "unauthenticated") {
+        setUnauthenticated(true);
+      } else {
+        setLoadError(true);
+      }
+    },
+    [customerId],
+  );
+
+  useEffect(() => {
+    if (userLoading || !user) return;
+    let active = true;
+    (async () => {
+      const result = await loadMeasurement(measurementId).catch(
+        () => ({ status: "error" }) as const,
+      );
+      if (!active) return;
+      applyResult(result);
+      setFetched(true);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [user, userLoading, measurementId, applyResult]);
+
+  const initial = useMemo(
+    () =>
+      measurement && items.status === "ok"
+        ? measurementToForm(measurement, items.data)
+        : null,
+    [measurement, items],
+  );
+
+  const dataLoss = useMemo(
+    () =>
+      measurement && items.status === "ok"
+        ? measurementDataLoss(measurement, items.data)
+        : null,
+    [measurement, items],
+  );
+
+  if (userLoading) {
+    return <PageSkeleton width="detail" />;
+  }
+
+  if (!user) {
+    return (
+      <PageMessage message="この測定を表示するにはサインインしてください。" />
+    );
+  }
+
+  if (!fetched || items.status === "loading") {
+    return <PageSkeleton width="detail" />;
+  }
+
+  if (unauthenticated || items.status === "unauthenticated") {
+    return (
+      <PageMessage
+        title="サインインの有効期限が切れました"
+        message="再度サインインしてください。"
+        action={<LoginButton />}
+      />
+    );
+  }
+
+  if (notFound) {
+    return (
+      <PageMessage
+        title="測定が見つかりません"
+        link={{ href: `/customers/${customerId}`, label: "顧客詳細に戻る" }}
+      />
+    );
+  }
+
+  if (loadError || !measurement) {
+    return (
+      <PageMessage
+        title="測定を読み込めませんでした"
+        message="時間をおいて再度お試しください。"
+        link={{ href: `/customers/${customerId}`, label: "顧客詳細に戻る" }}
+      />
+    );
+  }
+
+  if (items.status === "error" || !initial) {
+    return (
+      <PageMessage
+        title="測定項目を取得できませんでした"
+        message="測定項目を読み込めないため、測定を表示できません。"
+        action={
+          items.status === "error" && (
+            <SecondaryButton onClick={items.retry}>再試行</SecondaryButton>
+          )
+        }
+        link={{ href: `/customers/${customerId}`, label: "顧客詳細に戻る" }}
+      />
+    );
+  }
+
+  const isDraft = measurement.isDraft === true;
+  const values = edited ?? initial;
+  const busy = saving !== null || deleting;
+
+  const handleSave = (draft: boolean) => {
+    if (busy) return;
+
+    const built = buildMeasurementPayload(values, items.data, draft);
+    if (!built.ok) {
+      setSaveError(built.error);
+      return;
+    }
+
+    setSaving(draft ? "draft" : "final");
+    void runWithError(setSaveError, async () => {
+      const res = await fetch(`/api/fitness/measurement/${measurementId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(built.payload),
+      });
+      await ensureOk(res, "測定の更新に失敗しました");
+
+      const data = await res.json().catch(() => null);
+      if (data?.measurement?.measurementId) {
+        setMeasurement(data.measurement);
+        setEdited(null);
+        return;
+      }
+
+      const reloaded = await loadMeasurement(measurementId).catch(
+        () => ({ status: "error" }) as const,
+      );
+      if (reloaded.status !== "ok") {
+        throw new Error(
+          "更新は完了しましたが、最新の情報を取得できませんでした。ページを再読み込みしてください。",
+        );
+      }
+      setMeasurement(reloaded.data);
+      setEdited(null);
+    }).finally(() => setSaving(null));
+  };
+
+  const handleConfirm = () => {
+    if (busy) return;
+    if (
+      isDraft &&
+      !window.confirm(
+        "この測定を確定しますか？確定した測定を下書きに戻すことはできません。",
+      )
+    ) {
+      return;
+    }
+    handleSave(false);
+  };
+
+  const handleDelete = () => {
+    if (busy) return;
+    if (
+      !window.confirm(
+        "本当にこの測定を削除しますか？この操作は取り消せません。",
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    void runWithError(setDeleteError, async () => {
+      const res = await fetch(`/api/fitness/measurement/${measurementId}`, {
+        method: "DELETE",
+      });
+      await ensureOk(res, "測定の削除に失敗しました");
+      router.push(`/customers/${customerId}`);
+    }).finally(() => setDeleting(false));
+  };
+
+  return (
+    <PageContainer width="detail">
+      <PageHeader
+        backHref={`/customers/${customerId}`}
+        backLabel="顧客詳細"
+        title={dateLabel(measurement.measuredOn) || "測定日未登録"}
+        meta={isDraft && <Badge tone="subtle">下書き</Badge>}
+        description={[
+          customerName,
+          `測定時 ${measurement.ageAtMeasurement ?? 0}歳`,
+        ]
+          .filter(Boolean)
+          .join(" ・ ")}
+      />
+
+      <Card title="測定結果">
+        <dl className="mb-6">
+          <dt className="text-muted text-sm font-medium">測定 ID</dt>
+          <dd className="text-subtle mt-1 truncate font-mono text-xs">
+            {measurement.measurementId}
+          </dd>
+        </dl>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!isDraft) handleSave(false);
+          }}
+          className="flex flex-col gap-6"
+        >
+          {dataLoss && dataLoss.unknownItemIds.length > 0 && (
+            <p className="text-danger text-sm">
+              この測定には測定項目マスタに無い項目が
+              {dataLoss.unknownItemIds.length}
+              件含まれています。このまま保存するとその項目は失われます。
+            </p>
+          )}
+
+          {dataLoss && dataLoss.droppedValueCount > 0 && (
+            <p className="text-danger text-sm">
+              測定項目の試行回数・左右の設定が変わったため、表示できない値が
+              {dataLoss.droppedValueCount}
+              件あります。このまま保存するとその値は失われます。
+            </p>
+          )}
+
+          <MeasurementFields
+            items={items.data}
+            values={values}
+            onChange={setEdited}
+            disabled={busy}
+          />
+
+          {saveError && <p className="text-danger text-sm">{saveError}</p>}
+
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            {isDraft ? (
+              <>
+                <SecondaryButton
+                  onClick={() => handleSave(true)}
+                  disabled={busy}
+                >
+                  {saving === "draft" ? "保存中..." : "下書きとして保存"}
+                </SecondaryButton>
+                <PrimaryButton onClick={handleConfirm} disabled={busy}>
+                  {saving === "final" ? "保存中..." : "確定して保存"}
+                </PrimaryButton>
+              </>
+            ) : (
+              <PrimaryButton type="submit" disabled={busy}>
+                {saving === "final" ? "保存中..." : "変更を保存"}
+              </PrimaryButton>
+            )}
+          </div>
+        </form>
+      </Card>
+
+      <DangerZone
+        title="測定の削除"
+        description="この測定をデータごと削除します。元に戻せません。"
+        error={deleteError}
+        action={
+          <SecondaryButton
+            variant="danger"
+            onClick={handleDelete}
+            disabled={busy}
+          >
+            {deleting ? "削除中..." : "測定を削除"}
+          </SecondaryButton>
+        }
+      />
+    </PageContainer>
+  );
+}

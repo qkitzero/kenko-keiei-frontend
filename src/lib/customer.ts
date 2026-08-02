@@ -1,3 +1,15 @@
+import {
+  isValidPostalCode,
+  isValidPrefecture,
+  normalizePostalCode,
+} from "@/lib/address";
+import { isValidEmail, isValidPhone, normalizePhone } from "@/lib/contact";
+import {
+  dateInputValue,
+  isFutureDate,
+  isValidDate,
+  toDateValue,
+} from "@/lib/date";
 import { TEXT_MAX_LENGTH, isTooLong } from "@/lib/text";
 import type { components } from "../../gen/customer/v1/customer.schema";
 
@@ -24,56 +36,6 @@ export function genderLabel(gender: string | undefined): string {
   if (!gender) return "";
   return GENDER_LABELS[gender] ?? gender;
 }
-
-export const PREFECTURES = [
-  "北海道",
-  "青森県",
-  "岩手県",
-  "宮城県",
-  "秋田県",
-  "山形県",
-  "福島県",
-  "茨城県",
-  "栃木県",
-  "群馬県",
-  "埼玉県",
-  "千葉県",
-  "東京都",
-  "神奈川県",
-  "新潟県",
-  "富山県",
-  "石川県",
-  "福井県",
-  "山梨県",
-  "長野県",
-  "岐阜県",
-  "静岡県",
-  "愛知県",
-  "三重県",
-  "滋賀県",
-  "京都府",
-  "大阪府",
-  "兵庫県",
-  "奈良県",
-  "和歌山県",
-  "鳥取県",
-  "島根県",
-  "岡山県",
-  "広島県",
-  "山口県",
-  "徳島県",
-  "香川県",
-  "愛媛県",
-  "高知県",
-  "福岡県",
-  "佐賀県",
-  "長崎県",
-  "熊本県",
-  "大分県",
-  "宮崎県",
-  "鹿児島県",
-  "沖縄県",
-];
 
 export type CustomerFormValues = {
   name: string;
@@ -123,105 +85,9 @@ export const EMPTY_CUSTOMER_FORM: CustomerFormValues = {
 };
 
 const KANA_PATTERN = /^[ァ-ヿ 　]+$/;
-const PHONE_PATTERN = /^0\d{9,10}$/;
-const POSTAL_CODE_PATTERN = /^\d{7}$/;
-
-const MONTH_LENGTHS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-
-function toHalfWidthDigits(value: string): string {
-  return value.replace(/[０-９]/g, (char) =>
-    String.fromCharCode(char.charCodeAt(0) - 0xfee0),
-  );
-}
-
-export function normalizePhone(value: string): string {
-  return toHalfWidthDigits(value).replace(/[-－\s　]/g, "");
-}
-
-export function normalizePostalCode(value: string): string {
-  return toHalfWidthDigits(value).replace(/[-－\s　]/g, "");
-}
 
 export function isValidKana(value: string): boolean {
   return KANA_PATTERN.test(value);
-}
-
-export function isValidPhone(value: string): boolean {
-  return PHONE_PATTERN.test(normalizePhone(value));
-}
-
-export function isValidPostalCode(value: string): boolean {
-  return POSTAL_CODE_PATTERN.test(normalizePostalCode(value));
-}
-
-export function isValidPrefecture(value: string): boolean {
-  return PREFECTURES.includes(value);
-}
-
-function isLeapYear(year: number): boolean {
-  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
-}
-
-export function isValidCustomerDate(date: CustomerDate | undefined): boolean {
-  const year = date?.year ?? 0;
-  const month = date?.month ?? 0;
-  const day = date?.day ?? 0;
-  if (
-    !Number.isInteger(year) ||
-    !Number.isInteger(month) ||
-    !Number.isInteger(day)
-  ) {
-    return false;
-  }
-  if (year < 1 || year > 9999 || month < 1 || month > 12 || day < 1) {
-    return false;
-  }
-  const maxDay =
-    month === 2 && isLeapYear(year) ? 29 : MONTH_LENGTHS[month - 1];
-  return day <= maxDay;
-}
-
-function toDateInputValue(date: CustomerDate | undefined): string {
-  if (!isValidCustomerDate(date)) return "";
-  const year = String(date?.year ?? 0).padStart(4, "0");
-  const month = String(date?.month ?? 0).padStart(2, "0");
-  const day = String(date?.day ?? 0).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
-export function birthDateLabel(date: CustomerDate | undefined): string {
-  const value = toDateInputValue(date);
-  return value ? value.replaceAll("-", "/") : "";
-}
-
-function toCustomerDate(value: string): CustomerDate | null {
-  const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  if (!matched) return null;
-
-  const date = {
-    year: Number(matched[1]),
-    month: Number(matched[2]),
-    day: Number(matched[3]),
-  };
-  return isValidCustomerDate(date) ? date : null;
-}
-
-function dateInputValueOf(date: Date): string {
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${date.getFullYear()}-${month}-${day}`;
-}
-
-export function todayInputValue(): string {
-  return dateInputValueOf(new Date());
-}
-
-export const TIMEZONE_TOLERANCE_DAYS = 1;
-
-export function isFutureDate(date: CustomerDate, toleranceDays = 0): boolean {
-  const limit = new Date();
-  limit.setDate(limit.getDate() + toleranceDays);
-  return toDateInputValue(date) > dateInputValueOf(limit);
 }
 
 export function customerToForm(customer: Customer): CustomerFormValues {
@@ -232,7 +98,7 @@ export function customerToForm(customer: Customer): CustomerFormValues {
       customer.gender && customer.gender !== "GENDER_UNSPECIFIED"
         ? customer.gender
         : "",
-    birthDate: toDateInputValue(customer.birthDate),
+    birthDate: dateInputValue(customer.birthDate),
     phone: customer.phone ?? "",
     email: customer.email ?? "",
     postalCode: customer.postalCode ?? "",
@@ -254,13 +120,13 @@ export function fieldsNeedingInput(customer: Customer): string[] {
   if (!customer.gender || customer.gender === "GENDER_UNSPECIFIED") {
     fields.push("性別");
   }
-  if (!isValidCustomerDate(customer.birthDate)) fields.push("生年月日");
+  if (!isValidDate(customer.birthDate)) fields.push("生年月日");
 
   const phone = customer.phone?.trim() ?? "";
   if (phone && !isValidPhone(phone)) fields.push("電話番号");
 
   const email = customer.email?.trim() ?? "";
-  if (isTooLong(email)) fields.push("メールアドレス");
+  if (email && !isValidEmail(email)) fields.push("メールアドレス");
 
   const postalCode = customer.postalCode?.trim() ?? "";
   if (postalCode && !isValidPostalCode(postalCode)) fields.push("郵便番号");
@@ -318,7 +184,7 @@ export function buildCustomerPayload(
     return { ok: false, error: "性別を選択してください" };
   }
 
-  const birthDate = toCustomerDate(values.birthDate);
+  const birthDate = toDateValue(values.birthDate);
   if (!birthDate) return { ok: false, error: "生年月日を入力してください" };
   if (isFutureDate(birthDate)) {
     return { ok: false, error: "生年月日に未来の日付は指定できません" };
@@ -337,6 +203,12 @@ export function buildCustomerPayload(
     return {
       ok: false,
       error: `メールアドレスは${TEXT_MAX_LENGTH}文字以内で入力してください`,
+    };
+  }
+  if (email && !isValidEmail(email)) {
+    return {
+      ok: false,
+      error: "メールアドレスは taro@example.com の形式で入力してください",
     };
   }
 

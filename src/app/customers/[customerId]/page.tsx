@@ -3,8 +3,14 @@
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
 import CustomerFields from "@/components/CustomerFields";
+import DangerZone from "@/components/DangerZone";
 import LoginButton from "@/components/LoginButton";
+import MeasurementHistory from "@/components/MeasurementHistory";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageMessage from "@/components/PageMessage";
+import PageSkeleton from "@/components/PageSkeleton";
+import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
 import { useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
@@ -18,7 +24,6 @@ import {
   fieldsNeedingInput,
 } from "@/lib/customer";
 import { useOrganizations } from "@/lib/useOrganizations";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 
@@ -205,62 +210,41 @@ function CustomerDetail({ customerId }: { customerId: string }) {
   };
 
   if (userLoading || (user && !fetched)) {
-    return (
-      <PageContainer>
-        <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
-        <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-      </PageContainer>
-    );
+    return <PageSkeleton width="detail" />;
   }
 
   if (!user) {
     return (
-      <PageContainer centered>
-        <p className="text-subtle text-sm">
-          この顧客を表示するにはサインインしてください。
-        </p>
-      </PageContainer>
+      <PageMessage message="この顧客を表示するにはサインインしてください。" />
     );
   }
 
   if (notFound) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          顧客が見つかりません
-        </h1>
-        <Link href="/customers" className="text-muted text-sm underline">
-          顧客一覧に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="顧客が見つかりません"
+        link={{ href: "/customers", label: "顧客一覧に戻る" }}
+      />
     );
   }
 
   if (unauthenticated) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          サインインの有効期限が切れました
-        </h1>
-        <p className="text-subtle text-sm">再度サインインしてください。</p>
-        <div className="w-40">
-          <LoginButton />
-        </div>
-      </PageContainer>
+      <PageMessage
+        title="サインインの有効期限が切れました"
+        message="再度サインインしてください。"
+        action={<LoginButton />}
+      />
     );
   }
 
   if (loadError || !customer) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          顧客を読み込めませんでした
-        </h1>
-        <p className="text-subtle text-sm">時間をおいて再度お試しください。</p>
-        <Link href="/customers" className="text-muted text-sm underline">
-          顧客一覧に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="顧客を読み込めませんでした"
+        message="時間をおいて再度お試しください。"
+        link={{ href: "/customers", label: "顧客一覧に戻る" }}
+      />
     );
   }
 
@@ -277,56 +261,55 @@ function CustomerDetail({ customerId }: { customerId: string }) {
   const needsInput = fieldsNeedingInput(customer);
 
   return (
-    <PageContainer>
-      <div>
-        <Link href="/customers" className="text-subtle text-sm hover:underline">
-          ← 顧客一覧
-        </Link>
-      </div>
+    <PageContainer width="detail">
+      <PageHeader
+        backHref="/customers"
+        backLabel="顧客一覧"
+        title={customer.name ?? ""}
+        meta={!isActive && <Badge tone="subtle">無効</Badge>}
+        description={customer.nameKana}
+      />
 
-      <section>
-        <h1 className="text-foreground flex flex-wrap items-center gap-3 text-3xl font-semibold tracking-tight">
-          {customer.name}
-          {!isActive && <Badge tone="subtle">無効</Badge>}
-        </h1>
-        <p className="text-muted mt-1 text-sm">{customer.nameKana}</p>
-        <p className="text-subtle mt-1 truncate text-xs">
-          {customer.customerId}
-        </p>
-      </section>
-
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">顧客情報</h2>
-        <form onSubmit={handleSave} className="mt-4 flex flex-col gap-6">
-          <div>
-            <p className="text-muted text-sm font-medium">所属テナント</p>
-            {tenantsLoading ? (
-              <div className="bg-placeholder mt-1 h-5 w-40 animate-pulse rounded" />
-            ) : tenantName ? (
-              <p className="text-foreground mt-1 text-sm">{tenantName}</p>
-            ) : (
-              <>
-                <p className="text-subtle mt-1 text-sm">
-                  {tenantsError
-                    ? "テナント名を取得できませんでした"
-                    : "あなたが所属していないテナントです"}
-                </p>
-                <p className="text-subtle mt-0.5 truncate text-xs">
-                  {tenantId}
-                </p>
-                {tenantsError && (
-                  <div className="mt-2">
-                    <SecondaryButton
-                      onClick={handleRetryTenants}
-                      disabled={retryingTenants}
-                    >
-                      {retryingTenants ? "再取得中..." : "テナント名を再取得"}
-                    </SecondaryButton>
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+      <Card title="顧客情報">
+        <form onSubmit={handleSave} className="flex flex-col gap-6">
+          <dl className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <dt className="text-muted text-sm font-medium">所属テナント</dt>
+              {tenantsLoading ? (
+                <dd className="bg-placeholder mt-1 h-5 w-40 animate-pulse rounded" />
+              ) : tenantName ? (
+                <dd className="text-foreground mt-1 text-sm">{tenantName}</dd>
+              ) : (
+                <dd className="mt-1">
+                  <p className="text-subtle text-sm">
+                    {tenantsError
+                      ? "テナント名を取得できませんでした"
+                      : "あなたが所属していないテナントです"}
+                  </p>
+                  <p className="text-subtle mt-0.5 truncate font-mono text-xs">
+                    {tenantId}
+                  </p>
+                  {tenantsError && (
+                    <div className="mt-2">
+                      <SecondaryButton
+                        size="sm"
+                        onClick={handleRetryTenants}
+                        disabled={retryingTenants}
+                      >
+                        {retryingTenants ? "再取得中..." : "テナント名を再取得"}
+                      </SecondaryButton>
+                    </div>
+                  )}
+                </dd>
+              )}
+            </div>
+            <div>
+              <dt className="text-muted text-sm font-medium">顧客 ID</dt>
+              <dd className="text-subtle mt-1 truncate font-mono text-xs">
+                {customer.customerId}
+              </dd>
+            </div>
+          </dl>
 
           {needsInput.length > 0 && (
             <p className="text-danger text-sm">
@@ -345,27 +328,27 @@ function CustomerDetail({ customerId }: { customerId: string }) {
           {saveError && <p className="text-danger text-sm">{saveError}</p>}
 
           <div className="flex justify-end">
-            <SecondaryButton type="submit" disabled={busy}>
+            <PrimaryButton type="submit" disabled={busy}>
               {saving ? "保存中..." : "変更を保存"}
-            </SecondaryButton>
+            </PrimaryButton>
           </div>
         </form>
       </Card>
 
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">利用状態</h2>
-        <p className="text-foreground mt-3 text-sm">
-          {isActive ? "有効" : "無効"}
-        </p>
-        {activeError && (
-          <p className="text-danger mt-3 text-sm">{activeError}</p>
-        )}
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <p className="text-subtle text-sm">
-            {isActive
-              ? "無効にすると顧客一覧に表示されなくなります。データは残るのでいつでも有効に戻せます。"
-              : "有効に戻すと顧客一覧に再び表示されます。"}
-          </p>
+      <MeasurementHistory customerId={customerId} />
+
+      <Card title="利用状態">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="max-w-prose">
+            <p className="text-foreground text-sm font-medium">
+              {isActive ? "有効" : "無効"}
+            </p>
+            <p className="text-subtle mt-1 text-sm">
+              {isActive
+                ? "無効にすると顧客一覧に表示されなくなります。データは残るのでいつでも有効に戻せます。"
+                : "有効に戻すと顧客一覧に再び表示されます。"}
+            </p>
+          </div>
           <SecondaryButton
             onClick={() => handleSetActive(!isActive)}
             disabled={busy}
@@ -377,17 +360,16 @@ function CustomerDetail({ customerId }: { customerId: string }) {
                 : "有効にする"}
           </SecondaryButton>
         </div>
+        {activeError && (
+          <p className="text-danger mt-3 text-sm">{activeError}</p>
+        )}
       </Card>
 
-      <Card>
-        <h2 className="text-foreground text-sm font-medium">顧客の削除</h2>
-        {deleteError && (
-          <p className="text-danger mt-3 text-sm">{deleteError}</p>
-        )}
-        <div className="mt-4 flex items-center justify-between gap-4">
-          <p className="text-subtle text-sm">
-            この顧客をデータごと削除します。元に戻せません。一覧から隠すだけなら上の無効化を使ってください。
-          </p>
+      <DangerZone
+        title="顧客の削除"
+        description="この顧客をデータごと削除します。元に戻せません。一覧から隠すだけなら上の無効化を使ってください。測定履歴がある顧客は削除できません。"
+        error={deleteError}
+        action={
           <SecondaryButton
             variant="danger"
             onClick={handleDelete}
@@ -395,8 +377,8 @@ function CustomerDetail({ customerId }: { customerId: string }) {
           >
             {deleting ? "削除中..." : "顧客を削除"}
           </SecondaryButton>
-        </div>
-      </Card>
+        }
+      />
     </PageContainer>
   );
 }
