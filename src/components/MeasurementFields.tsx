@@ -1,6 +1,7 @@
 "use client";
 
 import Checkbox from "@/components/Checkbox";
+import { FIELD_GRID, FIELD_LEGEND } from "@/components/Field";
 import Select from "@/components/Select";
 import TextArea from "@/components/TextArea";
 import TextField from "@/components/TextField";
@@ -35,8 +36,6 @@ type MeasurementFieldsProps = {
   disabled?: boolean;
 };
 
-const LEGEND = "text-subtle text-sm font-medium";
-
 const VALUE_WIDTH = "w-20";
 
 export default function MeasurementFields({
@@ -51,8 +50,8 @@ export default function MeasurementFields({
   return (
     <div className="flex flex-col gap-6">
       <fieldset disabled={disabled}>
-        <legend className={LEGEND}>測定情報</legend>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+        <legend className={FIELD_LEGEND}>測定情報</legend>
+        <div className={FIELD_GRID}>
           <TextField
             label="測定日 *"
             type="date"
@@ -67,7 +66,9 @@ export default function MeasurementFields({
 
       {groupByCategory(items).map((group) => (
         <fieldset key={group.category} disabled={disabled}>
-          <legend className={LEGEND}>{categoryLabel(group.category)}</legend>
+          <legend className={FIELD_LEGEND}>
+            {categoryLabel(group.category)}
+          </legend>
           <div className="divide-border mt-1 divide-y">
             {group.items.map((item) => {
               const itemId = item.measurementItemId;
@@ -206,7 +207,7 @@ function MeasurementEntryFields({
   }
 
   return (
-    <div className="py-4">
+    <div className="py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-foreground text-sm font-medium">
           {name}
@@ -220,55 +221,57 @@ function MeasurementEntryFields({
         />
       </div>
 
-      {!entry.unmeasurable && trials.length > 0 && (
-        <div className="mt-3 overflow-x-auto">
-          <table className="border-separate border-spacing-x-3 border-spacing-y-1 text-sm">
-            {trials.length > 1 && (
-              <thead>
-                <tr>
-                  {item.bilateral && <td />}
-                  {trials.map((trialIndex) => (
-                    <th
-                      key={trialIndex}
-                      scope="col"
-                      className="text-subtle text-xs font-medium"
-                    >
-                      {trialIndex}回目
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-            )}
-            <tbody>
-              {sides.map((side) => (
-                <tr key={side}>
-                  {item.bilateral && (
-                    <th
-                      scope="row"
-                      className="text-muted text-xs font-medium whitespace-nowrap"
-                    >
-                      {sideLabel(side)}
-                    </th>
-                  )}
-                  {trials.map((trialIndex) => (
-                    <td key={trialIndex}>{cell(trialIndex, side)}</td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <div className="mt-2 flex flex-wrap items-start gap-4">
+        {!entry.unmeasurable && trials.length > 0 && (
+          <div className="overflow-x-auto">
+            <table className="border-separate border-spacing-x-3 border-spacing-y-1 text-sm">
+              {trials.length > 1 && (
+                <thead>
+                  <tr>
+                    {item.bilateral && <td />}
+                    {trials.map((trialIndex) => (
+                      <th
+                        key={trialIndex}
+                        scope="col"
+                        className="text-subtle text-xs font-medium"
+                      >
+                        {trialIndex}回目
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+              )}
+              <tbody>
+                {sides.map((side) => (
+                  <tr key={side}>
+                    {item.bilateral && (
+                      <th
+                        scope="row"
+                        className="text-muted text-xs font-medium whitespace-nowrap"
+                      >
+                        {sideLabel(side)}
+                      </th>
+                    )}
+                    {trials.map((trialIndex) => (
+                      <td key={trialIndex}>{cell(trialIndex, side)}</td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-      <TextArea
-        rows={1}
-        aria-label={`${name}のメモ`}
-        placeholder="メモ（任意）"
-        maxLength={TEXT_MAX_LENGTH}
-        className="mt-3 w-full"
-        value={entry.note}
-        onChange={(note) => onChange({ ...entry, note })}
-      />
+        <TextArea
+          rows={1}
+          aria-label={`${name}のメモ`}
+          placeholder="メモ（任意）"
+          maxLength={TEXT_MAX_LENGTH}
+          className="min-w-56 flex-1"
+          value={entry.note}
+          onChange={(note) => onChange({ ...entry, note })}
+        />
+      </div>
     </div>
   );
 }
