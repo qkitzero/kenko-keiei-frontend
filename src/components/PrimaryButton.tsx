@@ -1,18 +1,30 @@
-const BASE =
-  "bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active flex items-center justify-center rounded-full px-5 transition-colors disabled:opacity-50";
+import {
+  CONTROL_BASE,
+  CONTROL_FOCUS,
+  CONTROL_HEIGHT,
+  CONTROL_PADDING,
+  type ControlSize,
+} from "@/components/control";
 
-const HEIGHT = {
-  md: "h-11",
-  lg: "h-12",
-} as const;
+const TONE =
+  "bg-primary text-on-primary hover:bg-primary-hover active:bg-primary-active";
 
-export type PrimarySize = keyof typeof HEIGHT;
+export type PrimarySize = ControlSize;
 
 export function primaryClassName(
   size: PrimarySize = "md",
   className?: string,
 ): string {
-  return `${BASE} ${HEIGHT[size]}${className ? ` ${className}` : ""}`;
+  return [
+    CONTROL_BASE,
+    CONTROL_FOCUS,
+    TONE,
+    CONTROL_HEIGHT[size],
+    CONTROL_PADDING[size],
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 }
 
 type PrimaryButtonProps = {
