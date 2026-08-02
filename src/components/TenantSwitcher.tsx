@@ -52,10 +52,6 @@ export default function TenantSwitcher() {
     }
   };
 
-  if (loading) {
-    return <div className="bg-placeholder h-7 w-32 animate-pulse rounded-lg" />;
-  }
-
   return (
     <div className="relative" ref={ref}>
       <button
@@ -67,7 +63,11 @@ export default function TenantSwitcher() {
         <span className="text-subtle hidden shrink-0 text-xs font-normal sm:inline">
           テナント
         </span>
-        <span className="truncate">{activeTenant?.name ?? "—"}</span>
+        {loading ? (
+          <span className="bg-placeholder h-4 w-20 animate-pulse rounded" />
+        ) : (
+          <span className="truncate">{activeTenant?.name ?? "—"}</span>
+        )}
         <span className="text-subtle text-xs">▾</span>
       </button>
 
@@ -77,7 +77,11 @@ export default function TenantSwitcher() {
 
           <div className="bg-border my-1 h-px" />
 
-          {memberships.length === 0 ? (
+          {loading ? (
+            <p className="text-subtle px-3 py-2 text-xs">
+              テナント情報を読み込んでいます。
+            </p>
+          ) : memberships.length === 0 ? (
             <p className="text-subtle px-3 py-2 text-xs">
               {error
                 ? "テナント情報を取得できませんでした。"
