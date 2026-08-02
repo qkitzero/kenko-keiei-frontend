@@ -1,8 +1,9 @@
 "use client";
 
+import ManageTenantsLink from "@/components/ManageTenantsLink";
 import { tenantIdFromPathname, useTenants } from "@/context/TenantsContext";
+import { TENANT_NAV_ITEM } from "@/lib/navigation";
 import { roleLabel } from "@/lib/roles";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -13,6 +14,7 @@ export default function TenantSwitcher() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -23,6 +25,19 @@ export default function TenantSwitcher() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape" && !event.isComposing) {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [open]);
 
   const pathTenantId = tenantIdFromPathname(pathname);
   const shownTenantId = pathTenantId || selectedTenantId;
@@ -38,27 +53,40 @@ export default function TenantSwitcher() {
     }
   };
 
-  if (loading) {
-    return <div className="bg-placeholder h-7 w-32 animate-pulse rounded-lg" />;
-  }
+  const prefetchTenants = () => router.prefetch(TENANT_NAV_ITEM.href);
 
   return (
     <div className="relative" ref={ref}>
       <button
+        ref={buttonRef}
         onClick={() => setOpen(!open)}
+        onPointerEnter={prefetchTenants}
+        onFocus={prefetchTenants}
         aria-expanded={open}
         className="border-border text-foreground hover:bg-hover flex max-w-[14rem] cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
       >
-        <span className="text-subtle hidden shrink-0 text-xs font-normal sm:inline">
+        <span className="text-subtle sr-only shrink-0 text-xs font-normal sm:not-sr-only">
           テナント
         </span>
-        <span className="truncate">{activeTenant?.name ?? "—"}</span>
+        {loading ? (
+          <span className="bg-placeholder h-4 w-20 animate-pulse rounded" />
+        ) : (
+          <span className="truncate">{activeTenant?.name ?? "—"}</span>
+        )}
         <span className="text-subtle text-xs">▾</span>
       </button>
 
       {open && (
         <div className="border-border bg-surface absolute right-0 mt-2 min-w-64 rounded-xl border p-2 shadow-lg">
-          {memberships.length === 0 ? (
+          <ManageTenantsLink onClick={() => setOpen(false)} />
+
+          <div className="bg-border my-1 h-px" />
+
+          {loading ? (
+            <p className="text-subtle px-3 py-2 text-xs">
+              テナント情報を読み込んでいます。
+            </p>
+          ) : memberships.length === 0 ? (
             <p className="text-subtle px-3 py-2 text-xs">
               {error
                 ? "テナント情報を取得できませんでした。"
@@ -99,16 +127,6 @@ export default function TenantSwitcher() {
               </div>
             </>
           )}
-
-          <div className="bg-border my-1 h-px" />
-
-          <Link
-            href="/tenants"
-            onClick={() => setOpen(false)}
-            className="text-foreground hover:bg-hover block rounded-lg px-3 py-2 text-sm transition-colors"
-          >
-            テナントを管理
-          </Link>
         </div>
       )}
     </div>

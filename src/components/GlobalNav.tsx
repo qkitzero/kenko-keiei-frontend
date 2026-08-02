@@ -1,6 +1,11 @@
 "use client";
 
-import { isNavItemActive, NAV_ITEMS, type NavItem } from "@/lib/navigation";
+import ManageTenantsLink from "@/components/ManageTenantsLink";
+import {
+  GLOBAL_NAV_ITEMS,
+  isNavItemActive,
+  type NavItem,
+} from "@/lib/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -129,7 +134,7 @@ export default function GlobalNav() {
         aria-label="グローバルナビゲーション"
         className="hidden shrink-0 items-center gap-1 md:flex"
       >
-        {NAV_ITEMS.map((item) => (
+        {GLOBAL_NAV_ITEMS.map((item) => (
           <NavLink
             key={item.href}
             item={item}
@@ -212,7 +217,7 @@ export default function GlobalNav() {
                 aria-label="グローバルナビゲーション"
                 className="flex flex-col gap-1 p-2"
               >
-                {NAV_ITEMS.map((item) => (
+                {GLOBAL_NAV_ITEMS.map((item) => (
                   <NavLink
                     key={item.href}
                     item={item}
@@ -225,6 +230,15 @@ export default function GlobalNav() {
                   />
                 ))}
               </nav>
+              <div className="bg-border mx-2 h-px" />
+              <div className="p-2">
+                <ManageTenantsLink
+                  onClick={() => {
+                    skipFocusRestoreRef.current = true;
+                    setIsDrawerOpen(false);
+                  }}
+                />
+              </div>
             </div>
           </div>,
           document.body,
