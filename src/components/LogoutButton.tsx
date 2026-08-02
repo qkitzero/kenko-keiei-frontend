@@ -21,7 +21,8 @@ export default function LogoutButton() {
     <SecondaryButton
       onClick={handleLogout}
       disabled={isLoading}
-      className="w-full cursor-pointer border-solid hover:border-transparent"
+      size="sm"
+      className="w-full"
     >
       {isLoading ? "ログアウト中..." : "ログアウト"}
     </SecondaryButton>

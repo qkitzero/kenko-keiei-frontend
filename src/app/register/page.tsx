@@ -58,16 +58,16 @@ export default function Register() {
   };
 
   return (
-    <div className="bg-surface-muted flex flex-1 flex-col items-center justify-center px-6">
+    <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
       <Card as="div" padding="lg" className="w-full max-w-sm">
-        <h1 className="text-foreground mb-2 text-2xl font-semibold tracking-tight">
+        <h1 className="text-foreground text-xl font-semibold tracking-tight">
           プロフィールを作成
         </h1>
-        <p className="text-muted mb-6 text-sm">
+        <p className="text-muted mt-1 mb-6 text-sm">
           アカウント設定を完了するために、あなたの情報を教えてください。
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <TextField
             id="displayName"
             label="表示名"
@@ -85,16 +85,11 @@ export default function Register() {
             required
           />
 
-          <PrimaryButton
-            type="submit"
-            disabled={loading}
-            size="lg"
-            className="w-full"
-          >
+          {error && <p className="text-danger text-sm">{error}</p>}
+
+          <PrimaryButton type="submit" disabled={loading} className="w-full">
             {loading ? "登録中..." : "登録"}
           </PrimaryButton>
-
-          {error && <p className="text-danger text-sm">{error}</p>}
         </form>
       </Card>
     </div>

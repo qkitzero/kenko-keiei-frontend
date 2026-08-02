@@ -6,16 +6,12 @@ import {
   FieldWrapper,
   fieldClassName,
   useFieldId,
+  type FieldSize,
 } from "@/components/Field";
-
-const SIZE = {
-  sm: "rounded-lg px-2 py-1 text-xs",
-  md: FIELD_SIZE,
-} as const;
 
 type SelectProps = {
   label?: string;
-  size?: keyof typeof SIZE;
+  size?: FieldSize;
   onChange: (value: string) => void;
 } & Omit<React.ComponentProps<"select">, "onChange" | "size">;
 
@@ -36,7 +32,7 @@ export default function Select({
         id={fieldId}
         onChange={(e) => onChange(e.target.value)}
         className={fieldClassName(
-          `${FIELD_BASE} ${SIZE[size]}`,
+          `${FIELD_BASE} ${FIELD_SIZE[size]}`,
           label,
           className,
         )}

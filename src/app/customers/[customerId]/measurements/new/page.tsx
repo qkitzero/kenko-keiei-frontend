@@ -4,6 +4,9 @@ import Card from "@/components/Card";
 import LoginButton from "@/components/LoginButton";
 import MeasurementFields from "@/components/MeasurementFields";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageMessage from "@/components/PageMessage";
+import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
 import { useUser } from "@/context/UserContext";
@@ -16,7 +19,6 @@ import {
 } from "@/lib/measurement";
 import { useCustomerName } from "@/lib/useCustomerName";
 import { useMeasurementItems } from "@/lib/useMeasurementItems";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useMemo, useState } from "react";
 
@@ -48,57 +50,35 @@ function MeasurementRegister({ customerId }: { customerId: string }) {
   );
 
   if (userLoading || items.status === "loading") {
-    return (
-      <PageContainer>
-        <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
-        <div className="bg-placeholder h-64 w-full animate-pulse rounded-2xl" />
-      </PageContainer>
-    );
+    return <PageSkeleton width="detail" />;
   }
 
   if (!user) {
-    return (
-      <PageContainer centered>
-        <p className="text-subtle text-sm">
-          測定を記録するにはサインインしてください。
-        </p>
-      </PageContainer>
-    );
+    return <PageMessage message="測定を記録するにはサインインしてください。" />;
   }
 
   if (items.status === "unauthenticated") {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          サインインの有効期限が切れました
-        </h1>
-        <p className="text-subtle text-sm">再度サインインしてください。</p>
-        <div className="w-40">
-          <LoginButton />
-        </div>
-      </PageContainer>
+      <PageMessage
+        title="サインインの有効期限が切れました"
+        message="再度サインインしてください。"
+        action={<LoginButton />}
+      />
     );
   }
 
   if (items.status === "error" || !initial) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          測定項目を取得できませんでした
-        </h1>
-        <p className="text-subtle text-sm">
-          測定項目を読み込めないため、測定を記録できません。
-        </p>
-        {items.status === "error" && (
-          <SecondaryButton onClick={items.retry}>再試行</SecondaryButton>
-        )}
-        <Link
-          href={`/customers/${customerId}`}
-          className="text-muted text-sm underline"
-        >
-          顧客詳細に戻る
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="測定項目を取得できませんでした"
+        message="測定項目を読み込めないため、測定を記録できません。"
+        action={
+          items.status === "error" && (
+            <SecondaryButton onClick={items.retry}>再試行</SecondaryButton>
+          )
+        }
+        link={{ href: `/customers/${customerId}`, label: "顧客詳細に戻る" }}
+      />
     );
   }
 
@@ -142,31 +122,20 @@ function MeasurementRegister({ customerId }: { customerId: string }) {
   const busy = saving !== null;
 
   return (
-    <PageContainer>
-      <div>
-        <Link
-          href={`/customers/${customerId}`}
-          className="text-subtle text-sm hover:underline"
-        >
-          ← 顧客詳細
-        </Link>
-      </div>
-
-      <section>
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          測定を記録
-        </h1>
-        <p className="text-muted mt-2">
-          {customerName ? `${customerName} さんの測定結果` : "測定結果"}
-          を入力してください。入力しなかった項目は保存されません。
-        </p>
-      </section>
+    <PageContainer width="detail">
+      <PageHeader
+        backHref={`/customers/${customerId}`}
+        backLabel="顧客詳細"
+        title="測定を記録"
+        description={`${
+          customerName ? `${customerName} さんの測定結果` : "測定結果"
+        }を入力してください。入力しなかった項目は保存されません。`}
+      />
 
       <Card>
-        <h2 className="text-foreground text-sm font-medium">新しい測定</h2>
         <form
           onSubmit={(e) => e.preventDefault()}
-          className="mt-4 flex flex-col gap-6"
+          className="flex flex-col gap-6"
         >
           <MeasurementFields
             items={items.data}
@@ -177,7 +146,7 @@ function MeasurementRegister({ customerId }: { customerId: string }) {
 
           {error && <p className="text-danger text-sm">{error}</p>}
 
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <SecondaryButton
               onClick={() => void handleSave(true)}
               disabled={busy}

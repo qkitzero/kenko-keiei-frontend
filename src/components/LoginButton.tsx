@@ -1,9 +1,14 @@
 "use client";
 
-import PrimaryButton from "@/components/PrimaryButton";
+import PrimaryButton, { type PrimarySize } from "@/components/PrimaryButton";
 import { useState } from "react";
 
-export default function LoginButton() {
+type LoginButtonProps = {
+  size?: PrimarySize;
+  className?: string;
+};
+
+export default function LoginButton({ size, className }: LoginButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -21,8 +26,8 @@ export default function LoginButton() {
     <PrimaryButton
       onClick={handleLogin}
       disabled={isLoading}
-      size="lg"
-      className="w-full"
+      size={size}
+      className={className}
     >
       {isLoading ? "ログイン中..." : "ログイン"}
     </PrimaryButton>

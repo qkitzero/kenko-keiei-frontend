@@ -3,6 +3,9 @@
 import Card from "@/components/Card";
 import CustomerFields from "@/components/CustomerFields";
 import PageContainer from "@/components/PageContainer";
+import PageHeader from "@/components/PageHeader";
+import PageMessage from "@/components/PageMessage";
+import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
 import { useTenants } from "@/context/TenantsContext";
@@ -14,7 +17,6 @@ import {
   buildCustomerPayload,
 } from "@/lib/customer";
 import { useOrganizations } from "@/lib/useOrganizations";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -42,22 +44,11 @@ export default function CustomerRegister() {
   }
 
   if (userLoading || tenantsLoading) {
-    return (
-      <PageContainer>
-        <div className="bg-placeholder h-9 w-56 animate-pulse rounded-lg" />
-        <div className="bg-placeholder h-40 w-full animate-pulse rounded-2xl" />
-      </PageContainer>
-    );
+    return <PageSkeleton width="detail" />;
   }
 
   if (!user) {
-    return (
-      <PageContainer centered>
-        <p className="text-subtle text-sm">
-          顧客を登録するにはサインインしてください。
-        </p>
-      </PageContainer>
-    );
+    return <PageMessage message="顧客を登録するにはサインインしてください。" />;
   }
 
   if (tenantsError) {
@@ -68,33 +59,25 @@ export default function CustomerRegister() {
     };
 
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          テナント情報を取得できませんでした
-        </h1>
-        <p className="text-subtle text-sm">
-          登録先のテナントを読み込めないため、顧客を登録できません。
-        </p>
-        <SecondaryButton onClick={handleRetry} disabled={retrying}>
-          {retrying ? "再試行中..." : "再試行"}
-        </SecondaryButton>
-      </PageContainer>
+      <PageMessage
+        title="テナント情報を取得できませんでした"
+        message="登録先のテナントを読み込めないため、顧客を登録できません。"
+        action={
+          <SecondaryButton onClick={handleRetry} disabled={retrying}>
+            {retrying ? "再試行中..." : "再試行"}
+          </SecondaryButton>
+        }
+      />
     );
   }
 
   if (memberships.length === 0) {
     return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          登録先のテナントがありません
-        </h1>
-        <p className="text-subtle text-sm">
-          顧客を登録するにはテナントに所属する必要があります。
-        </p>
-        <Link href="/tenants" className="text-muted text-sm underline">
-          テナントを管理
-        </Link>
-      </PageContainer>
+      <PageMessage
+        title="登録先のテナントがありません"
+        message="顧客を登録するにはテナントに所属する必要があります。"
+        link={{ href: "/tenants", label: "テナントを管理" }}
+      />
     );
   }
 
@@ -137,35 +120,16 @@ export default function CustomerRegister() {
   };
 
   return (
-    <PageContainer>
-      <div>
-        <Link href="/customers" className="text-subtle text-sm hover:underline">
-          ← 顧客一覧
-        </Link>
-      </div>
-
-      <section>
-        <h1 className="text-foreground text-3xl font-semibold tracking-tight">
-          顧客を登録
-        </h1>
-        <p className="text-muted mt-2">新しい顧客の情報を入力してください。</p>
-      </section>
+    <PageContainer width="detail">
+      <PageHeader
+        backHref="/customers"
+        backLabel="顧客一覧"
+        title="顧客を登録"
+        description={`${tenantName}に新しい顧客を登録します。`}
+      />
 
       <Card>
-        <h2 className="text-foreground text-sm font-medium">
-          新しい顧客を登録
-        </h2>
-        <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-6">
-          <div>
-            <p className="text-muted text-sm font-medium">登録先のテナント</p>
-            <p className="text-foreground mt-1 text-sm">{tenantName}</p>
-            {memberships.length > 1 && (
-              <p className="text-subtle mt-1 text-xs">
-                ヘッダーのテナントメニューで切り替えられます。
-              </p>
-            )}
-          </div>
-
+        <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <CustomerFields
             values={values}
             onChange={setValues}

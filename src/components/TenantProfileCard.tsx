@@ -18,8 +18,6 @@ type LoadResult =
   | { status: "missing" }
   | { status: "error" };
 
-const HEADING = "text-foreground text-sm font-medium";
-
 async function loadTenantProfile(tenantId: string): Promise<LoadResult> {
   const res = await fetch(`/api/fitness/tenant/${tenantId}/profile`);
   if (res.status === 404) return { status: "missing" };
@@ -118,18 +116,16 @@ export default function TenantProfileCard({ tenantId }: { tenantId: string }) {
 
   if (!fetched) {
     return (
-      <Card>
-        <h2 className={HEADING}>テナント情報</h2>
-        <div className="bg-placeholder mt-4 h-48 w-full animate-pulse rounded-xl" />
+      <Card title="テナント情報">
+        <div className="bg-placeholder h-48 w-full animate-pulse rounded-md" />
       </Card>
     );
   }
 
   if (loadError) {
     return (
-      <Card>
-        <h2 className={HEADING}>テナント情報</h2>
-        <p className="text-subtle mt-3 text-sm">
+      <Card title="テナント情報">
+        <p className="text-subtle text-sm">
           テナント情報を取得できませんでした。
         </p>
         <div className="mt-3">
@@ -140,9 +136,8 @@ export default function TenantProfileCard({ tenantId }: { tenantId: string }) {
   }
 
   return (
-    <Card>
-      <h2 className={HEADING}>テナント情報</h2>
-      <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-6">
+    <Card title="テナント情報">
+      <form onSubmit={handleSubmit} className="flex flex-col gap-6">
         <TenantProfileFields
           values={values}
           onChange={handleChange}

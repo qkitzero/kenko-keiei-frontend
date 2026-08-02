@@ -2,7 +2,7 @@
 
 import {
   FIELD_BASE,
-  FIELD_SIZE,
+  FIELD_SIZE_MULTILINE,
   FieldWrapper,
   fieldClassName,
   useFieldId,
@@ -31,7 +31,7 @@ export default function TextArea({
         rows={rows}
         onChange={(e) => onChange(e.target.value)}
         className={fieldClassName(
-          `${FIELD_BASE} ${FIELD_SIZE}`,
+          `${FIELD_BASE} ${FIELD_SIZE_MULTILINE}`,
           label,
           className,
         )}

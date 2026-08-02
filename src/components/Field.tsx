@@ -3,11 +3,22 @@
 import { useId } from "react";
 
 export const FIELD_BASE =
-  "border-border bg-surface text-foreground focus:border-border-strong focus:ring-foreground/20 border outline-none focus:ring-2";
+  "border-border bg-surface text-foreground placeholder:text-subtle focus:border-primary focus:ring-primary/20 border outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-60";
 
-export const FIELD_SIZE = "rounded-xl px-3 py-2";
+export const FIELD_SIZE = {
+  sm: "h-8 rounded-md px-2 text-xs",
+  md: "h-9 rounded-md px-3 text-sm",
+} as const;
+
+export type FieldSize = keyof typeof FIELD_SIZE;
+
+export const FIELD_SIZE_MULTILINE = "rounded-md px-3 py-2 text-sm";
 
 const FIELD_LABEL = "text-muted mb-1 block text-sm font-medium";
+
+export const FIELD_LEGEND = "text-subtle text-xs font-semibold";
+
+export const FIELD_GRID = "mt-3 grid gap-4 sm:grid-cols-2";
 
 export function useFieldId(id: string | undefined): string {
   const autoId = useId();
