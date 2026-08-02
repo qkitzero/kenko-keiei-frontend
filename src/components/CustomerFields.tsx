@@ -1,5 +1,6 @@
 "use client";
 
+import { FIELD_GRID, FIELD_LEGEND } from "@/components/Field";
 import SecondaryButton from "@/components/SecondaryButton";
 import Select from "@/components/Select";
 import TextField from "@/components/TextField";
@@ -15,10 +16,6 @@ type CustomerFieldsProps = {
   disabled?: boolean;
   organizations: OrganizationOptions;
 };
-
-const LEGEND = "text-subtle text-sm font-medium";
-
-const GRID = "mt-3 grid gap-4 sm:grid-cols-2";
 
 export default function CustomerFields({
   values,
@@ -39,8 +36,8 @@ export default function CustomerFields({
   return (
     <div className="flex flex-col gap-6">
       <fieldset disabled={disabled}>
-        <legend className={LEGEND}>基本情報</legend>
-        <div className={GRID}>
+        <legend className={FIELD_LEGEND}>基本情報</legend>
+        <div className={FIELD_GRID}>
           <TextField
             label="氏名 *"
             value={values.name}
@@ -86,8 +83,8 @@ export default function CustomerFields({
       </fieldset>
 
       <fieldset disabled={disabled}>
-        <legend className={LEGEND}>所属（任意）</legend>
-        <div className={GRID}>
+        <legend className={FIELD_LEGEND}>所属（任意）</legend>
+        <div className={FIELD_GRID}>
           <Select
             label="所属組織"
             value={values.organizationId}
@@ -126,8 +123,8 @@ export default function CustomerFields({
       </fieldset>
 
       <fieldset disabled={disabled}>
-        <legend className={LEGEND}>連絡先（任意）</legend>
-        <div className={GRID}>
+        <legend className={FIELD_LEGEND}>連絡先（任意）</legend>
+        <div className={FIELD_GRID}>
           <TextField
             label="電話番号"
             type="tel"
@@ -150,8 +147,8 @@ export default function CustomerFields({
       </fieldset>
 
       <fieldset disabled={disabled}>
-        <legend className={LEGEND}>住所（任意）</legend>
-        <div className={GRID}>
+        <legend className={FIELD_LEGEND}>住所（任意）</legend>
+        <div className={FIELD_GRID}>
           <TextField
             label="郵便番号"
             inputMode="numeric"
@@ -206,8 +203,8 @@ export default function CustomerFields({
       </fieldset>
 
       <fieldset disabled={disabled}>
-        <legend className={LEGEND}>緊急連絡先（任意）</legend>
-        <div className={GRID}>
+        <legend className={FIELD_LEGEND}>緊急連絡先（任意）</legend>
+        <div className={FIELD_GRID}>
           <TextField
             label="氏名"
             value={values.emergencyContactName}
