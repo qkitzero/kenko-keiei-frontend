@@ -60,7 +60,7 @@ export default function TenantSwitcher() {
         aria-expanded={open}
         className="border-border text-foreground hover:bg-hover flex max-w-[14rem] cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors"
       >
-        <span className="text-subtle hidden shrink-0 text-xs font-normal sm:inline">
+        <span className="text-subtle sr-only shrink-0 text-xs font-normal sm:not-sr-only">
           テナント
         </span>
         {loading ? (
