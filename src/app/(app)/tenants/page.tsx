@@ -10,7 +10,6 @@ import PrimaryButton from "@/components/PrimaryButton";
 import StateCard from "@/components/StateCard";
 import TextField from "@/components/TextField";
 import { useTenants, type TenantMembership } from "@/context/TenantsContext";
-import { useUser } from "@/context/UserContext";
 import { roleLabel } from "@/lib/roles";
 import { useState } from "react";
 
@@ -30,7 +29,6 @@ const TENANT_COLUMNS: Column<TenantMembership>[] = [
 ];
 
 export default function Tenants() {
-  const { user, loading: userLoading } = useUser();
   const { memberships, loading: tenantsLoading, refreshTenants } = useTenants();
 
   const [name, setName] = useState("");
@@ -69,21 +67,8 @@ export default function Tenants() {
     }
   };
 
-  if (userLoading || (user && tenantsLoading)) {
+  if (tenantsLoading) {
     return <PageSkeleton />;
-  }
-
-  if (!user) {
-    return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-xl font-semibold tracking-tight">
-          テナント
-        </h1>
-        <p className="text-subtle text-sm">
-          テナントを表示するにはサインインしてください。
-        </p>
-      </PageContainer>
-    );
   }
 
   return (

@@ -9,7 +9,6 @@ import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
 import { useTenants } from "@/context/TenantsContext";
-import { useUser } from "@/context/UserContext";
 import { ensureOk, errorMessage } from "@/lib/apiError";
 import {
   CustomerFormValues,
@@ -22,7 +21,6 @@ import { useState } from "react";
 
 export default function CustomerRegister() {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
   const {
     memberships,
     loading: tenantsLoading,
@@ -43,12 +41,8 @@ export default function CustomerRegister() {
     setValues((current) => ({ ...current, organizationId: "" }));
   }
 
-  if (userLoading || tenantsLoading) {
+  if (tenantsLoading) {
     return <PageSkeleton width="detail" />;
-  }
-
-  if (!user) {
-    return <PageMessage message="顧客を登録するにはサインインしてください。" />;
   }
 
   if (tenantsError) {

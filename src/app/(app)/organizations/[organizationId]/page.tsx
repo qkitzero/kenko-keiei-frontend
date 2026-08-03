@@ -48,7 +48,7 @@ export default function OrganizationDetailPage({
 
 function OrganizationDetail({ organizationId }: { organizationId: string }) {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
+  const { loading: userLoading } = useUser();
   const {
     memberships,
     loading: tenantsLoading,
@@ -94,7 +94,7 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
   );
 
   useEffect(() => {
-    if (userLoading || !user) return;
+    if (userLoading) return;
     let active = true;
     (async () => {
       const result = await loadOrganization(organizationId).catch(
@@ -107,7 +107,7 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
     return () => {
       active = false;
     };
-  }, [user, userLoading, organizationId, applyResult]);
+  }, [userLoading, organizationId, applyResult]);
 
   const orgTenantId = organization?.tenantId ?? "";
   const memberTenantId = memberships.some(
@@ -184,14 +184,8 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
     }).finally(() => setDeleting(false));
   };
 
-  if (userLoading || (user && !fetched)) {
+  if (userLoading || !fetched) {
     return <PageSkeleton width="detail" />;
-  }
-
-  if (!user) {
-    return (
-      <PageMessage message="この組織を表示するにはサインインしてください。" />
-    );
   }
 
   if (notFound) {

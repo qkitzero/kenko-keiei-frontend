@@ -9,8 +9,6 @@ import SecondaryButton from "@/components/SecondaryButton";
 import StateCard from "@/components/StateCard";
 import StatTile from "@/components/StatTile";
 import { useTenantScope, useTenants } from "@/context/TenantsContext";
-import { useUser } from "@/context/UserContext";
-import { APP_NAME } from "@/lib/app";
 import { useResource, type ResourceState } from "@/lib/useResource";
 import { Suspense, useState } from "react";
 
@@ -82,7 +80,6 @@ export default function HomePage() {
 }
 
 function Home() {
-  const { user, loading: userLoading } = useUser();
   const {
     memberships,
     loading: tenantsLoading,
@@ -92,22 +89,8 @@ function Home() {
   const tenantId = useTenantScope();
   const [retrying, setRetrying] = useState(false);
 
-  if (userLoading || (user && tenantsLoading)) {
+  if (tenantsLoading) {
     return <PageSkeleton />;
-  }
-
-  if (!user) {
-    return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-2xl font-semibold tracking-tight">
-          {APP_NAME}
-        </h1>
-        <p className="text-muted text-sm">
-          利用するにはサインインしてください。
-        </p>
-        <LoginButton />
-      </PageContainer>
-    );
   }
 
   if (tenantsError) {

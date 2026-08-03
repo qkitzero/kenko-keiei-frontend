@@ -33,7 +33,7 @@ export default function MeasurementRegisterPage({
 
 function MeasurementRegister({ customerId }: { customerId: string }) {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
+  const { loading: userLoading } = useUser();
   const items = useMeasurementItems();
   const customerName = useCustomerName(customerId);
 
@@ -51,10 +51,6 @@ function MeasurementRegister({ customerId }: { customerId: string }) {
 
   if (userLoading || items.status === "loading") {
     return <PageSkeleton width="detail" />;
-  }
-
-  if (!user) {
-    return <PageMessage message="測定を記録するにはサインインしてください。" />;
   }
 
   if (items.status === "unauthenticated") {
