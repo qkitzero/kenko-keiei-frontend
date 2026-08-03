@@ -3,8 +3,10 @@ import {
   setAccessTokenCookie,
   setRefreshTokenCookie,
 } from "@/app/api/_lib/cookies";
+import { RETURN_TO_COOKIE, clearReturnToCookie } from "@/app/api/_lib/returnTo";
 import { client as authClient } from "@/app/api/auth/client";
 import { client as userClient } from "@/app/api/user/client";
+import { sanitizeReturnTo } from "@/lib/returnTo";
 import { NextRequest, NextResponse } from "next/server";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -51,9 +53,12 @@ export async function GET(req: NextRequest) {
       return NextResponse.json(userError, { status: 500 });
     }
 
-    const destination = userResponse.status === 404 ? "/register" : "/";
+    const returnTo = sanitizeReturnTo(req.cookies.get(RETURN_TO_COOKIE)?.value);
+    const destination =
+      userResponse.status === 404 ? "/register" : returnTo || "/";
     const res = NextResponse.redirect(new URL(destination, SITE_URL));
 
+    clearReturnToCookie(res);
     setAccessTokenCookie(res, accessToken);
     if (refreshToken) {
       setRefreshTokenCookie(res, refreshToken);
