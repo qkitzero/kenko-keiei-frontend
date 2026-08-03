@@ -68,7 +68,7 @@ function MeasurementDetail({
   measurementId: string;
 }) {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
+  const { loading: userLoading } = useUser();
   const items = useMeasurementItems();
   const customerName = useCustomerName(customerId);
 
@@ -108,7 +108,7 @@ function MeasurementDetail({
   );
 
   useEffect(() => {
-    if (userLoading || !user) return;
+    if (userLoading) return;
     let active = true;
     (async () => {
       const result = await loadMeasurement(measurementId).catch(
@@ -121,7 +121,7 @@ function MeasurementDetail({
     return () => {
       active = false;
     };
-  }, [user, userLoading, measurementId, applyResult]);
+  }, [userLoading, measurementId, applyResult]);
 
   const initial = useMemo(
     () =>
@@ -141,12 +141,6 @@ function MeasurementDetail({
 
   if (userLoading) {
     return <PageSkeleton width="detail" />;
-  }
-
-  if (!user) {
-    return (
-      <PageMessage message="この測定を表示するにはサインインしてください。" />
-    );
   }
 
   if (!fetched || items.status === "loading") {

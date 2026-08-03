@@ -11,7 +11,6 @@ import PrimaryLink from "@/components/PrimaryLink";
 import SecondaryButton from "@/components/SecondaryButton";
 import StateCard from "@/components/StateCard";
 import { useTenantScope, useTenants } from "@/context/TenantsContext";
-import { useUser } from "@/context/UserContext";
 import { Customer, genderLabel } from "@/lib/customer";
 import { dateLabel } from "@/lib/date";
 import { organizationName, type OrganizationOptions } from "@/lib/organization";
@@ -112,7 +111,6 @@ export default function CustomersPage() {
 function Customers() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { user, loading: userLoading } = useUser();
   const {
     memberships,
     loading: tenantsLoading,
@@ -150,21 +148,8 @@ function Customers() {
     };
   }, [tenantId, includeInactive, requestKey]);
 
-  if (userLoading || (user && tenantsLoading)) {
+  if (tenantsLoading) {
     return <PageSkeleton />;
-  }
-
-  if (!user) {
-    return (
-      <PageContainer centered>
-        <h1 className="text-foreground text-xl font-semibold tracking-tight">
-          顧客
-        </h1>
-        <p className="text-subtle text-sm">
-          顧客を表示するにはサインインしてください。
-        </p>
-      </PageContainer>
-    );
   }
 
   if (tenantsError) {
