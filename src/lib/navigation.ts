@@ -16,7 +16,7 @@ const HOME_NAV_ITEM: NavItem = {
   icon: "home",
 };
 
-const FEATURE_NAV_ITEMS: NavItem[] = [
+export const FEATURE_NAV_ITEMS: NavItem[] = [
   {
     label: "顧客",
     description: "顧客を一覧・登録します。",
