@@ -1,0 +1,232 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "judgment/v1/judgment.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "JudgmentService"
+    }
+  ],
+  "consumes": ["application/json"],
+  "produces": ["application/json"],
+  "paths": {
+    "/v1/measurement/{measurementId}/judgment": {
+      "get": {
+        "operationId": "JudgmentService_GetJudgment",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1GetJudgmentResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "measurementId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": ["JudgmentService"]
+      }
+    },
+    "/v1/measurement/{measurementId}/judgment/advice": {
+      "put": {
+        "operationId": "JudgmentService_UpsertJudgmentAdvice",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpsertJudgmentAdviceResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "measurementId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/JudgmentServiceUpsertJudgmentAdviceBody"
+            }
+          }
+        ],
+        "tags": ["JudgmentService"]
+      }
+    }
+  },
+  "definitions": {
+    "JudgmentServiceUpsertJudgmentAdviceBody": {
+      "type": "object",
+      "properties": {
+        "advice": {
+          "type": "string"
+        }
+      }
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    },
+    "v1Element": {
+      "type": "string",
+      "enum": [
+        "ELEMENT_UNSPECIFIED",
+        "ELEMENT_MUSCLE_STRENGTH",
+        "ELEMENT_MUSCLE_ENDURANCE",
+        "ELEMENT_FLEXIBILITY",
+        "ELEMENT_AGILITY",
+        "ELEMENT_BALANCE",
+        "ELEMENT_MOBILITY"
+      ],
+      "default": "ELEMENT_UNSPECIFIED"
+    },
+    "v1ElementEvaluation": {
+      "type": "object",
+      "properties": {
+        "element": {
+          "$ref": "#/definitions/v1Element"
+        },
+        "zScore": {
+          "type": "number",
+          "format": "double"
+        },
+        "rank": {
+          "$ref": "#/definitions/v1Rank"
+        }
+      }
+    },
+    "v1GetJudgmentResponse": {
+      "type": "object",
+      "properties": {
+        "judgment": {
+          "$ref": "#/definitions/v1Judgment"
+        }
+      }
+    },
+    "v1ItemEvaluation": {
+      "type": "object",
+      "properties": {
+        "measurementItemId": {
+          "type": "string"
+        },
+        "value": {
+          "type": "number",
+          "format": "double"
+        },
+        "mean": {
+          "type": "number",
+          "format": "double"
+        },
+        "zScore": {
+          "type": "number",
+          "format": "double"
+        },
+        "rank": {
+          "$ref": "#/definitions/v1Rank"
+        }
+      }
+    },
+    "v1Judgment": {
+      "type": "object",
+      "properties": {
+        "measurementId": {
+          "type": "string"
+        },
+        "itemEvaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ItemEvaluation"
+          }
+        },
+        "elementEvaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ElementEvaluation"
+          }
+        },
+        "motorAge": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "advice": {
+          "type": "string"
+        },
+        "isDraft": {
+          "type": "boolean"
+        }
+      }
+    },
+    "v1Rank": {
+      "type": "string",
+      "enum": [
+        "RANK_UNSPECIFIED",
+        "RANK_A",
+        "RANK_B",
+        "RANK_C",
+        "RANK_D",
+        "RANK_E"
+      ],
+      "default": "RANK_UNSPECIFIED"
+    },
+    "v1UpsertJudgmentAdviceResponse": {
+      "type": "object",
+      "properties": {
+        "measurementId": {
+          "type": "string"
+        },
+        "advice": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
