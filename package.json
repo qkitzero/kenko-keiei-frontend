@@ -15,7 +15,8 @@
     "generate:profile:openapi": "swagger2openapi ./gen/tenant/v1/profile.swagger.json -o ./gen/tenant/v1/profile.openapi.json",
     "generate:measurementitem:openapi": "swagger2openapi ./gen/measurementitem/v1/measurement_item.swagger.json -o ./gen/measurementitem/v1/measurement_item.openapi.json",
     "generate:measurement:openapi": "swagger2openapi ./gen/measurement/v1/measurement.swagger.json -o ./gen/measurement/v1/measurement.openapi.json",
-    "generate:openapi": "npm run generate:auth:openapi && npm run generate:user:openapi && npm run generate:group:openapi && npm run generate:customer:openapi && npm run generate:organization:openapi && npm run generate:profile:openapi && npm run generate:measurementitem:openapi && npm run generate:measurement:openapi",
+    "generate:judgment:openapi": "swagger2openapi ./gen/judgment/v1/judgment.swagger.json -o ./gen/judgment/v1/judgment.openapi.json",
+    "generate:openapi": "npm run generate:auth:openapi && npm run generate:user:openapi && npm run generate:group:openapi && npm run generate:customer:openapi && npm run generate:organization:openapi && npm run generate:profile:openapi && npm run generate:measurementitem:openapi && npm run generate:measurement:openapi && npm run generate:judgment:openapi",
     "generate:auth:schema": "openapi-typescript ./gen/auth/v1/auth.openapi.json -o ./gen/auth/v1/auth.schema.ts",
     "generate:user:schema": "openapi-typescript ./gen/user/v1/user.openapi.json -o ./gen/user/v1/user.schema.ts",
     "generate:group:schema": "openapi-typescript ./gen/group/v1/group.openapi.json -o ./gen/group/v1/group.schema.ts",
@@ -24,7 +25,8 @@
     "generate:profile:schema": "openapi-typescript ./gen/tenant/v1/profile.openapi.json -o ./gen/tenant/v1/profile.schema.ts",
     "generate:measurementitem:schema": "openapi-typescript ./gen/measurementitem/v1/measurement_item.openapi.json -o ./gen/measurementitem/v1/measurement_item.schema.ts",
     "generate:measurement:schema": "openapi-typescript ./gen/measurement/v1/measurement.openapi.json -o ./gen/measurement/v1/measurement.schema.ts",
-    "generate:schema": "npm run generate:auth:schema && npm run generate:user:schema && npm run generate:group:schema && npm run generate:customer:schema && npm run generate:organization:schema && npm run generate:profile:schema && npm run generate:measurementitem:schema && npm run generate:measurement:schema",
+    "generate:judgment:schema": "openapi-typescript ./gen/judgment/v1/judgment.openapi.json -o ./gen/judgment/v1/judgment.schema.ts",
+    "generate:schema": "npm run generate:auth:schema && npm run generate:user:schema && npm run generate:group:schema && npm run generate:customer:schema && npm run generate:organization:schema && npm run generate:profile:schema && npm run generate:measurementitem:schema && npm run generate:measurement:schema && npm run generate:judgment:schema",
     "generate:all": "npm run generate:buf && npm run generate:openapi && npm run generate:schema",
     "dev": "next dev",
     "build": "next build",
@@ -34,7 +36,7 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
-    "next": "16.2.11",
+    "next": "16.3.0",
     "openapi-fetch": "^0.17.0",
     "react": "19.2.4",
     "react-dom": "19.2.4"

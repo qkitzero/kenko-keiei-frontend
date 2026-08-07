@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 type BirthDate = {
   year: number;
@@ -14,46 +20,60 @@ type User = {
   birthDate: BirthDate;
 } | null;
 
+export type UserStatus =
+  "loading" | "ready" | "signedOut" | "noProfile" | "error";
+
 type UserContextType = {
   user: User;
+  status: UserStatus;
   loading: boolean;
   refreshUser: () => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType>({
   user: null,
+  status: "loading",
   loading: true,
   refreshUser: async () => {},
 });
 
 export const useUser = () => useContext(UserContext);
 
-export const UserProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User>(null);
-  const [loading, setLoading] = useState(true);
+type LoadResult = { status: Exclude<UserStatus, "loading">; user: User };
 
-  const loadUser = async (): Promise<User> => {
-    try {
-      const res = await fetch("/api/user/get");
-      if (!res.ok) return null;
-      return (await res.json()) as User;
-    } catch {
-      return null;
-    }
-  };
+const loadUser = async (): Promise<LoadResult> => {
+  try {
+    const res = await fetch("/api/user/get");
+    if (res.ok) return { status: "ready", user: (await res.json()) as User };
+    if (res.status === 401) return { status: "signedOut", user: null };
+    if (res.status === 404) return { status: "noProfile", user: null };
+    return { status: "error", user: null };
+  } catch {
+    return { status: "error", user: null };
+  }
+};
 
-  const refreshUser = async () => {
-    setUser(await loadUser());
-  };
+export const UserProvider = ({
+  initialStatus = "loading",
+  children,
+}: {
+  initialStatus?: Extract<UserStatus, "loading" | "signedOut">;
+  children: React.ReactNode;
+}) => {
+  const [state, setState] = useState<{ status: UserStatus; user: User }>({
+    status: initialStatus,
+    user: null,
+  });
+
+  const refreshUser = useCallback(async () => {
+    setState(await loadUser());
+  }, []);
 
   useEffect(() => {
     let active = true;
     (async () => {
-      const data = await loadUser();
-      if (active) {
-        setUser(data);
-        setLoading(false);
-      }
+      const result = await loadUser();
+      if (active) setState(result);
     })();
     return () => {
       active = false;
@@ -61,7 +81,14 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ user, loading, refreshUser }}>
+    <UserContext.Provider
+      value={{
+        user: state.user,
+        status: state.status,
+        loading: state.status === "loading",
+        refreshUser,
+      }}
+    >
       {children}
     </UserContext.Provider>
   );

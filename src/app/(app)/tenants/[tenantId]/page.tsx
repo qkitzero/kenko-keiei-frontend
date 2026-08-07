@@ -152,7 +152,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   }, [tenantId, applyResult]);
 
   useEffect(() => {
-    if (userLoading || !user) return;
+    if (userLoading) return;
     let active = true;
     (async () => {
       const result = await loadTenantData(tenantId).catch(
@@ -165,7 +165,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
     return () => {
       active = false;
     };
-  }, [user, userLoading, tenantId, applyResult]);
+  }, [userLoading, tenantId, applyResult]);
 
   const handleRename = (e: React.FormEvent) => {
     e.preventDefault();
@@ -278,14 +278,8 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
     });
   };
 
-  if (userLoading || (user && !fetched)) {
+  if (userLoading || !fetched) {
     return <PageSkeleton width="detail" />;
-  }
-
-  if (!user) {
-    return (
-      <PageMessage message="このテナントを表示するにはサインインしてください。" />
-    );
   }
 
   if (notFound) {
@@ -313,7 +307,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
       cell: (member) => (
         <span className="font-mono text-xs">
           {member.userId}
-          {member.userId === user.userId && (
+          {member.userId === user?.userId && (
             <span className="text-subtle font-sans"> (あなた)</span>
           )}
         </span>

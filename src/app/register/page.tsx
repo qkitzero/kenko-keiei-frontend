@@ -1,15 +1,19 @@
 "use client";
 
 import Card from "@/components/Card";
+import PageMessage from "@/components/PageMessage";
+import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
+import SignedOut from "@/components/SignedOut";
 import TextField from "@/components/TextField";
 import { useUser } from "@/context/UserContext";
+import { takeReturnTo } from "@/lib/returnTo";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function Register() {
   const router = useRouter();
-  const { refreshUser } = useUser();
+  const { status, refreshUser } = useUser();
 
   const [displayName, setDisplayName] = useState("");
   const [birthDate, setBirthDate] = useState("");
@@ -47,7 +51,7 @@ export default function Register() {
       }
 
       await refreshUser();
-      router.push("/");
+      router.push(takeReturnTo() || "/");
     } catch (err: unknown) {
       setError(
         err instanceof Error ? err.message : "予期しないエラーが発生しました",
@@ -56,6 +60,32 @@ export default function Register() {
       setLoading(false);
     }
   };
+
+  if (status === "loading") {
+    return <PageSkeleton width="detail" />;
+  }
+
+  if (status === "signedOut") {
+    return <SignedOut pathname="/register" />;
+  }
+
+  if (status === "error") {
+    return (
+      <PageMessage
+        title="ユーザー情報を取得できませんでした"
+        message="時間をおいて再度お試しください。"
+      />
+    );
+  }
+
+  if (status === "ready") {
+    return (
+      <PageMessage
+        title="プロフィールは作成済みです"
+        link={{ href: "/", label: "ホームに戻る" }}
+      />
+    );
+  }
 
   return (
     <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">

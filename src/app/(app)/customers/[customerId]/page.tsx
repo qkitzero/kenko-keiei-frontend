@@ -56,7 +56,7 @@ export default function CustomerDetailPage({
 
 function CustomerDetail({ customerId }: { customerId: string }) {
   const router = useRouter();
-  const { user, loading: userLoading } = useUser();
+  const { loading: userLoading } = useUser();
   const {
     memberships,
     loading: tenantsLoading,
@@ -104,7 +104,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
   );
 
   useEffect(() => {
-    if (userLoading || !user) return;
+    if (userLoading) return;
     let active = true;
     (async () => {
       const result = await loadCustomer(customerId).catch(
@@ -117,7 +117,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     return () => {
       active = false;
     };
-  }, [user, userLoading, customerId, applyResult]);
+  }, [userLoading, customerId, applyResult]);
 
   const busy = saving || switchingActive;
 
@@ -209,14 +209,8 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     }).finally(() => setDeleting(false));
   };
 
-  if (userLoading || (user && !fetched)) {
+  if (userLoading || !fetched) {
     return <PageSkeleton width="detail" />;
-  }
-
-  if (!user) {
-    return (
-      <PageMessage message="この顧客を表示するにはサインインしてください。" />
-    );
   }
 
   if (notFound) {

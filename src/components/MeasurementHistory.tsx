@@ -10,31 +10,58 @@ import StateCard from "@/components/StateCard";
 import { dateLabel } from "@/lib/date";
 import type { Measurement } from "@/lib/measurement";
 import { useMeasurements } from "@/lib/useMeasurements";
+import Link from "next/link";
+import { useMemo } from "react";
 
-const MEASUREMENT_COLUMNS: Column<Measurement>[] = [
-  {
-    header: "測定日",
-    cell: (measurement) => (
-      <span className="flex items-center gap-2">
-        {dateLabel(measurement.measuredOn) || "測定日未登録"}
-        {measurement.isDraft && (
-          <Badge size="sm" tone="subtle">
-            下書き
-          </Badge>
-        )}
-      </span>
-    ),
-  },
-  {
-    header: "項目数",
-    cell: (measurement) => `${measurement.entries?.length ?? 0}項目`,
-  },
-  {
-    header: "測定時の年齢",
-    cell: (measurement) => `${measurement.ageAtMeasurement ?? 0}歳`,
-    align: "end",
-  },
-];
+const CELL_LINK =
+  "text-primary hover:text-primary-hover focus-visible:outline-primary rounded-sm underline-offset-2 outline-offset-2 transition-colors hover:underline focus-visible:outline-2";
+
+function measurementColumns(customerId: string): Column<Measurement>[] {
+  return [
+    {
+      header: "測定日",
+      cell: (measurement) => (
+        <span className="flex items-center gap-2">
+          <Link
+            href={`/customers/${customerId}/measurements/${measurement.measurementId}`}
+            className={`${CELL_LINK} font-medium`}
+          >
+            {dateLabel(measurement.measuredOn) || "測定日未登録"}
+          </Link>
+          {measurement.isDraft && (
+            <Badge size="sm" tone="subtle">
+              下書き
+            </Badge>
+          )}
+        </span>
+      ),
+    },
+    {
+      header: "項目数",
+      cell: (measurement) => `${measurement.entries?.length ?? 0}項目`,
+    },
+    {
+      header: "測定時の年齢",
+      cell: (measurement) =>
+        typeof measurement.ageAtMeasurement === "number"
+          ? `${measurement.ageAtMeasurement}歳`
+          : "",
+      align: "end",
+    },
+    {
+      header: "判定",
+      cell: (measurement) => (
+        <Link
+          href={`/customers/${customerId}/measurements/${measurement.measurementId}/judgment`}
+          className={CELL_LINK}
+        >
+          判定結果
+        </Link>
+      ),
+      align: "end",
+    },
+  ];
+}
 
 export default function MeasurementHistory({
   customerId,
@@ -42,6 +69,7 @@ export default function MeasurementHistory({
   customerId: string;
 }) {
   const measurements = useMeasurements(customerId);
+  const columns = useMemo(() => measurementColumns(customerId), [customerId]);
 
   return (
     <section className="flex flex-col gap-3">
@@ -79,12 +107,9 @@ export default function MeasurementHistory({
       ) : (
         <DataTable
           caption="測定履歴"
-          columns={MEASUREMENT_COLUMNS}
+          columns={columns}
           rows={measurements.data}
           rowKey={(measurement) => measurement.measurementId ?? ""}
-          rowHref={(measurement) =>
-            `/customers/${customerId}/measurements/${measurement.measurementId}`
-          }
           empty={<StateCard message="まだ測定が記録されていません。" />}
         />
       )}
