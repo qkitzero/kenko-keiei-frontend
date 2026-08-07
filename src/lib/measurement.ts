@@ -14,6 +14,7 @@ import {
   isTooLong,
   toHalfWidthNumber,
 } from "@/lib/text";
+import { isSameId } from "@/lib/uuid";
 import type { components } from "../../gen/measurement/v1/measurement.schema";
 
 type Schemas = components["schemas"];
@@ -227,6 +228,159 @@ export function valuePositionLabel(
 
 export function valueRangeHint(): string {
   return `0以上${MEASUREMENT_VALUE_MAX}以下の数値（小数第2位まで）`;
+}
+
+export function formatMeasurementNumber(value: number | undefined): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "";
+  return String(Number(value.toFixed(2)));
+}
+
+function formatCell(value: MeasurementValue, item: MeasurementItem): string {
+  if (item.valueType === "VALUE_TYPE_CHOICE") {
+    return value.valueChoice?.trim() ?? "";
+  }
+
+  const primary = formatMeasurementNumber(value.value);
+  if (item.valueType !== "VALUE_TYPE_PAIRED") return primary;
+
+  const secondary = formatMeasurementNumber(value.valueSecondary);
+  if (!primary && !secondary) return "";
+
+  const [firstLabel, secondLabel] = pairedLabels(item);
+  if (!secondary) return `${firstLabel} ${primary}`;
+  if (!primary) return `${secondLabel} ${secondary}`;
+  return `${primary} / ${secondary}`;
+}
+
+export function formatEntryValues(
+  entry: MeasurementEntry,
+  item: MeasurementItem,
+): string {
+  const groups = sidesOf(item).map((side) => {
+    const trials = trialIndexes(item)
+      .map((trialIndex) => {
+        const value = (entry.values ?? []).find(
+          (candidate) =>
+            candidate.trialIndex === trialIndex && candidate.side === side,
+        );
+        return value ? formatCell(value, item) : "";
+      })
+      .filter(Boolean);
+
+    if (trials.length === 0) return "";
+
+    const joined = trials.join(" / ");
+    const label = sideLabel(side);
+    return label ? `${label} ${joined}` : joined;
+  });
+
+  return groups.filter(Boolean).join("、");
+}
+
+const HEIGHT_CODE = "height";
+const WEIGHT_CODE = "weight";
+const STANDARD_BMI = 22;
+
+const BMI_CATEGORIES: [number, string][] = [
+  [18.5, "低体重"],
+  [25, "普通体重"],
+  [30, "肥満（1度）"],
+  [35, "肥満（2度）"],
+  [40, "肥満（3度）"],
+];
+
+export type BodyComposition = {
+  bmi: number;
+  category: string;
+  idealWeight: number;
+};
+
+function bmiCategory(bmi: number): string {
+  for (const [upperBound, label] of BMI_CATEGORIES) {
+    if (bmi < upperBound) return label;
+  }
+  return "肥満（4度）";
+}
+
+function measuredNumber(
+  measurement: Measurement,
+  items: MeasurementItem[],
+  code: string,
+  unit: string,
+): number | null {
+  const item = items.find((candidate) => candidate.code === code);
+  if (!item || item.unit !== unit) return null;
+  if (item.valueType !== "VALUE_TYPE_NUMERIC") return null;
+
+  const entry = (measurement.entries ?? []).find((candidate) =>
+    isSameId(candidate.measurementItemId, item.measurementItemId),
+  );
+  if (!entry || entry.unmeasurable) return null;
+
+  const value = (entry.values ?? [])
+    .filter((candidate) => typeof candidate.value === "number")
+    .sort(
+      (left, right) =>
+        (left.trialIndex ?? 0) - (right.trialIndex ?? 0) ||
+        SIDES.indexOf(left.side ?? "SIDE_NONE") -
+          SIDES.indexOf(right.side ?? "SIDE_NONE"),
+    )[0]?.value;
+  return typeof value === "number" && value > 0 ? value : null;
+}
+
+export function bodyComposition(
+  measurement: Measurement,
+  items: MeasurementItem[],
+): BodyComposition | null {
+  const height = measuredNumber(measurement, items, HEIGHT_CODE, "UNIT_CM");
+  const weight = measuredNumber(measurement, items, WEIGHT_CODE, "UNIT_KG");
+  if (height === null || weight === null) return null;
+
+  const meters = height / 100;
+  const exact = weight / (meters * meters);
+  if (!Number.isFinite(exact)) return null;
+
+  const bmi = Number(exact.toFixed(1));
+
+  return {
+    bmi,
+    category: bmiCategory(bmi),
+    idealWeight: Number((STANDARD_BMI * meters * meters).toFixed(1)),
+  };
+}
+
+export type MeasurementDisplayEntry = {
+  item: MeasurementItem;
+  unmeasurable: boolean;
+  text: string;
+  note: string;
+};
+
+export function measurementDisplayEntries(
+  measurement: Measurement,
+  items: MeasurementItem[],
+): MeasurementDisplayEntry[] {
+  const byItemId = new Map<string, MeasurementEntry>();
+  for (const entry of measurement.entries ?? []) {
+    const itemId = entry.measurementItemId?.trim().toLowerCase();
+    if (itemId) byItemId.set(itemId, entry);
+  }
+
+  const displayed: MeasurementDisplayEntry[] = [];
+  for (const item of items) {
+    const entry = byItemId.get(
+      item.measurementItemId?.trim().toLowerCase() ?? "",
+    );
+    if (!entry) continue;
+
+    const unmeasurable = entry.unmeasurable === true;
+    const text = unmeasurable ? "" : formatEntryValues(entry, item);
+    const note = entry.note?.trim() ?? "";
+    if (!unmeasurable && !text && !note) continue;
+
+    displayed.push({ item, unmeasurable, text, note });
+  }
+  return displayed;
 }
 
 function buildValue(

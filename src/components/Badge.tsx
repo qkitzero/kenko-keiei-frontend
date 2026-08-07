@@ -6,12 +6,16 @@ const SIZE = {
 const TONE = {
   muted: "border-border bg-surface-muted text-muted",
   subtle: "border-border bg-surface-muted text-subtle",
+  success: "border-success/30 bg-success/5 text-success",
+  warning: "border-warning/30 bg-warning/5 text-warning",
   danger: "border-danger/30 bg-danger/5 text-danger",
 } as const;
 
+export type BadgeTone = keyof typeof TONE;
+
 type BadgeProps = {
   size?: keyof typeof SIZE;
-  tone?: keyof typeof TONE;
+  tone?: BadgeTone;
   className?: string;
   children: React.ReactNode;
 };
