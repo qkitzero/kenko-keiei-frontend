@@ -24,6 +24,8 @@ const UPSTREAM_MESSAGES: Record<string, string> = {
   "duplicate entry": "同じ測定項目が重複しています。",
   "invalid age at measurement":
     "測定日時点の年齢を計算できませんでした。顧客の生年月日を確認してください。",
+  "judgment not found": "判定が見つかりません。",
+  "invalid advice": "アドバイスに使用できない文字が含まれています。",
 };
 
 export function upstreamMessage(message: unknown): string {
