@@ -10,6 +10,7 @@ import PageHeader from "@/components/PageHeader";
 import PageMessage from "@/components/PageMessage";
 import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
+import PrimaryLink from "@/components/PrimaryLink";
 import SecondaryButton from "@/components/SecondaryButton";
 import { useUser } from "@/context/UserContext";
 import { ensureOk, runWithError } from "@/lib/apiError";
@@ -22,28 +23,14 @@ import {
   type MeasurementFormValues,
 } from "@/lib/measurement";
 import { useCustomerName } from "@/lib/useCustomerName";
+import {
+  loadMeasurement,
+  type MeasurementLoadResult,
+} from "@/lib/useMeasurement";
 import { useMeasurementItems } from "@/lib/useMeasurementItems";
 import { isSameId } from "@/lib/uuid";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
-
-type LoadResult =
-  | { status: "ok"; data: Measurement }
-  | { status: "not_found" }
-  | { status: "unauthenticated" }
-  | { status: "error" };
-
-async function loadMeasurement(measurementId: string): Promise<LoadResult> {
-  const res = await fetch(`/api/fitness/measurement/${measurementId}`);
-  if (!res.ok) {
-    if (res.status === 404) return { status: "not_found" };
-    if (res.status === 401) return { status: "unauthenticated" };
-    return { status: "error" };
-  }
-  const data = await res.json();
-  if (!data.measurement?.measurementId) return { status: "not_found" };
-  return { status: "ok", data: data.measurement };
-}
 
 export default function MeasurementDetailPage({
   params,
@@ -85,7 +72,7 @@ function MeasurementDetail({
   const [deleteError, setDeleteError] = useState("");
 
   const applyResult = useCallback(
-    (result: LoadResult) => {
+    (result: MeasurementLoadResult) => {
       if (result.status === "ok") {
         if (!isSameId(result.data.customerId, customerId)) {
           setNotFound(true);
@@ -274,10 +261,20 @@ function MeasurementDetail({
         meta={isDraft && <Badge tone="subtle">下書き</Badge>}
         description={[
           customerName,
-          `測定時 ${measurement.ageAtMeasurement ?? 0}歳`,
+          typeof measurement.ageAtMeasurement === "number"
+            ? `測定時 ${measurement.ageAtMeasurement}歳`
+            : "",
         ]
           .filter(Boolean)
           .join(" ・ ")}
+        actions={
+          <PrimaryLink
+            size="sm"
+            href={`/customers/${customerId}/measurements/${measurementId}/judgment`}
+          >
+            判定結果を見る
+          </PrimaryLink>
+        }
       />
 
       <Card title="測定結果">
