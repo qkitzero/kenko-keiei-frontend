@@ -9,6 +9,8 @@ export type ValueType = Schemas["v1ValueType"];
 
 export const CHOICE_MAX_LENGTH = 32;
 
+export const CATEGORY_MOTOR_FUNCTION = "CATEGORY_MOTOR_FUNCTION";
+
 const CATEGORY_LABELS: Record<string, string> = {
   CATEGORY_UNSPECIFIED: "その他",
   CATEGORY_VITAL: "バイタル",
@@ -67,6 +69,26 @@ export function trialIndexes(item: MeasurementItem): number[] {
 
 export function expectedValueCount(item: MeasurementItem): number {
   return trialCountOf(item) * (item.bilateral ? 2 : 1);
+}
+
+export function recordingLabel(item: MeasurementItem): string {
+  const parts: string[] = [];
+
+  const unit = unitLabel(item.unit);
+  if (unit) parts.push(unit);
+
+  if (item.valueType === "VALUE_TYPE_PAIRED") {
+    parts.push(pairedLabels(item).join("・"));
+  }
+  if (item.valueType === "VALUE_TYPE_CHOICE") {
+    parts.push("選択");
+  }
+  if (item.bilateral) parts.push("左右");
+
+  const trials = trialCountOf(item);
+  if (trials > 1) parts.push(`${trials}回`);
+
+  return parts.join(" ・ ");
 }
 
 export type MeasurementItemGroup = {

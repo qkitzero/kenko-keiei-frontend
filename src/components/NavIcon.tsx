@@ -14,6 +14,7 @@ const PATHS: Record<NavIconName, string[]> = {
     "M2 21h20",
     "M8 7h3M8 11h3M8 15h3",
   ],
+  measurementItems: ["M4 20V10M9 20V4M14 20v-7M19 20v-4", "M2 20h20"],
   tenants: [
     "m12 3 9 4.5-9 4.5-9-4.5L12 3Z",
     "m3 12 9 4.5 9-4.5",
