@@ -22,7 +22,7 @@ export default function PageHeader({
       {backHref && (
         <Link
           href={backHref}
-          className="text-subtle hover:text-foreground mb-1 w-fit text-xs transition-colors"
+          className="text-subtle hover:text-foreground mb-1 w-fit text-xs transition-colors print:hidden"
         >
           ← {backLabel ?? "戻る"}
         </Link>
@@ -35,7 +35,9 @@ export default function PageHeader({
           {meta}
         </div>
         {actions && (
-          <div className="flex shrink-0 items-center gap-2">{actions}</div>
+          <div className="flex shrink-0 items-center gap-2 print:hidden">
+            {actions}
+          </div>
         )}
       </div>
       {description && <p className="text-muted text-sm">{description}</p>}
