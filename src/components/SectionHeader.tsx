@@ -10,7 +10,7 @@ export default function SectionHeader({
   actions,
 }: SectionHeaderProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 print:break-after-avoid">
       <h2 className="text-foreground text-sm font-semibold">
         {title}
         {count !== undefined && (

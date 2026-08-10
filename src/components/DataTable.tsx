@@ -63,8 +63,8 @@ export default function DataTable<T>({
   if (rows.length === 0 && empty) return <>{empty}</>;
 
   return (
-    <div className="border-border bg-surface overflow-x-auto rounded-lg border">
-      <table className="w-full min-w-max text-sm">
+    <div className="border-border bg-surface overflow-x-auto rounded-lg border print:overflow-visible">
+      <table className="w-full min-w-max text-sm print:min-w-0">
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr className="border-border bg-surface-muted border-b">
@@ -114,9 +114,9 @@ export default function DataTable<T>({
             return (
               <tr
                 key={rowKey(row)}
-                className={
-                  href ? "hover:bg-hover relative transition-colors" : undefined
-                }
+                className={`print:break-inside-avoid ${
+                  href ? "hover:bg-hover relative transition-colors" : ""
+                }`}
               >
                 {columns.map((column, index) => {
                   const content = column.cell(row);

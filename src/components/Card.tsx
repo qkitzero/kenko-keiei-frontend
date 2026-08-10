@@ -19,6 +19,7 @@ type CardProps = {
   padding?: keyof typeof PADDING;
   tone?: keyof typeof TONE;
   dashed?: boolean;
+  splittable?: boolean;
   className?: string;
   children: React.ReactNode;
 };
@@ -31,11 +32,13 @@ export default function Card({
   padding = "md",
   tone = "default",
   dashed = false,
+  splittable = false,
   className,
   children,
 }: CardProps) {
   const classes = [
     "bg-surface rounded-lg border",
+    !splittable && "print:break-inside-avoid",
     TONE[tone],
     PADDING[padding],
     dashed && "border-dashed",
@@ -59,7 +62,7 @@ export default function Card({
 
   return (
     <Tag className={classes}>
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 print:break-after-avoid">
         {title && (
           <h2 className="text-foreground text-sm font-semibold">{title}</h2>
         )}
