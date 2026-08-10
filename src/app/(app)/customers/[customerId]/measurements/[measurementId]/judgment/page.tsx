@@ -6,15 +6,20 @@ import ElementEvaluations from "@/components/ElementEvaluations";
 import ItemEvaluations from "@/components/ItemEvaluations";
 import JudgmentSummary from "@/components/JudgmentSummary";
 import LoginButton from "@/components/LoginButton";
+import MeasurementItemGuide from "@/components/MeasurementItemGuide";
 import MeasurementValues from "@/components/MeasurementValues";
 import PageContainer from "@/components/PageContainer";
 import PageHeader from "@/components/PageHeader";
 import PageMessage from "@/components/PageMessage";
 import PageSkeleton from "@/components/PageSkeleton";
+import PrintButton from "@/components/PrintButton";
+import PrintFrame from "@/components/PrintFrame";
 import SecondaryButton from "@/components/SecondaryButton";
 import StateCard from "@/components/StateCard";
-import { dateLabel } from "@/lib/date";
+import { useTenants } from "@/context/TenantsContext";
+import { dateInputValue, dateLabel } from "@/lib/date";
 import { emptyJudgmentMessage, isEmptyJudgment } from "@/lib/judgment";
+import { printFileName } from "@/lib/print";
 import { useCustomer } from "@/lib/useCustomer";
 import { useJudgment } from "@/lib/useJudgment";
 import { useMeasurement } from "@/lib/useMeasurement";
@@ -48,6 +53,7 @@ function JudgmentDetail({
   const judgment = useJudgment(measurementId);
   const items = useMeasurementItems();
   const customer = useCustomer(customerId);
+  const { memberships } = useTenants();
 
   const measurementHref = `/customers/${customerId}/measurements/${measurementId}`;
 
@@ -109,67 +115,105 @@ function JudgmentDetail({
     );
   }
 
+  if (customer.status === "error") {
+    return (
+      <PageMessage
+        title="顧客を取得できませんでした"
+        message="誰の判定結果かを確認できないため、表示できません。"
+        action={
+          <SecondaryButton onClick={customer.retry}>再試行</SecondaryButton>
+        }
+        link={{ href: measurementHref, label: "測定詳細に戻る" }}
+      />
+    );
+  }
+
   const isDraft = measurement.data.isDraft === true;
-  const customerName =
-    customer.status === "ok" ? (customer.data?.name ?? "") : "";
+  const customerName = customer.data?.name ?? "";
+  const tenantId = customer.data?.tenantId ?? "";
+  const issuer =
+    memberships.find(({ tenant }) => isSameId(tenant.tenantId, tenantId))
+      ?.tenant.name ?? "";
   const age = measurement.data.ageAtMeasurement;
   const judged = judgment.status === "ok" ? judgment.data : null;
+  const measuredOn = dateLabel(measurement.data.measuredOn);
+  const printable = judged !== null && Boolean(issuer);
 
   return (
     <PageContainer width="detail">
-      <PageHeader
-        backHref={measurementHref}
-        backLabel="測定詳細"
+      <PrintFrame
+        issuer={issuer}
         title="判定結果"
-        meta={isDraft && <Badge tone="subtle">下書き</Badge>}
-        description={[
+        subject={[customerName, measuredOn].filter(Boolean).join(" ・ ")}
+        fileName={printFileName([
+          "判定結果",
           customerName,
-          dateLabel(measurement.data.measuredOn),
-          typeof age === "number" ? `測定時 ${age}歳` : "",
-        ]
-          .filter(Boolean)
-          .join(" ・ ")}
-      />
-
-      {isDraft && (
-        <p className="text-warning text-sm">
-          この測定は下書きです。確定するまでの暫定的な判定結果です。
-        </p>
-      )}
-
-      {!judged ? (
-        <StateCard
-          message="判定を読み込めませんでした。時間をおいて再度お試しください。読み込めるまでアドバイスの編集はできません。"
-          action={
-            judgment.status === "error" && (
-              <SecondaryButton onClick={judgment.retry}>再試行</SecondaryButton>
-            )
-          }
+          dateInputValue(measurement.data.measuredOn),
+        ])}
+        appendix={
+          <MeasurementItemGuide
+            measurement={measurement.data}
+            items={items.data}
+          />
+        }
+      >
+        <PageHeader
+          backHref={measurementHref}
+          backLabel="測定詳細"
+          title="判定結果"
+          meta={isDraft && <Badge tone="subtle">下書き</Badge>}
+          actions={<PrintButton disabled={!printable} />}
+          description={[
+            customerName,
+            measuredOn,
+            typeof age === "number" ? `測定時 ${age}歳` : "",
+          ]
+            .filter(Boolean)
+            .join(" ・ ")}
         />
-      ) : isEmptyJudgment(judged) ? (
-        <StateCard
-          message={emptyJudgmentMessage(
-            measurement.data,
-            items.data,
-            customer.status === "ok" ? customer.data : null,
-          )}
-        />
-      ) : (
-        <>
-          <JudgmentSummary judgment={judged} measurement={measurement.data} />
-          <ElementEvaluations judgment={judged} />
-          <ItemEvaluations judgment={judged} items={items.data} />
-        </>
-      )}
 
-      <MeasurementValues measurement={measurement.data} items={items.data} />
+        {isDraft && (
+          <p className="text-warning text-sm">
+            この測定は下書きです。確定するまでの暫定的な判定結果です。
+          </p>
+        )}
 
-      {judged && (
-        <AdviceForm
-          measurementId={measurementId}
-          advice={judged.advice ?? ""}
-        />
-      )}
+        <MeasurementValues measurement={measurement.data} items={items.data} />
+
+        {!judged ? (
+          <StateCard
+            message="判定を読み込めませんでした。時間をおいて再度お試しください。読み込めるまでアドバイスの編集はできません。"
+            action={
+              judgment.status === "error" && (
+                <SecondaryButton onClick={judgment.retry}>
+                  再試行
+                </SecondaryButton>
+              )
+            }
+          />
+        ) : isEmptyJudgment(judged) ? (
+          <StateCard
+            message={emptyJudgmentMessage(
+              measurement.data,
+              items.data,
+              customer.data,
+            )}
+          />
+        ) : (
+          <>
+            <ItemEvaluations judgment={judged} items={items.data} />
+            <ElementEvaluations judgment={judged} />
+            <JudgmentSummary judgment={judged} measurement={measurement.data} />
+          </>
+        )}
+
+        {judged && (
+          <AdviceForm
+            measurementId={measurementId}
+            advice={judged.advice ?? ""}
+          />
+        )}
+      </PrintFrame>
     </PageContainer>
   );
 }
