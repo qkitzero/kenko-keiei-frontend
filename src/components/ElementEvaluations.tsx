@@ -39,7 +39,7 @@ export default function ElementEvaluations({
     <Card title="要素別評価">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
         {measuredCount >= MIN_RADAR_ELEMENTS && (
-          <div className="flex min-w-0 flex-col items-center gap-2 sm:shrink-0">
+          <div className="flex min-w-0 flex-col items-center gap-2 sm:shrink-0 print:break-inside-avoid">
             <ElementRadar points={points} />
             <p className="text-subtle text-xs">
               灰色の帯が「年代相応」の範囲です
@@ -51,28 +51,28 @@ export default function ElementEvaluations({
           {rows.map((row) => (
             <li
               key={row.element}
-              className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0"
+              className="flex items-center gap-2 py-2 first:pt-0 last:pb-0 print:break-inside-avoid"
             >
               <span
-                className={`text-sm ${
+                className={`flex-1 text-sm ${
                   row.evaluation ? "text-foreground" : "text-subtle"
                 }`}
               >
                 {row.label}
               </span>
-              {row.evaluation ? (
-                <span className="flex items-center gap-2">
-                  <span className="text-subtle text-xs tabular-nums">
-                    {formatZScore(row.evaluation.zScore)}
-                  </span>
+              <span className="text-subtle w-12 shrink-0 text-right text-xs tabular-nums">
+                {row.evaluation ? formatZScore(row.evaluation.zScore) : ""}
+              </span>
+              <span className="flex w-7 shrink-0 justify-start">
+                {row.evaluation && (
                   <Badge size="sm" tone={rankTone(row.evaluation.rank)}>
-                    {rankLetter(row.evaluation.rank)}{" "}
-                    {rankMeaning(row.evaluation.rank)}
+                    {rankLetter(row.evaluation.rank)}
                   </Badge>
-                </span>
-              ) : (
-                <span className="text-subtle text-xs">未測定</span>
-              )}
+                )}
+              </span>
+              <span className="text-muted w-20 shrink-0 text-xs">
+                {row.evaluation ? rankMeaning(row.evaluation.rank) : "未測定"}
+              </span>
             </li>
           ))}
         </ul>
