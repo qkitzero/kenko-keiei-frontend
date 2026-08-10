@@ -74,3 +74,52 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
+
+@page {
+  size: A4 portrait;
+  margin: 20mm 14mm 16mm;
+}
+
+.print-document,
+.print-document > tbody,
+.print-document > tbody > tr,
+.print-document > tbody > tr > td {
+  display: block;
+}
+
+.print-document > thead {
+  display: none;
+}
+
+@media print {
+  :root {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+
+    --background: var(--white);
+    --hover: transparent;
+  }
+
+  .print-document {
+    display: table;
+    width: 100%;
+  }
+
+  .print-document > thead {
+    display: table-header-group;
+  }
+
+  .print-document > tbody {
+    display: table-row-group;
+  }
+
+  .print-document > thead > tr,
+  .print-document > tbody > tr {
+    display: table-row;
+  }
+
+  .print-document > thead > tr > td,
+  .print-document > tbody > tr > td {
+    display: table-cell;
+  }
+}

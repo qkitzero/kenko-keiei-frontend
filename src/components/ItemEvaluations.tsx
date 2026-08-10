@@ -83,23 +83,25 @@ export default function ItemEvaluations({
         </p>
       )}
 
-      <DataTable
-        caption="測定項目ごとの判定"
-        columns={COLUMNS}
-        rows={judged}
-        rowKey={(row) => row.item.measurementItemId ?? ""}
-        empty={<StateCard message="表示できる項目別評価がありません。" />}
-      />
+      <div className="flex flex-col gap-3">
+        <DataTable
+          caption="測定項目ごとの判定"
+          columns={COLUMNS}
+          rows={judged}
+          rowKey={(row) => row.item.measurementItemId ?? ""}
+          empty={<StateCard message="表示できる項目別評価がありません。" />}
+        />
 
-      <div className="text-subtle flex flex-col gap-1 text-xs">
-        <p>
-          {RANK_LEGEND.map((entry) => `${entry.letter} ${entry.meaning}`).join(
-            " ・ ",
-          )}
-        </p>
-        <p>
-          記録値は試行と左右をまとめた代表値で、入力した値とは異なることがあります。
-        </p>
+        <div className="text-subtle flex flex-col gap-1 text-xs print:break-before-avoid">
+          <p>
+            {RANK_LEGEND.map(
+              (entry) => `${entry.letter} ${entry.meaning}`,
+            ).join(" ・ ")}
+          </p>
+          <p>
+            記録値は試行と左右をまとめた代表値で、入力した値とは異なることがあります。
+          </p>
+        </div>
       </div>
     </section>
   );

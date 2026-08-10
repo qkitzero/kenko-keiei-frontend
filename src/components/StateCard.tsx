@@ -9,7 +9,9 @@ export default function StateCard({ message, action }: StateCardProps) {
   return (
     <Card as="div" padding="lg" dashed className="text-center">
       <p className="text-muted text-sm">{message}</p>
-      {action && <div className="mt-4 flex justify-center">{action}</div>}
+      {action && (
+        <div className="mt-4 flex justify-center print:hidden">{action}</div>
+      )}
     </Card>
   );
 }

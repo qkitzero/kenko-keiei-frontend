@@ -1,4 +1,5 @@
-export type NavIconName = "home" | "customers" | "organizations" | "tenants";
+export type NavIconName =
+  "home" | "customers" | "organizations" | "measurementItems" | "tenants";
 
 export type NavItem = {
   label: string;
@@ -30,6 +31,13 @@ export const FEATURE_NAV_ITEMS: NavItem[] = [
     href: "/organizations",
     activePrefix: "/organizations",
     icon: "organizations",
+  },
+  {
+    label: "測定項目",
+    description: "測定で記録する項目と、その内容を確認します。",
+    href: "/measurement-items",
+    activePrefix: "/measurement-items",
+    icon: "measurementItems",
   },
   {
     label: "テナント",

@@ -15,7 +15,7 @@ function Intro() {
       <p className="text-muted text-sm">{APP_DESCRIPTION}</p>
       <LoginButton />
 
-      <ul className="mt-3 grid w-full max-w-3xl gap-4 text-left sm:grid-cols-3">
+      <ul className="mt-3 grid w-full max-w-3xl gap-4 text-left sm:grid-cols-2">
         {FEATURE_NAV_ITEMS.map((item) => (
           <li key={item.href}>
             <Card as="div" className="flex h-full flex-col gap-2">

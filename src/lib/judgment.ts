@@ -83,7 +83,7 @@ export function elementLabel(element: string | undefined): string {
 
 export function rankLetter(rank: string | undefined): string {
   if (!rank) return "";
-  return RANK_LETTERS[rank] ?? rank;
+  return RANK_LETTERS[rank] ?? rank.replace(/^RANK_/, "");
 }
 
 export function rankMeaning(rank: string | undefined): string {
