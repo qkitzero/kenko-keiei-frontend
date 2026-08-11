@@ -152,7 +152,7 @@ function JudgmentDetail({
         ])}
         appendix={
           <MeasurementItemGuide
-            measurement={measurement.data}
+            measurements={[measurement.data]}
             items={items.data}
           />
         }

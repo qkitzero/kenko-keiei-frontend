@@ -29,16 +29,27 @@ function GuideList({ entries }: { entries: GuideEntry[] }) {
 }
 
 export default function MeasurementItemGuide({
-  measurement,
+  measurements,
   items,
 }: {
-  measurement: Measurement;
+  measurements: Measurement[];
   items: MeasurementItem[];
 }) {
+  const recorded = new Set<string>();
+  for (const measurement of measurements) {
+    for (const { item } of measurementDisplayEntries(measurement, items)) {
+      if (item.measurementItemId) recorded.add(item.measurementItemId);
+    }
+  }
+
   const groups: { category: string; entries: GuideEntry[] }[] = [];
   const byCategory = new Map<string, GuideEntry[]>();
 
-  for (const { item } of measurementDisplayEntries(measurement, items)) {
+  for (const item of items) {
+    if (!item.measurementItemId || !recorded.has(item.measurementItemId)) {
+      continue;
+    }
+
     const name = item.name ?? "";
     const description = itemDescription(item.code);
     if (!name || !description) continue;
@@ -54,7 +65,11 @@ export default function MeasurementItemGuide({
     groups.push({ category, entries: created });
   }
 
-  const derived = bodyComposition(measurement, items) ? DERIVED_GUIDE : [];
+  const derived = measurements.some((measurement) =>
+    bodyComposition(measurement, items),
+  )
+    ? DERIVED_GUIDE
+    : [];
 
   if (groups.length === 0 && derived.length === 0) return null;
 
