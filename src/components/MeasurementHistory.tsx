@@ -5,6 +5,7 @@ import DataTable, { type Column } from "@/components/DataTable";
 import LoginButton from "@/components/LoginButton";
 import PrimaryLink from "@/components/PrimaryLink";
 import SecondaryButton from "@/components/SecondaryButton";
+import SecondaryLink from "@/components/SecondaryLink";
 import SectionHeader from "@/components/SectionHeader";
 import StateCard from "@/components/StateCard";
 import { dateLabel } from "@/lib/date";
@@ -79,12 +80,19 @@ export default function MeasurementHistory({
           measurements.status === "ok" ? measurements.data.length : undefined
         }
         actions={
-          <PrimaryLink
-            size="sm"
-            href={`/customers/${customerId}/measurements/new`}
-          >
-            測定を記録
-          </PrimaryLink>
+          <div className="flex items-center gap-2">
+            {measurements.status === "ok" && measurements.data.length > 0 && (
+              <SecondaryLink size="sm" href={`/customers/${customerId}/trend`}>
+                推移を見る
+              </SecondaryLink>
+            )}
+            <PrimaryLink
+              size="sm"
+              href={`/customers/${customerId}/measurements/new`}
+            >
+              測定を記録
+            </PrimaryLink>
+          </div>
         }
       />
 
