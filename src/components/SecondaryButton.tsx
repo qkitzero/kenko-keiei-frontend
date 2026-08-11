@@ -11,20 +11,14 @@ const VARIANT = {
   danger: "border-danger/40 bg-surface text-danger hover:bg-danger/5",
 } as const;
 
-type SecondaryButtonProps = {
-  size?: ControlSize;
-  variant?: keyof typeof VARIANT;
-} & React.ComponentProps<"button">;
+export type SecondaryVariant = keyof typeof VARIANT;
 
-export default function SecondaryButton({
-  size = "md",
-  variant = "default",
-  type = "button",
-  className,
-  children,
-  ...props
-}: SecondaryButtonProps) {
-  const classes = [
+export function secondaryClassName(
+  size: ControlSize = "md",
+  variant: SecondaryVariant = "default",
+  className?: string,
+): string {
+  return [
     CONTROL_BASE,
     CONTROL_FOCUS,
     "border",
@@ -35,9 +29,27 @@ export default function SecondaryButton({
   ]
     .filter(Boolean)
     .join(" ");
+}
 
+type SecondaryButtonProps = {
+  size?: ControlSize;
+  variant?: SecondaryVariant;
+} & React.ComponentProps<"button">;
+
+export default function SecondaryButton({
+  size = "md",
+  variant = "default",
+  type = "button",
+  className,
+  children,
+  ...props
+}: SecondaryButtonProps) {
   return (
-    <button {...props} type={type} className={classes}>
+    <button
+      {...props}
+      type={type}
+      className={secondaryClassName(size, variant, className)}
+    >
       {children}
     </button>
   );

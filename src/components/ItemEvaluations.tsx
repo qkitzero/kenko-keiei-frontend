@@ -1,9 +1,9 @@
 import Badge from "@/components/Badge";
 import DataTable, { type Column } from "@/components/DataTable";
+import RankLegend from "@/components/RankLegend";
 import SectionHeader from "@/components/SectionHeader";
 import StateCard from "@/components/StateCard";
 import {
-  RANK_LEGEND,
   formatZScore,
   judgedItems,
   rankLetter,
@@ -92,16 +92,7 @@ export default function ItemEvaluations({
           empty={<StateCard message="表示できる項目別評価がありません。" />}
         />
 
-        <div className="text-subtle flex flex-col gap-1 text-xs print:break-before-avoid">
-          <p>
-            {RANK_LEGEND.map(
-              (entry) => `${entry.letter} ${entry.meaning}`,
-            ).join(" ・ ")}
-          </p>
-          <p>
-            記録値は試行と左右をまとめた代表値で、入力した値とは異なることがあります。
-          </p>
-        </div>
+        <RankLegend note="記録値は試行と左右をまとめた代表値で、入力した値とは異なることがあります。" />
       </div>
     </section>
   );
