@@ -1,3 +1,4 @@
+import { lineSegments } from "@/lib/chart";
 import {
   MIN_RADAR_ELEMENTS,
   RANK_BOUNDARIES,
@@ -6,13 +7,16 @@ import {
   Z_SCORE_MIN,
 } from "@/lib/judgment";
 
-const RADIUS = 82;
+const RADIUS = 92;
 const LABEL_GAP = 16;
 const LABEL_RADIUS = RADIUS + LABEL_GAP;
 const LABEL_FONT_SIZE = 12;
 const LABEL_MAX_CHARS = 5;
 const LABEL_WIDTH = LABEL_FONT_SIZE * LABEL_MAX_CHARS;
 const LABEL_OFFSET = LABEL_FONT_SIZE / 2;
+const EMPHASIS_STROKE_WIDTH = 2.5;
+const STROKE_WIDTH = 1.75;
+const MARKER_RADIUS = 3;
 
 const WIDTH = Math.ceil(
   2 * (LABEL_RADIUS * Math.cos(Math.PI / 6) + LABEL_WIDTH),
@@ -21,10 +25,16 @@ const HEIGHT = Math.ceil(2 * (LABEL_RADIUS + LABEL_OFFSET + LABEL_FONT_SIZE));
 const CENTER_X = WIDTH / 2;
 const CENTER_Y = HEIGHT / 2;
 
-export type ElementPoint = {
-  element: string;
+export type RadarAxis = {
+  key: string;
   label: string;
-  zScore: number | null;
+};
+
+export type RadarSeries = {
+  key: string;
+  stroke: string;
+  fill: string;
+  values: (number | null)[];
 };
 
 function vertex(
@@ -64,26 +74,27 @@ function radiusForZScore(zScore: number): number {
   return Math.min(Math.max(ratio, 0), 1) * RADIUS;
 }
 
-export default function ElementRadar({ points }: { points: ElementPoint[] }) {
-  const count = points.length;
-  const measured = points.filter((point) => point.zScore !== null);
-  if (count < MIN_RADAR_ELEMENTS || measured.length < MIN_RADAR_ELEMENTS) {
-    return null;
-  }
+function closedSegments(plotted: ([number, number] | null)[]) {
+  return lineSegments([...plotted, plotted[0] ?? null]);
+}
 
-  const [typicalMin, typicalMax] = TYPICAL_Z_SCORE_RANGE;
-
-  const plotted = points.map((point, index) =>
-    point.zScore === null
-      ? null
-      : vertex(index, radiusForZScore(point.zScore), count),
+export default function ElementRadar({
+  axes,
+  series,
+}: {
+  axes: RadarAxis[];
+  series: RadarSeries[];
+}) {
+  const count = axes.length;
+  const drawable = series.filter(
+    (entry) =>
+      entry.values.filter((value) => value !== null).length >=
+      MIN_RADAR_ELEMENTS,
   );
 
-  const segments = plotted.flatMap((from, index) => {
-    const to = plotted[(index + 1) % count];
-    if (!from || !to) return [];
-    return [{ key: `${index}`, from, to }];
-  });
+  if (count < MIN_RADAR_ELEMENTS || drawable.length === 0) return null;
+
+  const [typicalMin, typicalMax] = TYPICAL_Z_SCORE_RANGE;
 
   return (
     <svg
@@ -116,11 +127,11 @@ export default function ElementRadar({ points }: { points: ElementPoint[] }) {
         strokeWidth={1}
       />
 
-      {points.map((point, index) => {
+      {axes.map((axis, index) => {
         const [x, y] = vertex(index, RADIUS, count);
         return (
           <line
-            key={point.element}
+            key={axis.key}
             x1={CENTER_X}
             y1={CENTER_Y}
             x2={x}
@@ -131,50 +142,64 @@ export default function ElementRadar({ points }: { points: ElementPoint[] }) {
         );
       })}
 
-      {segments.map((segment) => (
-        <line
-          key={segment.key}
-          x1={segment.from[0]}
-          y1={segment.from[1]}
-          x2={segment.to[0]}
-          y2={segment.to[1]}
-          className="stroke-primary"
-          strokeWidth={1.5}
-          strokeLinecap="round"
-        />
-      ))}
+      {drawable.map((entry, entryIndex) => {
+        const plotted = axes.map((_, index) => {
+          const zScore = entry.values[index];
+          return zScore === null || zScore === undefined
+            ? null
+            : vertex(index, radiusForZScore(zScore), count);
+        });
+        const emphasized = entryIndex === drawable.length - 1;
 
-      {plotted.map((position, index) =>
-        position ? (
-          <circle
-            key={points[index].element}
-            cx={position[0]}
-            cy={position[1]}
-            r={3}
-            className="fill-primary"
-          />
-        ) : null,
-      )}
+        return (
+          <g key={entry.key}>
+            {closedSegments(plotted).map((segment) => (
+              <line
+                key={segment.key}
+                x1={segment.from[0]}
+                y1={segment.from[1]}
+                x2={segment.to[0]}
+                y2={segment.to[1]}
+                className={entry.stroke}
+                strokeWidth={emphasized ? EMPHASIS_STROKE_WIDTH : STROKE_WIDTH}
+                strokeLinecap="round"
+              />
+            ))}
 
-      {points.map((point, index) => {
+            {plotted.map((point, index) =>
+              point ? (
+                <circle
+                  key={axes[index].key}
+                  cx={point[0]}
+                  cy={point[1]}
+                  r={MARKER_RADIUS}
+                  className={`${entry.fill} stroke-surface`}
+                  strokeWidth={1.5}
+                />
+              ) : null,
+            )}
+          </g>
+        );
+      })}
+
+      {axes.map((axis, index) => {
         const [x, y] = vertex(index, LABEL_RADIUS, count);
         const onAxis = Math.abs(x - CENTER_X) < 1;
         const anchor = onAxis ? "middle" : x > CENTER_X ? "start" : "end";
         const dy = onAxis ? (y < CENTER_Y ? -LABEL_OFFSET : LABEL_OFFSET) : 0;
+        const measured = drawable.some((entry) => entry.values[index] !== null);
         return (
           <text
-            key={point.element}
+            key={axis.key}
             x={x}
             y={y}
             dy={dy}
             textAnchor={anchor}
             fontSize={LABEL_FONT_SIZE}
             dominantBaseline="middle"
-            className={
-              point.zScore === null ? "fill-subtle" : "fill-foreground"
-            }
+            className={measured ? "fill-foreground" : "fill-subtle"}
           >
-            {point.label}
+            {axis.label}
           </text>
         );
       })}

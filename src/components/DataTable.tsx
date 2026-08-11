@@ -5,6 +5,7 @@ export type SortOrder = "asc" | "desc";
 export type SortState = { key: string; order: SortOrder };
 
 export type Column<T> = {
+  key?: string;
   header: string;
   cell: (row: T) => React.ReactNode;
   align?: "start" | "end";
@@ -78,7 +79,7 @@ export default function DataTable<T>({
               const align = column.align ?? "start";
               return (
                 <th
-                  key={column.header}
+                  key={column.key ?? column.header}
                   scope="col"
                   aria-sort={
                     sortable ? (order ? ARIA_SORT[order] : "none") : undefined
@@ -123,7 +124,7 @@ export default function DataTable<T>({
                   const Cell = index === 0 ? "th" : "td";
                   return (
                     <Cell
-                      key={column.header}
+                      key={column.key ?? column.header}
                       scope={index === 0 ? "row" : undefined}
                       className={`text-foreground px-4 py-2.5 font-normal ${
                         ALIGN[column.align ?? "start"]

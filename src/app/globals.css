@@ -13,6 +13,7 @@
   --zinc-900: #18181b;
 
   --blue-50: #eff6ff;
+  --blue-400: #60a5fa;
   --blue-700: #1d4ed8;
   --blue-800: #1e40af;
   --blue-900: #1e3a8a;
@@ -44,6 +45,9 @@
   --on-success: var(--zinc-900);
   --on-warning: var(--zinc-900);
   --on-danger: var(--white);
+
+  --trend-old: var(--blue-400);
+  --trend-new: var(--blue-900);
 }
 
 @theme inline {
@@ -70,6 +74,9 @@
   --color-on-success: var(--on-success);
   --color-on-warning: var(--on-warning);
   --color-on-danger: var(--on-danger);
+
+  --color-trend-old: var(--trend-old);
+  --color-trend-new: var(--trend-new);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);

@@ -1,6 +1,6 @@
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
-import ElementRadar, { type ElementPoint } from "@/components/ElementRadar";
+import ElementRadar, { type RadarAxis } from "@/components/ElementRadar";
 import {
   ELEMENTS,
   MIN_RADAR_ELEMENTS,
@@ -26,21 +26,33 @@ export default function ElementEvaluations({
     evaluation: byElement.get(element) ?? null,
   }));
 
-  const points: ElementPoint[] = rows.map((row) => ({
-    element: row.element,
+  const axes: RadarAxis[] = rows.map((row) => ({
+    key: row.element,
     label: row.label,
-    zScore:
-      typeof row.evaluation?.zScore === "number" ? row.evaluation.zScore : null,
   }));
 
-  const measuredCount = points.filter((point) => point.zScore !== null).length;
+  const zScores = rows.map((row) =>
+    typeof row.evaluation?.zScore === "number" ? row.evaluation.zScore : null,
+  );
+
+  const measuredCount = zScores.filter((zScore) => zScore !== null).length;
 
   return (
     <Card title="要素別評価">
       <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8">
         {measuredCount >= MIN_RADAR_ELEMENTS && (
           <div className="flex min-w-0 flex-col items-center gap-2 sm:shrink-0 print:break-inside-avoid">
-            <ElementRadar points={points} />
+            <ElementRadar
+              axes={axes}
+              series={[
+                {
+                  key: "current",
+                  stroke: "stroke-primary",
+                  fill: "fill-primary",
+                  values: zScores,
+                },
+              ]}
+            />
             <p className="text-subtle text-xs">
               灰色の帯が「年代相応」の範囲です
             </p>
