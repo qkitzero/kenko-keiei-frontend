@@ -52,7 +52,7 @@ export default function TenantSwitcher() {
       </button>
 
       {open && (
-        <div className={MENU_PANEL}>
+        <div className={`${MENU_PANEL} w-64 sm:w-80`}>
           {loading ? (
             <p className="text-subtle px-2.5 py-2 text-xs">
               テナント情報を読み込んでいます。
@@ -78,7 +78,7 @@ export default function TenantSwitcher() {
                       aria-current={isActive ? "true" : undefined}
                       className={`${MENU_ITEM} ${isActive ? "bg-hover" : ""}`}
                     >
-                      <span className="text-foreground truncate">
+                      <span className="text-foreground break-words">
                         {tenant.name}
                       </span>
                       <span className="text-subtle flex shrink-0 items-center gap-1.5 text-xs">
