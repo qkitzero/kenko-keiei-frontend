@@ -1,7 +1,9 @@
 "use client";
 
 import AccountMenu from "@/components/AccountMenu";
-import TenantSwitcher from "@/components/TenantSwitcher";
+import TenantSwitcher, {
+  TenantSwitcherSkeleton,
+} from "@/components/TenantSwitcher";
 import { APP_NAME } from "@/lib/app";
 import Link from "next/link";
 
@@ -62,10 +64,7 @@ export default function TopBar({
             </>
           ) : (
             <>
-              <div
-                className="border-border h-8 w-28 shrink-0 rounded-md border sm:w-44"
-                aria-hidden
-              />
+              <TenantSwitcherSkeleton />
               <div
                 className="bg-placeholder size-6 shrink-0 animate-pulse rounded-full"
                 aria-hidden

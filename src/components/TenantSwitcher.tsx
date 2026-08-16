@@ -8,6 +8,16 @@ import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
 const TRIGGER_MAX_WIDTH = "max-w-56 sm:max-w-xs lg:max-w-sm xl:max-w-md";
+const TRIGGER_SKELETON_WIDTH = "w-56 sm:w-xs lg:w-sm xl:w-md";
+
+export function TenantSwitcherSkeleton() {
+  return (
+    <div
+      className={`border-border h-8 shrink-0 rounded-md border ${TRIGGER_SKELETON_WIDTH}`}
+      aria-hidden
+    />
+  );
+}
 
 export default function TenantSwitcher() {
   const { memberships, loading, error, selectedTenantId, selectTenant } =
