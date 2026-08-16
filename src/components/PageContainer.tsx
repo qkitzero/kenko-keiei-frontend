@@ -9,7 +9,8 @@ type PageContainerProps = {
   children: React.ReactNode;
 };
 
-const MAIN = "mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6";
+const MAIN =
+  "mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 py-6 sm:px-6 print:max-w-none print:px-0 print:py-0";
 
 export default function PageContainer({
   width = "wide",
@@ -26,7 +27,9 @@ export default function PageContainer({
 
   return (
     <main className={MAIN}>
-      <div className={`flex flex-1 flex-col gap-6 ${WIDTH[width]}`}>
+      <div
+        className={`flex flex-1 flex-col gap-6 print:max-w-none ${WIDTH[width]}`}
+      >
         {children}
       </div>
     </main>

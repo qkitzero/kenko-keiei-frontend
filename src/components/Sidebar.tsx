@@ -169,7 +169,7 @@ export default function Sidebar({
 
   return (
     <>
-      <aside className="border-border bg-surface fixed inset-y-0 left-0 z-20 hidden w-56 flex-col border-r md:flex">
+      <aside className="border-border bg-surface fixed inset-y-0 left-0 z-20 hidden w-56 flex-col border-r md:flex print:hidden">
         <div className="flex h-14 shrink-0 items-center px-4">
           <Link
             href="/"
@@ -187,7 +187,7 @@ export default function Sidebar({
           <div
             id="app-nav-drawer"
             inert={!open}
-            className={`fixed inset-0 z-30 transition-[visibility] duration-200 md:hidden ${
+            className={`fixed inset-0 z-30 transition-[visibility] duration-200 md:hidden print:hidden ${
               open ? "visible" : "pointer-events-none invisible"
             }`}
           >

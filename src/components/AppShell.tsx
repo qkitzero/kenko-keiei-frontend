@@ -91,7 +91,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         onClose={closeDrawer}
         openButtonRef={openButtonRef}
       />
-      <div className="flex min-w-0 flex-1 flex-col md:pl-56">
+      <div className="flex min-w-0 flex-1 flex-col md:pl-56 print:pl-0">
         <TopBar
           ready={ready}
           drawerOpen={drawerOpen}

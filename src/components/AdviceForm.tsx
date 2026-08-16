@@ -15,11 +15,13 @@ export default function AdviceForm({
   advice: string;
 }) {
   const [value, setValue] = useState(advice);
+  const [savedValue, setSavedValue] = useState(advice);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
 
   const length = [...value.trim()].length;
+  const unsaved = value !== savedValue;
 
   const handleChange = (next: string) => {
     setValue(next);
@@ -51,14 +53,23 @@ export default function AdviceForm({
 
       const submitted = parsed.payload.advice ?? "";
       const data = await res.json().catch(() => null);
-      setValue(typeof data?.advice === "string" ? data.advice : submitted);
+      const stored = typeof data?.advice === "string" ? data.advice : submitted;
+      setValue(stored);
+      setSavedValue(stored);
       setSaved(true);
     }).finally(() => setSaving(false));
   };
 
   return (
-    <Card title="アドバイス">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <Card
+      title="アドバイス"
+      splittable
+      className={savedValue ? undefined : "print:hidden"}
+    >
+      <form
+        onSubmit={handleSubmit}
+        className="flex flex-col gap-4 print:hidden"
+      >
         <TextArea
           label="アドバイス"
           value={value}
@@ -76,8 +87,13 @@ export default function AdviceForm({
           >
             {length} / {ADVICE_MAX_LENGTH}文字
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {saved && <p className="text-subtle text-sm">保存しました</p>}
+            {unsaved && (
+              <p className="text-warning text-sm">
+                未保存の変更は印刷されません
+              </p>
+            )}
             <PrimaryButton type="submit" disabled={saving}>
               {saving ? "保存中..." : "保存"}
             </PrimaryButton>
@@ -86,6 +102,10 @@ export default function AdviceForm({
 
         {error && <p className="text-danger text-sm">{error}</p>}
       </form>
+
+      <p className="hidden text-sm whitespace-pre-wrap print:block">
+        {savedValue}
+      </p>
     </Card>
   );
 }
