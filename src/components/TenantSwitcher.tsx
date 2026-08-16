@@ -7,6 +7,8 @@ import { useDismissableMenu } from "@/lib/useDismissableMenu";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
+const TRIGGER_MAX_WIDTH = "max-w-56 sm:max-w-xs lg:max-w-sm xl:max-w-md";
+
 export default function TenantSwitcher() {
   const { memberships, loading, error, selectedTenantId, selectTenant } =
     useTenants();
@@ -36,7 +38,8 @@ export default function TenantSwitcher() {
         ref={triggerRef}
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className={`${MENU_TRIGGER} max-w-56 gap-1.5`}
+        title={activeTenant?.name}
+        className={`${MENU_TRIGGER} gap-1.5 ${TRIGGER_MAX_WIDTH}`}
       >
         <span className="text-subtle sr-only shrink-0 text-xs font-normal sm:not-sr-only">
           テナント
