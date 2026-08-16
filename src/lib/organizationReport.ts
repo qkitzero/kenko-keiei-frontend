@@ -5,6 +5,7 @@ import {
   ELEMENTS,
   JUDGMENT_MAX_AGE,
   JUDGMENT_MIN_AGE,
+  isWithinStandardAges,
   type Element,
 } from "@/lib/judgment";
 import type { MeasurementItem } from "@/lib/measurementItem";
@@ -305,6 +306,7 @@ function motorAgeDifferenceOf(judgments: OrganizationJudgment[]): {
     const motorAge = judgment.motorAge;
     const age = judgment.ageAtMeasurement;
     if (typeof motorAge !== "number" || typeof age !== "number") continue;
+    if (!isWithinStandardAges(age)) continue;
     differences.push(motorAge - age);
   }
   if (differences.length === 0) return { difference: null, count: 0 };
