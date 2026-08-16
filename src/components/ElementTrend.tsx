@@ -7,7 +7,13 @@ import RankLegend from "@/components/RankLegend";
 import StateCard from "@/components/StateCard";
 import TrendTable from "@/components/TrendTable";
 import { dateLabel } from "@/lib/date";
-import { ELEMENTS, MIN_RADAR_ELEMENTS, elementLabel } from "@/lib/judgment";
+import {
+  ELEMENTS,
+  JUDGMENT_MAX_AGE,
+  JUDGMENT_MIN_AGE,
+  MIN_RADAR_ELEMENTS,
+  elementLabel,
+} from "@/lib/judgment";
 import type { Measurement } from "@/lib/measurement";
 import {
   elementRows,
@@ -57,7 +63,9 @@ export default function ElementTrend({
   if (!hasAnyValue(rows)) {
     return (
       <Card title="6要素の変化">
-        <StateCard message="要素別の評価が出た測定がありません。判定の対象は20〜79歳・男女の運動機能の項目です。" />
+        <StateCard
+          message={`要素別の評価が出た測定がありません。判定の対象は${JUDGMENT_MIN_AGE}〜${JUDGMENT_MAX_AGE}歳・男女の運動機能の項目です。`}
+        />
       </Card>
     );
   }
