@@ -8,9 +8,19 @@ export type ResourceState<T> =
   | { status: "unauthenticated" }
   | { status: "error"; retry: () => void };
 
+export type DetailedResourceState<T> =
+  | { status: "loading" }
+  | { status: "ok"; data: T }
+  | { status: "unauthenticated"; retry: () => void }
+  | { status: "forbidden"; retry: () => void }
+  | { status: "not_found"; retry: () => void }
+  | { status: "error"; retry: () => void };
+
 type FetchResult<T> =
   | { status: "ok"; data: T }
   | { status: "unauthenticated" }
+  | { status: "forbidden" }
+  | { status: "not_found" }
   | { status: "error" };
 
 async function load<T>(
@@ -19,14 +29,13 @@ async function load<T>(
 ): Promise<FetchResult<T>> {
   const res = await fetch(url);
   if (res.status === 401) return { status: "unauthenticated" };
+  if (res.status === 403) return { status: "forbidden" };
+  if (res.status === 404) return { status: "not_found" };
   if (!res.ok) return { status: "error" };
   return { status: "ok", data: select(await res.json()) };
 }
 
-export function useResource<T>(
-  url: string,
-  select: (body: unknown) => T,
-): ResourceState<T> {
+function useFetched<T>(url: string, select: (body: unknown) => T) {
   const [loaded, setLoaded] = useState<{
     key: string;
     result: FetchResult<T>;
@@ -51,14 +60,38 @@ export function useResource<T>(
     };
   }, [url, select, requestKey]);
 
+  return {
+    result: loaded?.key === requestKey ? loaded.result : null,
+    retry,
+  };
+}
+
+export function useDetailedResource<T>(
+  url: string,
+  select: (body: unknown) => T,
+): DetailedResourceState<T> {
+  const { result, retry } = useFetched(url, select);
+
   return useMemo(() => {
-    if (loaded?.key !== requestKey) return { status: "loading" };
-    if (loaded.result.status === "ok") {
-      return { status: "ok", data: loaded.result.data };
-    }
-    if (loaded.result.status === "unauthenticated") {
+    if (!result) return { status: "loading" };
+    if (result.status === "ok") return { status: "ok", data: result.data };
+    return { status: result.status, retry };
+  }, [result, retry]);
+}
+
+export function useResource<T>(
+  url: string,
+  select: (body: unknown) => T,
+): ResourceState<T> {
+  const detailed = useDetailedResource(url, select);
+
+  return useMemo(() => {
+    if (detailed.status === "unauthenticated") {
       return { status: "unauthenticated" };
     }
-    return { status: "error", retry };
-  }, [loaded, requestKey, retry]);
+    if (detailed.status === "forbidden" || detailed.status === "not_found") {
+      return { status: "error", retry: detailed.retry };
+    }
+    return detailed;
+  }, [detailed]);
 }

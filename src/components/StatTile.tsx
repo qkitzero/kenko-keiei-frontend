@@ -2,12 +2,13 @@ import Card from "@/components/Card";
 
 type StatTileProps = {
   label: string;
-  href: string;
+  href?: string;
   state:
     | { status: "loading" }
-    | { status: "ok"; value: number }
+    | { status: "ok"; value: number | string }
     | { status: "error" };
   unit?: string;
+  note?: React.ReactNode;
 };
 
 export default function StatTile({
@@ -15,6 +16,7 @@ export default function StatTile({
   href,
   state,
   unit = "件",
+  note,
 }: StatTileProps) {
   return (
     <Card href={href} padding="md">
@@ -26,9 +28,12 @@ export default function StatTile({
       ) : (
         <p className="text-foreground mt-1 text-2xl font-semibold tabular-nums">
           {state.value}
-          <span className="text-subtle ml-1 text-sm font-normal">{unit}</span>
+          {unit && (
+            <span className="text-subtle ml-1 text-sm font-normal">{unit}</span>
+          )}
         </p>
       )}
+      {note && <p className="text-muted mt-1 text-xs">{note}</p>}
     </Card>
   );
 }

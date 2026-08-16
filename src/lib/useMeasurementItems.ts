@@ -1,7 +1,14 @@
 "use client";
 
 import type { MeasurementItem } from "@/lib/measurementItem";
-import { useResource, type ResourceState } from "@/lib/useResource";
+import {
+  useDetailedResource,
+  useResource,
+  type DetailedResourceState,
+  type ResourceState,
+} from "@/lib/useResource";
+
+const MEASUREMENT_ITEMS_URL = "/api/fitness/measurement-items";
 
 function selectMeasurementItems(body: unknown): MeasurementItem[] {
   const data = body as { measurementItems?: MeasurementItem[] } | null;
@@ -11,5 +18,11 @@ function selectMeasurementItems(body: unknown): MeasurementItem[] {
 }
 
 export function useMeasurementItems(): ResourceState<MeasurementItem[]> {
-  return useResource("/api/fitness/measurement-items", selectMeasurementItems);
+  return useResource(MEASUREMENT_ITEMS_URL, selectMeasurementItems);
+}
+
+export function useDetailedMeasurementItems(): DetailedResourceState<
+  MeasurementItem[]
+> {
+  return useDetailedResource(MEASUREMENT_ITEMS_URL, selectMeasurementItems);
 }

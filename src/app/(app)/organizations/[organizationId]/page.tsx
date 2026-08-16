@@ -8,6 +8,7 @@ import PageHeader from "@/components/PageHeader";
 import PageMessage from "@/components/PageMessage";
 import PageSkeleton from "@/components/PageSkeleton";
 import SecondaryButton from "@/components/SecondaryButton";
+import SecondaryLink from "@/components/SecondaryLink";
 import TextField from "@/components/TextField";
 import { useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
@@ -233,6 +234,11 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
         backHref="/organizations"
         backLabel="組織一覧"
         title={organization.name ?? ""}
+        actions={
+          <SecondaryLink href={`/organizations/${organizationId}/report`}>
+            測定結果一覧
+          </SecondaryLink>
+        }
       />
 
       <Card title="組織設定">

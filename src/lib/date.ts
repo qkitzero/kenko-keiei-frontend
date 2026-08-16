@@ -54,6 +54,27 @@ export function toDateValue(value: string): DateValue | null {
   return isValidDate(date) ? date : null;
 }
 
+export const FISCAL_YEAR_START_MONTH = 4;
+
+export function fiscalYear(date: DateValue | undefined): number | null {
+  if (!isValidDate(date)) return null;
+  const year = date?.year ?? 0;
+  const month = date?.month ?? 0;
+  return month >= FISCAL_YEAR_START_MONTH ? year : year - 1;
+}
+
+export function fiscalYearLabel(year: number): string {
+  return `${year}年度`;
+}
+
+export function currentFiscalYear(): number {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  return month >= FISCAL_YEAR_START_MONTH
+    ? now.getFullYear()
+    : now.getFullYear() - 1;
+}
+
 function dateInputValueOf(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
