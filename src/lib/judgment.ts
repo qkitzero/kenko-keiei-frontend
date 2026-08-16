@@ -16,8 +16,16 @@ export type AdvicePayload = Schemas["JudgmentServiceUpsertJudgmentAdviceBody"];
 
 export const ADVICE_MAX_LENGTH = 2000;
 
-export const JUDGMENT_MIN_AGE = 20;
-export const JUDGMENT_MAX_AGE = 79;
+export const JUDGMENT_MIN_AGE = 18;
+export const JUDGMENT_MAX_AGE = 99;
+
+export const STANDARD_MIN_AGE = 20;
+export const STANDARD_MAX_AGE = 79;
+
+export function isWithinStandardAges(age: number | undefined): boolean {
+  if (typeof age !== "number") return false;
+  return age >= STANDARD_MIN_AGE && age <= STANDARD_MAX_AGE;
+}
 
 export const Z_SCORE_MIN = -2.5;
 export const Z_SCORE_MAX = 2.5;
