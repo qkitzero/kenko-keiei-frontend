@@ -32,7 +32,7 @@ export default function AccountMenu() {
       </button>
 
       {open && (
-        <div className={MENU_PANEL}>
+        <div className={`${MENU_PANEL} w-64`}>
           <div className="px-2.5 py-2">
             <p className="text-foreground truncate text-sm font-medium">
               {user.displayName}
