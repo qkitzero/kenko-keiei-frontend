@@ -36,12 +36,47 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  "/v1/measurement/{measurementId}/prescription": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put: operations["JudgmentService_UpsertPrescription"];
+    post?: never;
+    delete: operations["JudgmentService_DeletePrescription"];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  "/v1/organization/{organizationId}/judgments": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["JudgmentService_ListOrganizationJudgments"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
 }
 export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
     JudgmentServiceUpsertJudgmentAdviceBody: {
       advice?: string;
+    };
+    JudgmentServiceUpsertPrescriptionBody: {
+      prescribedMenus?: components["schemas"]["v1PrescribedMenuInput"][];
     };
     protobufAny: {
       "@type"?: string;
@@ -54,6 +89,45 @@ export interface components {
       message?: string;
       details?: components["schemas"]["protobufAny"][];
     };
+    /**
+     * Represents a whole or partial calendar date, such as a birthday. The time of
+     *     day and time zone are either specified elsewhere or are insignificant. The
+     *     date is relative to the Gregorian Calendar. This can represent one of the
+     *     following:
+     * @description * A full date, with non-zero year, month, and day values.
+     *     * A month and day, with a zero year (for example, an anniversary).
+     *     * A year on its own, with a zero month and a zero day.
+     *     * A year and month, with a zero day (for example, a credit card expiration
+     *       date).
+     *
+     *     Related types:
+     *
+     *     * [google.type.TimeOfDay][google.type.TimeOfDay]
+     *     * [google.type.DateTime][google.type.DateTime]
+     *     * [google.protobuf.Timestamp][google.protobuf.Timestamp]
+     */
+    typeDate: {
+      /**
+       * Format: int32
+       * @description Year of the date. Must be from 1 to 9999, or 0 to specify a date without
+       *     a year.
+       */
+      year?: number;
+      /**
+       * Format: int32
+       * @description Month of a year. Must be from 1 to 12, or 0 to specify a year without a
+       *     month and day.
+       */
+      month?: number;
+      /**
+       * Format: int32
+       * @description Day of a month. Must be from 1 to 31 and valid for the year and month, or 0
+       *     to specify a year by itself or a year and month where the day isn't
+       *     significant.
+       */
+      day?: number;
+    };
+    v1DeletePrescriptionResponse: Record<string, never>;
     /**
      * @default ELEMENT_UNSPECIFIED
      * @enum {string}
@@ -93,7 +167,73 @@ export interface components {
       motorAge?: number;
       advice?: string;
       isDraft?: boolean;
+      prescribedMenus?: components["schemas"]["v1PrescribedMenu"][];
     };
+    v1ListOrganizationJudgmentsResponse: {
+      judgments?: components["schemas"]["v1OrganizationJudgment"][];
+    };
+    v1OrganizationJudgment: {
+      customerId?: string;
+      measurementId?: string;
+      measuredOn?: components["schemas"]["typeDate"];
+      /** Format: int64 */
+      ageAtMeasurement?: number;
+      isDraft?: boolean;
+      itemEvaluations?: components["schemas"]["v1ItemEvaluation"][];
+      elementEvaluations?: components["schemas"]["v1ElementEvaluation"][];
+      /** Format: int64 */
+      motorAge?: number;
+    };
+    v1PrescribedMenu: {
+      source?: components["schemas"]["v1PrescriptionSource"];
+      element?: components["schemas"]["v1Element"];
+      part?: components["schemas"]["v1PrescribedPart"];
+      trainingMenuId?: string;
+      trainingMenuName?: string;
+      /** Format: int64 */
+      amount?: number;
+      unit?: components["schemas"]["v1PrescribedUnit"];
+      /** Format: int64 */
+      sets?: number;
+    };
+    v1PrescribedMenuInput: {
+      element?: components["schemas"]["v1Element"];
+      part?: components["schemas"]["v1PrescribedPart"];
+      trainingMenuId?: string;
+      /** Format: int64 */
+      amount?: number;
+      unit?: components["schemas"]["v1PrescribedUnit"];
+      /** Format: int64 */
+      sets?: number;
+    };
+    /**
+     * @default PRESCRIBED_PART_UNSPECIFIED
+     * @enum {string}
+     */
+    v1PrescribedPart:
+      | "PRESCRIBED_PART_UNSPECIFIED"
+      | "PRESCRIBED_PART_UPPER_LIMB"
+      | "PRESCRIBED_PART_LOWER_LIMB"
+      | "PRESCRIBED_PART_WHOLE_BODY";
+    /**
+     * @default PRESCRIBED_UNIT_UNSPECIFIED
+     * @enum {string}
+     */
+    v1PrescribedUnit:
+      | "PRESCRIBED_UNIT_UNSPECIFIED"
+      | "PRESCRIBED_UNIT_REPS"
+      | "PRESCRIBED_UNIT_SECONDS"
+      | "PRESCRIBED_UNIT_MINUTES";
+    /**
+     * @default PRESCRIPTION_SOURCE_UNSPECIFIED
+     * @enum {string}
+     */
+    v1PrescriptionSource:
+      | "PRESCRIPTION_SOURCE_UNSPECIFIED"
+      | "PRESCRIPTION_SOURCE_ELEMENT"
+      | "PRESCRIPTION_SOURCE_FIXED"
+      | "PRESCRIPTION_SOURCE_AGE_DECADE"
+      | "PRESCRIPTION_SOURCE_MANUAL";
     /**
      * @default RANK_UNSPECIFIED
      * @enum {string}
@@ -103,6 +243,10 @@ export interface components {
     v1UpsertJudgmentAdviceResponse: {
       measurementId?: string;
       advice?: string;
+    };
+    v1UpsertPrescriptionResponse: {
+      measurementId?: string;
+      prescribedMenus?: components["schemas"]["v1PrescribedMenu"][];
     };
   };
   responses: never;
@@ -166,6 +310,105 @@ export interface operations {
         };
         content: {
           "application/json": components["schemas"]["v1UpsertJudgmentAdviceResponse"];
+        };
+      };
+      /** @description An unexpected error response. */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["rpcStatus"];
+        };
+      };
+    };
+  };
+  JudgmentService_UpsertPrescription: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        measurementId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["JudgmentServiceUpsertPrescriptionBody"];
+      };
+    };
+    responses: {
+      /** @description A successful response. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["v1UpsertPrescriptionResponse"];
+        };
+      };
+      /** @description An unexpected error response. */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["rpcStatus"];
+        };
+      };
+    };
+  };
+  JudgmentService_DeletePrescription: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        measurementId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A successful response. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["v1DeletePrescriptionResponse"];
+        };
+      };
+      /** @description An unexpected error response. */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["rpcStatus"];
+        };
+      };
+    };
+  };
+  JudgmentService_ListOrganizationJudgments: {
+    parameters: {
+      query?: {
+        includeInactive?: boolean;
+      };
+      header?: never;
+      path: {
+        organizationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A successful response. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["v1ListOrganizationJudgmentsResponse"];
         };
       };
       /** @description An unexpected error response. */

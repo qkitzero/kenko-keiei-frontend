@@ -75,6 +75,102 @@
         ],
         "tags": ["JudgmentService"]
       }
+    },
+    "/v1/measurement/{measurementId}/prescription": {
+      "delete": {
+        "operationId": "JudgmentService_DeletePrescription",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1DeletePrescriptionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "measurementId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          }
+        ],
+        "tags": ["JudgmentService"]
+      },
+      "put": {
+        "operationId": "JudgmentService_UpsertPrescription",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1UpsertPrescriptionResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "measurementId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/JudgmentServiceUpsertPrescriptionBody"
+            }
+          }
+        ],
+        "tags": ["JudgmentService"]
+      }
+    },
+    "/v1/organization/{organizationId}/judgments": {
+      "get": {
+        "operationId": "JudgmentService_ListOrganizationJudgments",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/v1ListOrganizationJudgmentsResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "organizationId",
+            "in": "path",
+            "required": true,
+            "type": "string"
+          },
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
+          }
+        ],
+        "tags": ["JudgmentService"]
+      }
     }
   },
   "definitions": {
@@ -83,6 +179,18 @@
       "properties": {
         "advice": {
           "type": "string"
+        }
+      }
+    },
+    "JudgmentServiceUpsertPrescriptionBody": {
+      "type": "object",
+      "properties": {
+        "prescribedMenus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PrescribedMenuInput"
+          }
         }
       }
     },
@@ -113,6 +221,31 @@
           }
         }
       }
+    },
+    "typeDate": {
+      "type": "object",
+      "properties": {
+        "year": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Year of the date. Must be from 1 to 9999, or 0 to specify a date without\na year."
+        },
+        "month": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Month of a year. Must be from 1 to 12, or 0 to specify a year without a\nmonth and day."
+        },
+        "day": {
+          "type": "integer",
+          "format": "int32",
+          "description": "Day of a month. Must be from 1 to 31 and valid for the year and month, or 0\nto specify a year by itself or a year and month where the day isn't\nsignificant."
+        }
+      },
+      "description": "* A full date, with non-zero year, month, and day values.\n* A month and day, with a zero year (for example, an anniversary).\n* A year on its own, with a zero month and a zero day.\n* A year and month, with a zero day (for example, a credit card expiration\n  date).\n\nRelated types:\n\n* [google.type.TimeOfDay][google.type.TimeOfDay]\n* [google.type.DateTime][google.type.DateTime]\n* [google.protobuf.Timestamp][google.protobuf.Timestamp]",
+      "title": "Represents a whole or partial calendar date, such as a birthday. The time of\nday and time zone are either specified elsewhere or are insignificant. The\ndate is relative to the Gregorian Calendar. This can represent one of the\nfollowing:"
+    },
+    "v1DeletePrescriptionResponse": {
+      "type": "object"
     },
     "v1Element": {
       "type": "string",
@@ -202,8 +335,153 @@
         },
         "isDraft": {
           "type": "boolean"
+        },
+        "prescribedMenus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PrescribedMenu"
+          }
         }
       }
+    },
+    "v1ListOrganizationJudgmentsResponse": {
+      "type": "object",
+      "properties": {
+        "judgments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1OrganizationJudgment"
+          }
+        }
+      }
+    },
+    "v1OrganizationJudgment": {
+      "type": "object",
+      "properties": {
+        "customerId": {
+          "type": "string"
+        },
+        "measurementId": {
+          "type": "string"
+        },
+        "measuredOn": {
+          "$ref": "#/definitions/typeDate"
+        },
+        "ageAtMeasurement": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "isDraft": {
+          "type": "boolean"
+        },
+        "itemEvaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ItemEvaluation"
+          }
+        },
+        "elementEvaluations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1ElementEvaluation"
+          }
+        },
+        "motorAge": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1PrescribedMenu": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "$ref": "#/definitions/v1PrescriptionSource"
+        },
+        "element": {
+          "$ref": "#/definitions/v1Element"
+        },
+        "part": {
+          "$ref": "#/definitions/v1PrescribedPart"
+        },
+        "trainingMenuId": {
+          "type": "string"
+        },
+        "trainingMenuName": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "unit": {
+          "$ref": "#/definitions/v1PrescribedUnit"
+        },
+        "sets": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1PrescribedMenuInput": {
+      "type": "object",
+      "properties": {
+        "element": {
+          "$ref": "#/definitions/v1Element"
+        },
+        "part": {
+          "$ref": "#/definitions/v1PrescribedPart"
+        },
+        "trainingMenuId": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "unit": {
+          "$ref": "#/definitions/v1PrescribedUnit"
+        },
+        "sets": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "v1PrescribedPart": {
+      "type": "string",
+      "enum": [
+        "PRESCRIBED_PART_UNSPECIFIED",
+        "PRESCRIBED_PART_UPPER_LIMB",
+        "PRESCRIBED_PART_LOWER_LIMB",
+        "PRESCRIBED_PART_WHOLE_BODY"
+      ],
+      "default": "PRESCRIBED_PART_UNSPECIFIED"
+    },
+    "v1PrescribedUnit": {
+      "type": "string",
+      "enum": [
+        "PRESCRIBED_UNIT_UNSPECIFIED",
+        "PRESCRIBED_UNIT_REPS",
+        "PRESCRIBED_UNIT_SECONDS",
+        "PRESCRIBED_UNIT_MINUTES"
+      ],
+      "default": "PRESCRIBED_UNIT_UNSPECIFIED"
+    },
+    "v1PrescriptionSource": {
+      "type": "string",
+      "enum": [
+        "PRESCRIPTION_SOURCE_UNSPECIFIED",
+        "PRESCRIPTION_SOURCE_ELEMENT",
+        "PRESCRIPTION_SOURCE_FIXED",
+        "PRESCRIPTION_SOURCE_AGE_DECADE",
+        "PRESCRIPTION_SOURCE_MANUAL"
+      ],
+      "default": "PRESCRIPTION_SOURCE_UNSPECIFIED"
     },
     "v1Rank": {
       "type": "string",
@@ -225,6 +503,21 @@
         },
         "advice": {
           "type": "string"
+        }
+      }
+    },
+    "v1UpsertPrescriptionResponse": {
+      "type": "object",
+      "properties": {
+        "measurementId": {
+          "type": "string"
+        },
+        "prescribedMenus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/v1PrescribedMenu"
+          }
         }
       }
     }
