@@ -1,5 +1,6 @@
 "use client";
 
+import CopyableId from "@/components/CopyableId";
 import LogoutButton from "@/components/LogoutButton";
 import { MENU_PANEL, MENU_TRIGGER } from "@/components/menu";
 import { useUser } from "@/context/UserContext";
@@ -36,14 +37,16 @@ export default function AccountMenu() {
             <p className="text-foreground truncate text-sm font-medium">
               {user.displayName}
             </p>
-            <p className="text-subtle mt-0.5 truncate text-xs">{user.userId}</p>
+          </div>
+          <div className="bg-border my-1 h-px" />
+          <div className="px-2.5 py-1.5">
+            <CopyableId label="ユーザー ID" value={user.userId} />
+            <p className="text-subtle mt-1.5 text-xs">
+              テナントに招待してもらうときは、この ID を管理者に伝えます。
+            </p>
           </div>
           <div className="bg-border my-1 h-px" />
           <dl className="space-y-1.5 px-2.5 py-1.5 text-xs">
-            <div className="flex justify-between gap-4">
-              <dt className="text-subtle">表示名</dt>
-              <dd className="text-foreground">{user.displayName}</dd>
-            </div>
             <div className="flex justify-between gap-4">
               <dt className="text-subtle">生年月日</dt>
               <dd className="text-foreground">
