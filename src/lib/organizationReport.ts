@@ -234,6 +234,7 @@ export type FiscalSummary = {
   judgedCount: number;
   motorAgeDifference: number | null;
   motorAgeCount: number;
+  motorAgeOutsideStandardCount: number;
   attentionCount: number;
   distributions: ElementDistribution[];
 };
@@ -300,19 +301,30 @@ function needsAttention(judgment: OrganizationJudgment): boolean {
 function motorAgeDifferenceOf(judgments: OrganizationJudgment[]): {
   difference: number | null;
   count: number;
+  outsideStandardCount: number;
 } {
   const differences: number[] = [];
+  let outsideStandardCount = 0;
   for (const judgment of judgments) {
     const motorAge = judgment.motorAge;
     const age = judgment.ageAtMeasurement;
     if (typeof motorAge !== "number" || typeof age !== "number") continue;
-    if (!isWithinStandardAges(age)) continue;
+    if (!isWithinStandardAges(age)) {
+      outsideStandardCount += 1;
+      continue;
+    }
     differences.push(motorAge - age);
   }
-  if (differences.length === 0) return { difference: null, count: 0 };
+  if (differences.length === 0) {
+    return { difference: null, count: 0, outsideStandardCount };
+  }
 
   const total = differences.reduce((sum, value) => sum + value, 0);
-  return { difference: total / differences.length, count: differences.length };
+  return {
+    difference: total / differences.length,
+    count: differences.length,
+    outsideStandardCount,
+  };
 }
 
 export function fiscalSummaries(
@@ -330,6 +342,7 @@ export function fiscalSummaries(
         judgedCount: yearly.filter(hasEvaluations).length,
         motorAgeDifference: motorAge.difference,
         motorAgeCount: motorAge.count,
+        motorAgeOutsideStandardCount: motorAge.outsideStandardCount,
         attentionCount: yearly.filter(needsAttention).length,
         distributions: ELEMENTS.map((element) => ({
           element,
