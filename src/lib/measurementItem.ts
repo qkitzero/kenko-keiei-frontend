@@ -47,7 +47,6 @@ const SHORT_NAMES_BY_CODE: Record<string, string> = {
   seated_stepping_20s: "座位",
   sit_and_reach: "前屈",
   stick_reaction: "棒反応",
-  side_step: "横跳び",
   eyes_closed_one_leg_stand: "閉眼",
   eyes_open_one_leg_stand: "開眼",
   functional_reach: "FRT",
