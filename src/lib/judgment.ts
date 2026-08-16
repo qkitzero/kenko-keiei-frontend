@@ -27,6 +27,10 @@ export function isWithinStandardAges(age: number | undefined): boolean {
   return age >= STANDARD_MIN_AGE && age <= STANDARD_MAX_AGE;
 }
 
+export function usesRoundedStandards(age: number | null | undefined): boolean {
+  return typeof age === "number" && !isWithinStandardAges(age);
+}
+
 export const Z_SCORE_MIN = -2.5;
 export const Z_SCORE_MAX = 2.5;
 

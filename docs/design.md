@@ -225,10 +225,12 @@ UI を追加・変更するときはこのガイドに従う。クラス文字�
 | 一覧                     | `DataTable`                                                        |
 | 入力                     | `TextField` / `Select` / `TextArea` / `Checkbox`（土台は `Field`） |
 | 操作・状態               | `PrimaryButton` / `PrimaryLink` / `SecondaryButton` / `Badge`      |
+| 識別子の受け渡し         | `CopyButton` / `CopyableId`                                        |
 
 - **ボタンとリンクを1つのコンポーネントに兼用させない**。`href` と `disabled` / `onClick` が同時に受け取れると、渡しても効かない props が型を通ってしまう
 - `className` は基底クラスと**競合しない**追加クラス（`flex-1`, `w-full` など）に使う。余白やサイズのバリエーションは `padding` / `size` の props で表す。足りないバリエーションはクラスをコピーせずコンポーネント側に追加する
 - 新しい入力部品は `Field.tsx` の `FIELD_BASE` / `FIELD_SIZE`、新しいボタンは `control.ts` の `CONTROL_*` を使う
+- **利用者が書き写す識別子には `CopyButton` を添える**（UUID は目で写すと間違える）。結果はアイコンの差し替え（成功 `success` / 失敗 `danger`）と `role="status"` で伝え、**押しても何も起きない状態を作らない**。クリップボードは非対応・拒否がありうるので、失敗を無視しない
 
 ## 検証とフォーマット
 

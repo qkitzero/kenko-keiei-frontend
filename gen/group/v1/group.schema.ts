@@ -213,6 +213,7 @@ export interface components {
     v1Member: {
       userId?: string;
       role?: string;
+      displayName?: string;
     };
     v1RemoveChildGroupResponse: Record<string, never>;
     v1RemoveMemberResponse: Record<string, never>;

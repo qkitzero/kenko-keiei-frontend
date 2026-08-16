@@ -1,6 +1,7 @@
 "use client";
 
 import LoginButton from "@/components/LoginButton";
+import NoTenantCard from "@/components/NoTenantCard";
 import PageContainer from "@/components/PageContainer";
 import PageHeader from "@/components/PageHeader";
 import PageSkeleton from "@/components/PageSkeleton";
@@ -134,7 +135,7 @@ function Home() {
         description={
           tenantName
             ? `${tenantName}のデータを表示しています。`
-            : "テナントを作成すると、顧客や組織を登録できます。"
+            : "テナントを作るか、既存のテナントに追加してもらうと、顧客や組織を登録できます。"
         }
         actions={
           tenantId && (
@@ -150,8 +151,7 @@ function Home() {
       )}
 
       {memberships.length === 0 && (
-        <StateCard
-          message="まだテナントに所属していません。テナントを作成すると顧客や組織を登録できます。"
+        <NoTenantCard
           action={<PrimaryLink href="/tenants">テナントを管理</PrimaryLink>}
         />
       )}

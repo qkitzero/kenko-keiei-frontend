@@ -2,9 +2,9 @@ import Card from "@/components/Card";
 import {
   STANDARD_MAX_AGE,
   STANDARD_MIN_AGE,
-  isWithinStandardAges,
   motorAgeDifference,
   motorAgeDifferenceLabel,
+  usesRoundedStandards,
   type Judgment,
 } from "@/lib/judgment";
 import type { Measurement } from "@/lib/measurement";
@@ -35,7 +35,7 @@ export default function JudgmentSummary({
               </p>
             )}
           </div>
-          {!isWithinStandardAges(measurement.ageAtMeasurement) && (
+          {usesRoundedStandards(measurement.ageAtMeasurement) && (
             <p className="text-subtle mt-2 text-xs">
               測定時の年齢に対応する基準値が無いため、最も近い年代（
               {STANDARD_MIN_AGE}〜{STANDARD_MAX_AGE}

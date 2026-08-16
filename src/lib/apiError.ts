@@ -7,6 +7,17 @@ const UPSTREAM_MESSAGES: Record<string, string> = {
   "failed to resolve the signed in staff": SESSION_EXPIRED,
   "upstream request failed":
     "サーバーに接続できませんでした。時間をおいて再度お試しください。",
+  "user not found":
+    "そのユーザー ID のアカウントは見つかりません。ID を確認してください。",
+  "already a member": "このユーザーはすでにこのテナントのメンバーです。",
+  "membership not found":
+    "このユーザーはこのテナントのメンバーではありません。",
+  "permission denied": "この操作を行う権限がありません。",
+  "last owner cannot leave":
+    "最後のオーナーは外せません。先に別のメンバーをオーナーにしてください。",
+  "group not found": "テナントが見つかりません。",
+  "already a child": "このテナントはすでに下位テナントです。",
+  "circular reference": "上位・下位の関係が循環するため追加できません。",
   "measured on cannot be in the future": "測定日に未来の日付は指定できません。",
   "customer in use":
     "測定履歴が登録されているため削除できません。一覧から隠すだけなら無効化を使ってください。",

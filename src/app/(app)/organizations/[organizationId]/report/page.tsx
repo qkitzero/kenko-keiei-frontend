@@ -485,7 +485,9 @@ function OrganizationReport({ organization }: { organization: Organization }) {
                     ? `${thisYearLabel}の測定がありません`
                     : [
                         motorAgeDifference === null
-                          ? "同年代の基準値がある測定がありません"
+                          ? current.motorAgeOutsideStandardCount > 0
+                            ? "同年代の基準値がある測定がありません"
+                            : "運動器年齢を算出できた人がいません"
                           : `同年代の基準値がある${current.motorAgeCount}人の平均`,
                         previousMotorAgeDifference === null
                           ? ""

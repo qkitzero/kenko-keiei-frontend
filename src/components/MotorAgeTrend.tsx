@@ -8,7 +8,7 @@ import { dateLabel } from "@/lib/date";
 import {
   STANDARD_MAX_AGE,
   STANDARD_MIN_AGE,
-  isWithinStandardAges,
+  usesRoundedStandards,
 } from "@/lib/judgment";
 import type { Measurement } from "@/lib/measurement";
 import { motorAgeTrend, type Judgments } from "@/lib/trend";
@@ -84,8 +84,7 @@ export default function MotorAgeTrend({
   const latestAge = trend.ages.filter((value) => value !== null).at(-1);
   const hasRoundedAge = trend.ages.some(
     (age, index) =>
-      trend.motorAges[index] !== null &&
-      !isWithinStandardAges(age ?? undefined),
+      trend.motorAges[index] !== null && usesRoundedStandards(age),
   );
 
   return (

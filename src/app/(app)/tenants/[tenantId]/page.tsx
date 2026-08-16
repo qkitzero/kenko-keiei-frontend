@@ -2,6 +2,7 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import CopyButton from "@/components/CopyButton";
 import DangerZone from "@/components/DangerZone";
 import DataTable, { type Column } from "@/components/DataTable";
 import PageContainer from "@/components/PageContainer";
@@ -24,16 +25,18 @@ import {
   isOwner,
   roleLabel,
 } from "@/lib/roles";
+import { isValidUuid } from "@/lib/uuid";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { use, useCallback, useEffect, useState } from "react";
 
 type Tenant = { tenantId: string; name: string };
-type Member = { userId: string; role: string };
+type Member = { userId: string; role: string; displayName?: string };
 
 type TenantData = {
   tenant: Tenant;
   members: Member[];
+  membersForbidden: boolean;
   children: Tenant[];
   parents: Tenant[];
 };
@@ -48,6 +51,16 @@ type GroupResponse = { groupId?: string; name?: string };
 function toTenant(group: GroupResponse | undefined): Tenant | null {
   if (!group?.groupId) return null;
   return { tenantId: group.groupId, name: group.name ?? "" };
+}
+
+const NO_DISPLAY_NAME = "（表示名なし）";
+
+function memberName(member: Member): string {
+  return member.displayName?.trim() ?? "";
+}
+
+function memberLabel(member: Member): string {
+  return memberName(member) || member.userId;
 }
 
 function toTenants(groups: unknown): Tenant[] {
@@ -72,7 +85,8 @@ async function loadTenantData(tenantId: string): Promise<LoadResult> {
   const tenant = toTenant((await tenantRes.json()).group);
   if (!tenant) return { status: "not_found" };
 
-  if (!membersRes.ok) {
+  const membersForbidden = membersRes.status === 403;
+  if (!membersRes.ok && !membersForbidden) {
     return { status: "error" };
   }
 
@@ -80,7 +94,10 @@ async function loadTenantData(tenantId: string): Promise<LoadResult> {
     status: "ok",
     data: {
       tenant,
-      members: (await membersRes.json()).members ?? [],
+      members: membersForbidden
+        ? []
+        : ((await membersRes.json()).members ?? []),
+      membersForbidden,
       children: childrenRes.ok
         ? toTenants((await childrenRes.json()).groups)
         : [],
@@ -105,6 +122,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
 
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [membersForbidden, setMembersForbidden] = useState(false);
   const [children, setChildren] = useState<Tenant[]>([]);
   const [parents, setParents] = useState<Tenant[]>([]);
   const [fetched, setFetched] = useState(false);
@@ -133,6 +151,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
       setTenant(result.data.tenant);
       setName(result.data.tenant.name);
       setMembers(result.data.members);
+      setMembersForbidden(result.data.membersForbidden);
       setChildren(result.data.children);
       setParents(result.data.parents);
       setNotFound(false);
@@ -202,6 +221,12 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   const handleAddMember = (e: React.FormEvent) => {
     e.preventDefault();
     if (addingMember || !newMemberId.trim()) return;
+    if (!isValidUuid(newMemberId)) {
+      setMemberError(
+        "ユーザー ID の形式ではありません。招待するスタッフのユーザー ID を貼り付けてください。",
+      );
+      return;
+    }
     setAddingMember(true);
     void runWithError(setMemberError, async () => {
       const res = await fetch(`/api/group/${tenantId}/members`, {
@@ -231,18 +256,19 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
     });
   };
 
-  const handleRemoveMember = (userId: string) => {
+  const handleRemoveMember = (member: Member) => {
     if (
       !window.confirm(
-        "このメンバーをテナントから外しますか？この操作は取り消せません。",
+        `${memberLabel(member)}をテナントから外しますか？この操作は取り消せません。`,
       )
     ) {
       return;
     }
     void runWithError(setMemberError, async () => {
-      const res = await fetch(`/api/group/${tenantId}/members/${userId}`, {
-        method: "DELETE",
-      });
+      const res = await fetch(
+        `/api/group/${tenantId}/members/${member.userId}`,
+        { method: "DELETE" },
+      );
       await ensureOk(res, "メンバーの削除に失敗しました");
       await reload();
     });
@@ -251,6 +277,12 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   const handleAddChild = (e: React.FormEvent) => {
     e.preventDefault();
     if (addingChild || !newChildId.trim()) return;
+    if (!isValidUuid(newChildId)) {
+      setChildError(
+        "テナント ID の形式ではありません。下位にするテナントの ID を貼り付けてください。",
+      );
+      return;
+    }
     setAddingChild(true);
     void runWithError(setChildError, async () => {
       const res = await fetch(`/api/group/${tenantId}/children`, {
@@ -303,15 +335,29 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
 
   const memberColumns: Column<Member>[] = [
     {
-      header: "ユーザー ID",
-      cell: (member) => (
-        <span className="font-mono text-xs">
-          {member.userId}
-          {member.userId === user?.userId && (
-            <span className="text-subtle font-sans"> (あなた)</span>
-          )}
-        </span>
-      ),
+      header: "メンバー",
+      cell: (member) => {
+        const name = memberName(member);
+        return (
+          <div className="min-w-0">
+            <span
+              className={name ? "text-foreground font-medium" : "text-subtle"}
+            >
+              {name || NO_DISPLAY_NAME}
+              {member.userId === user?.userId && (
+                <span className="text-subtle font-normal"> (あなた)</span>
+              )}
+            </span>
+            <span className="text-subtle mt-0.5 flex items-center gap-1 font-mono text-xs">
+              {member.userId}
+              <CopyButton
+                value={member.userId}
+                label={`${memberLabel(member)}のユーザー ID をコピー`}
+              />
+            </span>
+          </div>
+        );
+      },
     },
     {
       header: "ロール",
@@ -319,7 +365,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
         canManage && !isOwner(member.role) ? (
           <Select
             size="sm"
-            aria-label={`${member.userId}のロール`}
+            aria-label={`${memberLabel(member)}のロール`}
             value={member.role}
             onChange={(role) => handleRoleChange(member.userId, role)}
           >
@@ -344,7 +390,8 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
           <SecondaryButton
             size="sm"
             variant="danger"
-            onClick={() => handleRemoveMember(member.userId)}
+            aria-label={`${memberLabel(member)}をテナントから外す`}
+            onClick={() => handleRemoveMember(member)}
           >
             削除
           </SecondaryButton>
@@ -408,8 +455,9 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
       <Card title="テナント設定">
         <dl>
           <dt className="text-muted text-sm font-medium">テナント ID</dt>
-          <dd className="text-subtle mt-1 truncate font-mono text-xs">
-            {tenant.tenantId}
+          <dd className="text-subtle mt-1 flex items-center gap-1 font-mono text-xs">
+            <span className="truncate">{tenant.tenantId}</span>
+            <CopyButton value={tenant.tenantId} label="テナント ID をコピー" />
           </dd>
         </dl>
         {canManage && (
@@ -434,13 +482,24 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
       {isMember && <TenantProfileCard tenantId={tenantId} />}
 
       <section className="flex flex-col gap-3">
-        <SectionHeader title="メンバー" count={members.length} />
+        <SectionHeader
+          title="メンバー"
+          count={membersForbidden ? undefined : members.length}
+        />
         <DataTable
           caption="メンバー一覧"
           columns={memberColumns}
           rows={members}
           rowKey={(member) => member.userId}
-          empty={<StateCard message="メンバーはいません。" />}
+          empty={
+            <StateCard
+              message={
+                membersForbidden
+                  ? "このテナントのメンバーではないため、メンバーを表示できません。"
+                  : "メンバーはいません。"
+              }
+            />
+          }
         />
         {memberError && <p className="text-danger text-sm">{memberError}</p>}
         {canManage && (
@@ -471,6 +530,10 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
                 {addingMember ? "追加中..." : "メンバーを追加"}
               </PrimaryButton>
             </form>
+            <p className="text-subtle mt-2 text-xs">
+              招待するスタッフのアカウントメニューに表示されるユーザー ID
+              を貼り付けます。
+            </p>
           </Card>
         )}
       </section>
