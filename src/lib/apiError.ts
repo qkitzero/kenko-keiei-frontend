@@ -37,6 +37,10 @@ const UPSTREAM_MESSAGES: Record<string, string> = {
     "測定日時点の年齢を計算できませんでした。顧客の生年月日を確認してください。",
   "judgment not found": "判定が見つかりません。",
   "invalid advice": "アドバイスに使用できない文字が含まれています。",
+  "training menu not found":
+    "選択した種目が見つかりません。ページを再読み込みして選び直してください。",
+  "invalid prescribed menu labels":
+    "種目と要素・部位が一致していません。ページを再読み込みして選び直してください。",
 };
 
 export function upstreamMessage(message: unknown): string {
