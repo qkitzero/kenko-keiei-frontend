@@ -1,0 +1,151 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "training/v1/training_menu.proto",
+    "version": "version not set"
+  },
+  "tags": [
+    {
+      "name": "TrainingMenuService"
+    }
+  ],
+  "paths": {
+    "/v1/training-menus": {
+      "get": {
+        "operationId": "TrainingMenuService_ListTrainingMenus",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1ListTrainingMenusResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/rpcStatus"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["TrainingMenuService"]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "protobufAny": {
+        "type": "object",
+        "properties": {
+          "@type": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": {}
+      },
+      "rpcStatus": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/protobufAny"
+            }
+          }
+        }
+      },
+      "v1ListTrainingMenusResponse": {
+        "type": "object",
+        "properties": {
+          "trainingMenus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v1TrainingMenu"
+            }
+          }
+        }
+      },
+      "v1Part": {
+        "type": "string",
+        "enum": [
+          "PART_UNSPECIFIED",
+          "PART_UPPER_LIMB",
+          "PART_LOWER_LIMB",
+          "PART_WHOLE_BODY"
+        ],
+        "default": "PART_UNSPECIFIED"
+      },
+      "v1TrainingElement": {
+        "type": "string",
+        "enum": [
+          "TRAINING_ELEMENT_UNSPECIFIED",
+          "TRAINING_ELEMENT_MUSCLE_STRENGTH",
+          "TRAINING_ELEMENT_MUSCLE_ENDURANCE",
+          "TRAINING_ELEMENT_FLEXIBILITY",
+          "TRAINING_ELEMENT_AGILITY",
+          "TRAINING_ELEMENT_BALANCE",
+          "TRAINING_ELEMENT_MOBILITY"
+        ],
+        "default": "TRAINING_ELEMENT_UNSPECIFIED"
+      },
+      "v1TrainingMenu": {
+        "type": "object",
+        "properties": {
+          "trainingMenuId": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "element": {
+            "$ref": "#/components/schemas/v1TrainingElement"
+          },
+          "part": {
+            "$ref": "#/components/schemas/v1Part"
+          },
+          "amount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/v1TrainingUnit"
+          },
+          "sets": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "instruction": {
+            "type": "string"
+          }
+        }
+      },
+      "v1TrainingUnit": {
+        "type": "string",
+        "enum": [
+          "TRAINING_UNIT_UNSPECIFIED",
+          "TRAINING_UNIT_REPS",
+          "TRAINING_UNIT_SECONDS",
+          "TRAINING_UNIT_MINUTES"
+        ],
+        "default": "TRAINING_UNIT_UNSPECIFIED"
+      }
+    }
+  }
+}
