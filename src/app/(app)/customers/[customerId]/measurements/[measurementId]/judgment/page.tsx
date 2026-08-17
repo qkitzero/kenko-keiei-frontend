@@ -12,18 +12,28 @@ import PageContainer from "@/components/PageContainer";
 import PageHeader from "@/components/PageHeader";
 import PageMessage from "@/components/PageMessage";
 import PageSkeleton from "@/components/PageSkeleton";
+import PrescribedMenus from "@/components/PrescribedMenus";
+import PrescriptionDangerZone from "@/components/PrescriptionDangerZone";
 import PrintButton from "@/components/PrintButton";
 import PrintFrame from "@/components/PrintFrame";
 import SecondaryButton from "@/components/SecondaryButton";
 import StateCard from "@/components/StateCard";
 import { useTenants } from "@/context/TenantsContext";
 import { dateInputValue, dateLabel } from "@/lib/date";
-import { emptyJudgmentMessage, isEmptyJudgment } from "@/lib/judgment";
+import {
+  emptyJudgmentMessage,
+  isEmptyJudgment,
+  type Judgment,
+} from "@/lib/judgment";
 import { printFileName } from "@/lib/print";
+import type { TrainingMenu } from "@/lib/trainingMenu";
 import { useCustomer } from "@/lib/useCustomer";
 import { useJudgment } from "@/lib/useJudgment";
 import { useMeasurement } from "@/lib/useMeasurement";
 import { useMeasurementItems } from "@/lib/useMeasurementItems";
+import { usePrescription } from "@/lib/usePrescription";
+import type { ResourceState } from "@/lib/useResource";
+import { useTrainingMenus } from "@/lib/useTrainingMenus";
 import { isSameId } from "@/lib/uuid";
 import { use } from "react";
 
@@ -52,6 +62,7 @@ function JudgmentDetail({
   const measurement = useMeasurement(measurementId);
   const judgment = useJudgment(measurementId);
   const items = useMeasurementItems();
+  const trainingMenus = useTrainingMenus();
   const customer = useCustomer(customerId);
   const { memberships } = useTenants();
 
@@ -208,12 +219,46 @@ function JudgmentDetail({
         )}
 
         {judged && (
-          <AdviceForm
+          <JudgmentEditors
             measurementId={measurementId}
-            advice={judged.advice ?? ""}
+            judgment={judged}
+            trainingMenus={trainingMenus}
           />
         )}
       </PrintFrame>
     </PageContainer>
+  );
+}
+
+function JudgmentEditors({
+  measurementId,
+  judgment,
+  trainingMenus,
+}: {
+  measurementId: string;
+  judgment: Judgment;
+  trainingMenus: ResourceState<TrainingMenu[]>;
+}) {
+  const prescription = usePrescription(
+    measurementId,
+    judgment,
+    trainingMenus.status === "ok" ? trainingMenus.data : null,
+  );
+
+  return (
+    <>
+      <PrescribedMenus
+        judgment={judgment}
+        trainingMenus={trainingMenus}
+        prescription={prescription}
+      />
+
+      <AdviceForm
+        measurementId={measurementId}
+        advice={judgment.advice ?? ""}
+      />
+
+      <PrescriptionDangerZone prescription={prescription} />
+    </>
   );
 }

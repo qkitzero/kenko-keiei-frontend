@@ -11,6 +11,8 @@ export const CHOICE_MAX_LENGTH = 32;
 
 export const CATEGORY_MOTOR_FUNCTION = "CATEGORY_MOTOR_FUNCTION";
 
+const UNIT_LEVEL = "UNIT_LEVEL";
+
 const CATEGORY_LABELS: Record<string, string> = {
   CATEGORY_UNSPECIFIED: "その他",
   CATEGORY_VITAL: "バイタル",
@@ -28,6 +30,7 @@ const UNIT_LABELS: Record<string, string> = {
   UNIT_MMHG: "mmHg",
   UNIT_PERCENT: "%",
   UNIT_BPM: "bpm",
+  UNIT_LEVEL: "",
 };
 
 const PAIRED_LABELS: Record<string, [string, string]> = {
@@ -36,8 +39,21 @@ const PAIRED_LABELS: Record<string, [string, string]> = {
 
 const DEFAULT_PAIRED_LABELS: [string, string] = ["1つ目", "2つ目"];
 
-const CHOICES_BY_CODE: Record<string, string[]> = {
-  stand_up_test: ["40", "30", "20", "10"],
+const CHOICES_BY_CODE: Record<string, string[]> = {};
+
+const LEVEL_LABELS_BY_CODE: Record<string, string[]> = {
+  stand_up_test: [
+    "両足 50cm",
+    "両足 40cm",
+    "両足 30cm",
+    "両足 20cm",
+    "両足 10cm",
+    "片足 40cm",
+    "片足 30cm",
+    "片足 20cm",
+    "片足 10cm",
+    "片足 0cm",
+  ],
 };
 
 const SHORT_NAMES_BY_CODE: Record<string, string> = {
@@ -47,7 +63,6 @@ const SHORT_NAMES_BY_CODE: Record<string, string> = {
   seated_stepping_20s: "座位",
   sit_and_reach: "前屈",
   stick_reaction: "棒反応",
-  side_step: "横跳び",
   eyes_closed_one_leg_stand: "閉眼",
   eyes_open_one_leg_stand: "開眼",
   functional_reach: "FRT",
@@ -63,7 +78,7 @@ export function categoryLabel(category: string | undefined): string {
 
 export function unitLabel(unit: string | undefined): string {
   if (!unit) return "";
-  return UNIT_LABELS[unit] ?? unit;
+  return UNIT_LABELS[unit] ?? unit.replace(/^UNIT_/, "");
 }
 
 export function pairedLabels(item: MeasurementItem): [string, string] {
@@ -72,6 +87,32 @@ export function pairedLabels(item: MeasurementItem): [string, string] {
 
 export function choicesOf(item: MeasurementItem): string[] {
   return (item.code && CHOICES_BY_CODE[item.code]) || [];
+}
+
+export type LevelOption = { level: number; label: string };
+
+export function isLevelItem(item: MeasurementItem): boolean {
+  return item.unit === UNIT_LEVEL;
+}
+
+function levelLabelsOf(item: MeasurementItem): string[] {
+  if (!isLevelItem(item)) return [];
+  return (item.code && LEVEL_LABELS_BY_CODE[item.code]) || [];
+}
+
+export function levelOptionsOf(item: MeasurementItem): LevelOption[] {
+  return levelLabelsOf(item).map((label, index) => ({
+    level: index + 1,
+    label,
+  }));
+}
+
+export function levelLabel(
+  item: MeasurementItem,
+  level: number | undefined,
+): string {
+  if (typeof level !== "number") return "";
+  return levelLabelsOf(item)[level - 1] ?? "";
 }
 
 export function shortItemName(item: MeasurementItem): string {
@@ -108,6 +149,10 @@ export function recordingLabel(item: MeasurementItem): string {
   if (item.valueType === "VALUE_TYPE_CHOICE") {
     parts.push("選択");
   }
+
+  const levels = levelLabelsOf(item).length;
+  if (levels > 0) parts.push(`${levels}段階`);
+
   if (item.bilateral) parts.push("左右");
 
   const trials = trialCountOf(item);

@@ -4,14 +4,14 @@
  */
 
 export interface paths {
-  "/v1/measurement-items": {
+  "/v1/training-menus": {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations["MeasurementItemService_ListMeasurementItems"];
+    get: operations["TrainingMenuService_ListTrainingMenus"];
     put?: never;
     post?: never;
     delete?: never;
@@ -35,53 +35,52 @@ export interface components {
       message?: string;
       details?: components["schemas"]["protobufAny"][];
     };
+    v1ListTrainingMenusResponse: {
+      trainingMenus?: components["schemas"]["v1TrainingMenu"][];
+    };
     /**
-     * @default CATEGORY_UNSPECIFIED
+     * @default PART_UNSPECIFIED
      * @enum {string}
      */
-    v1Category:
-      | "CATEGORY_UNSPECIFIED"
-      | "CATEGORY_VITAL"
-      | "CATEGORY_PHYSIQUE"
-      | "CATEGORY_BODY_COMPOSITION"
-      | "CATEGORY_MOTOR_FUNCTION";
-    v1ListMeasurementItemsResponse: {
-      measurementItems?: components["schemas"]["v1MeasurementItem"][];
-    };
-    v1MeasurementItem: {
-      measurementItemId?: string;
+    v1Part:
+      | "PART_UNSPECIFIED"
+      | "PART_UPPER_LIMB"
+      | "PART_LOWER_LIMB"
+      | "PART_WHOLE_BODY";
+    /**
+     * @default TRAINING_ELEMENT_UNSPECIFIED
+     * @enum {string}
+     */
+    v1TrainingElement:
+      | "TRAINING_ELEMENT_UNSPECIFIED"
+      | "TRAINING_ELEMENT_MUSCLE_STRENGTH"
+      | "TRAINING_ELEMENT_MUSCLE_ENDURANCE"
+      | "TRAINING_ELEMENT_FLEXIBILITY"
+      | "TRAINING_ELEMENT_AGILITY"
+      | "TRAINING_ELEMENT_BALANCE"
+      | "TRAINING_ELEMENT_MOBILITY";
+    v1TrainingMenu: {
+      trainingMenuId?: string;
       code?: string;
       name?: string;
-      category?: components["schemas"]["v1Category"];
-      unit?: components["schemas"]["v1Unit"];
+      element?: components["schemas"]["v1TrainingElement"];
+      part?: components["schemas"]["v1Part"];
       /** Format: int64 */
-      trialCount?: number;
-      bilateral?: boolean;
-      valueType?: components["schemas"]["v1ValueType"];
+      amount?: number;
+      unit?: components["schemas"]["v1TrainingUnit"];
+      /** Format: int64 */
+      sets?: number;
+      instruction?: string;
     };
     /**
-     * @default UNIT_UNSPECIFIED
+     * @default TRAINING_UNIT_UNSPECIFIED
      * @enum {string}
      */
-    v1Unit:
-      | "UNIT_UNSPECIFIED"
-      | "UNIT_KG"
-      | "UNIT_CM"
-      | "UNIT_SEC"
-      | "UNIT_COUNT"
-      | "UNIT_MMHG"
-      | "UNIT_PERCENT"
-      | "UNIT_BPM"
-      | "UNIT_LEVEL";
-    /**
-     * @default VALUE_TYPE_UNSPECIFIED
-     * @enum {string}
-     */
-    v1ValueType:
-      | "VALUE_TYPE_UNSPECIFIED"
-      | "VALUE_TYPE_NUMERIC"
-      | "VALUE_TYPE_PAIRED"
-      | "VALUE_TYPE_CHOICE";
+    v1TrainingUnit:
+      | "TRAINING_UNIT_UNSPECIFIED"
+      | "TRAINING_UNIT_REPS"
+      | "TRAINING_UNIT_SECONDS"
+      | "TRAINING_UNIT_MINUTES";
   };
   responses: never;
   parameters: never;
@@ -91,7 +90,7 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
-  MeasurementItemService_ListMeasurementItems: {
+  TrainingMenuService_ListTrainingMenus: {
     parameters: {
       query?: never;
       header?: never;
@@ -106,7 +105,7 @@ export interface operations {
           [name: string]: unknown;
         };
         content: {
-          "application/json": components["schemas"]["v1ListMeasurementItemsResponse"];
+          "application/json": components["schemas"]["v1ListTrainingMenusResponse"];
         };
       };
       /** @description An unexpected error response. */

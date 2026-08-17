@@ -17,6 +17,8 @@ import {
 } from "@/lib/measurement";
 import {
   CATEGORY_MOTOR_FUNCTION,
+  isLevelItem,
+  levelLabel,
   pairedLabels,
   trialIndexes,
   unitLabel,
@@ -276,8 +278,10 @@ function evaluationPoint(
   if (!evaluation) return null;
 
   return {
-    text: formatMeasurementNumber(evaluation.value),
-    value: numberOrNull(evaluation.value),
+    text:
+      levelLabel(item, evaluation.value) ||
+      formatMeasurementNumber(evaluation.value),
+    value: isLevelItem(item) ? null : numberOrNull(evaluation.value),
     rank: evaluation.rank ?? null,
     unmeasurable: false,
   };
@@ -295,7 +299,9 @@ function recordedPoint(
   if (!text) return EMPTY_POINT;
 
   const value =
-    hasSingleCell(item) && item.valueType === "VALUE_TYPE_NUMERIC"
+    hasSingleCell(item) &&
+    item.valueType === "VALUE_TYPE_NUMERIC" &&
+    !isLevelItem(item)
       ? numberOrNull(configuredCells(entry, item)[0]?.value)
       : null;
 

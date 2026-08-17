@@ -1,25 +1,25 @@
 {
   "swagger": "2.0",
   "info": {
-    "title": "measurementitem/v1/measurement_item.proto",
+    "title": "training/v1/training_menu.proto",
     "version": "version not set"
   },
   "tags": [
     {
-      "name": "MeasurementItemService"
+      "name": "TrainingMenuService"
     }
   ],
   "consumes": ["application/json"],
   "produces": ["application/json"],
   "paths": {
-    "/v1/measurement-items": {
+    "/v1/training-menus": {
       "get": {
-        "operationId": "MeasurementItemService_ListMeasurementItems",
+        "operationId": "TrainingMenuService_ListTrainingMenus",
         "responses": {
           "200": {
             "description": "A successful response.",
             "schema": {
-              "$ref": "#/definitions/v1ListMeasurementItemsResponse"
+              "$ref": "#/definitions/v1ListTrainingMenusResponse"
             }
           },
           "default": {
@@ -29,7 +29,7 @@
             }
           }
         },
-        "tags": ["MeasurementItemService"]
+        "tags": ["TrainingMenuService"]
       }
     }
   },
@@ -62,33 +62,45 @@
         }
       }
     },
-    "v1Category": {
-      "type": "string",
-      "enum": [
-        "CATEGORY_UNSPECIFIED",
-        "CATEGORY_VITAL",
-        "CATEGORY_PHYSIQUE",
-        "CATEGORY_BODY_COMPOSITION",
-        "CATEGORY_MOTOR_FUNCTION"
-      ],
-      "default": "CATEGORY_UNSPECIFIED"
-    },
-    "v1ListMeasurementItemsResponse": {
+    "v1ListTrainingMenusResponse": {
       "type": "object",
       "properties": {
-        "measurementItems": {
+        "trainingMenus": {
           "type": "array",
           "items": {
             "type": "object",
-            "$ref": "#/definitions/v1MeasurementItem"
+            "$ref": "#/definitions/v1TrainingMenu"
           }
         }
       }
     },
-    "v1MeasurementItem": {
+    "v1Part": {
+      "type": "string",
+      "enum": [
+        "PART_UNSPECIFIED",
+        "PART_UPPER_LIMB",
+        "PART_LOWER_LIMB",
+        "PART_WHOLE_BODY"
+      ],
+      "default": "PART_UNSPECIFIED"
+    },
+    "v1TrainingElement": {
+      "type": "string",
+      "enum": [
+        "TRAINING_ELEMENT_UNSPECIFIED",
+        "TRAINING_ELEMENT_MUSCLE_STRENGTH",
+        "TRAINING_ELEMENT_MUSCLE_ENDURANCE",
+        "TRAINING_ELEMENT_FLEXIBILITY",
+        "TRAINING_ELEMENT_AGILITY",
+        "TRAINING_ELEMENT_BALANCE",
+        "TRAINING_ELEMENT_MOBILITY"
+      ],
+      "default": "TRAINING_ELEMENT_UNSPECIFIED"
+    },
+    "v1TrainingMenu": {
       "type": "object",
       "properties": {
-        "measurementItemId": {
+        "trainingMenuId": {
           "type": "string"
         },
         "code": {
@@ -97,48 +109,37 @@
         "name": {
           "type": "string"
         },
-        "category": {
-          "$ref": "#/definitions/v1Category"
+        "element": {
+          "$ref": "#/definitions/v1TrainingElement"
         },
-        "unit": {
-          "$ref": "#/definitions/v1Unit"
+        "part": {
+          "$ref": "#/definitions/v1Part"
         },
-        "trialCount": {
+        "amount": {
           "type": "integer",
           "format": "int64"
         },
-        "bilateral": {
-          "type": "boolean"
+        "unit": {
+          "$ref": "#/definitions/v1TrainingUnit"
         },
-        "valueType": {
-          "$ref": "#/definitions/v1ValueType"
+        "sets": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "instruction": {
+          "type": "string"
         }
       }
     },
-    "v1Unit": {
+    "v1TrainingUnit": {
       "type": "string",
       "enum": [
-        "UNIT_UNSPECIFIED",
-        "UNIT_KG",
-        "UNIT_CM",
-        "UNIT_SEC",
-        "UNIT_COUNT",
-        "UNIT_MMHG",
-        "UNIT_PERCENT",
-        "UNIT_BPM",
-        "UNIT_LEVEL"
+        "TRAINING_UNIT_UNSPECIFIED",
+        "TRAINING_UNIT_REPS",
+        "TRAINING_UNIT_SECONDS",
+        "TRAINING_UNIT_MINUTES"
       ],
-      "default": "UNIT_UNSPECIFIED"
-    },
-    "v1ValueType": {
-      "type": "string",
-      "enum": [
-        "VALUE_TYPE_UNSPECIFIED",
-        "VALUE_TYPE_NUMERIC",
-        "VALUE_TYPE_PAIRED",
-        "VALUE_TYPE_CHOICE"
-      ],
-      "default": "VALUE_TYPE_UNSPECIFIED"
+      "default": "TRAINING_UNIT_UNSPECIFIED"
     }
   }
 }

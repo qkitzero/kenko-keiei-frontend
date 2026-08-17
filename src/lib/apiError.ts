@@ -7,6 +7,17 @@ const UPSTREAM_MESSAGES: Record<string, string> = {
   "failed to resolve the signed in staff": SESSION_EXPIRED,
   "upstream request failed":
     "サーバーに接続できませんでした。時間をおいて再度お試しください。",
+  "user not found":
+    "そのユーザー ID のアカウントは見つかりません。ID を確認してください。",
+  "already a member": "このユーザーはすでにこのテナントのメンバーです。",
+  "membership not found":
+    "このユーザーはこのテナントのメンバーではありません。",
+  "permission denied": "この操作を行う権限がありません。",
+  "last owner cannot leave":
+    "最後のオーナーは外せません。先に別のメンバーをオーナーにしてください。",
+  "group not found": "テナントが見つかりません。",
+  "already a child": "このテナントはすでに下位テナントです。",
+  "circular reference": "上位・下位の関係が循環するため追加できません。",
   "measured on cannot be in the future": "測定日に未来の日付は指定できません。",
   "customer in use":
     "測定履歴が登録されているため削除できません。一覧から隠すだけなら無効化を使ってください。",
@@ -26,6 +37,10 @@ const UPSTREAM_MESSAGES: Record<string, string> = {
     "測定日時点の年齢を計算できませんでした。顧客の生年月日を確認してください。",
   "judgment not found": "判定が見つかりません。",
   "invalid advice": "アドバイスに使用できない文字が含まれています。",
+  "training menu not found":
+    "選択した種目が見つかりません。ページを再読み込みして選び直してください。",
+  "invalid prescribed menu labels":
+    "種目と要素・部位が一致していません。ページを再読み込みして選び直してください。",
 };
 
 export function upstreamMessage(message: unknown): string {

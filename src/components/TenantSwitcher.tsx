@@ -7,6 +7,18 @@ import { useDismissableMenu } from "@/lib/useDismissableMenu";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
+const TRIGGER_MAX_WIDTH = "max-w-56 sm:max-w-xs lg:max-w-sm xl:max-w-md";
+const TRIGGER_SKELETON_WIDTH = "w-56 sm:w-xs lg:w-sm xl:w-md";
+
+export function TenantSwitcherSkeleton() {
+  return (
+    <div
+      className={`border-border h-8 shrink-0 rounded-md border ${TRIGGER_SKELETON_WIDTH}`}
+      aria-hidden
+    />
+  );
+}
+
 export default function TenantSwitcher() {
   const { memberships, loading, error, selectedTenantId, selectTenant } =
     useTenants();
@@ -36,7 +48,8 @@ export default function TenantSwitcher() {
         ref={triggerRef}
         onClick={() => setOpen(!open)}
         aria-expanded={open}
-        className={`${MENU_TRIGGER} max-w-56 gap-1.5`}
+        title={activeTenant?.name}
+        className={`${MENU_TRIGGER} gap-1.5 ${TRIGGER_MAX_WIDTH}`}
       >
         <span className="text-subtle sr-only shrink-0 text-xs font-normal sm:not-sr-only">
           テナント
@@ -52,7 +65,7 @@ export default function TenantSwitcher() {
       </button>
 
       {open && (
-        <div className={MENU_PANEL}>
+        <div className={`${MENU_PANEL} w-64 sm:w-80`}>
           {loading ? (
             <p className="text-subtle px-2.5 py-2 text-xs">
               テナント情報を読み込んでいます。
@@ -78,7 +91,7 @@ export default function TenantSwitcher() {
                       aria-current={isActive ? "true" : undefined}
                       className={`${MENU_ITEM} ${isActive ? "bg-hover" : ""}`}
                     >
-                      <span className="text-foreground truncate">
+                      <span className="text-foreground break-words">
                         {tenant.name}
                       </span>
                       <span className="text-subtle flex shrink-0 items-center gap-1.5 text-xs">

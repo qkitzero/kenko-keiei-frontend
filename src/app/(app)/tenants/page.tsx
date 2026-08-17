@@ -2,23 +2,41 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import CopyButton from "@/components/CopyButton";
 import DataTable, { type Column } from "@/components/DataTable";
+import NoTenantCard from "@/components/NoTenantCard";
 import PageContainer from "@/components/PageContainer";
 import PageHeader from "@/components/PageHeader";
 import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
-import StateCard from "@/components/StateCard";
 import TextField from "@/components/TextField";
 import { useTenants, type TenantMembership } from "@/context/TenantsContext";
 import { roleLabel } from "@/lib/roles";
+import Link from "next/link";
 import { useState } from "react";
 
 const TENANT_COLUMNS: Column<TenantMembership>[] = [
-  { header: "テナント名", cell: ({ tenant }) => tenant.name },
+  {
+    header: "テナント名",
+    cell: ({ tenant }) => (
+      <Link
+        href={`/tenants/${tenant.tenantId}`}
+        className="text-foreground font-medium hover:underline"
+      >
+        {tenant.name}
+      </Link>
+    ),
+  },
   {
     header: "ID",
     cell: ({ tenant }) => (
-      <span className="text-subtle font-mono text-xs">{tenant.tenantId}</span>
+      <span className="text-subtle flex items-center gap-1 font-mono text-xs">
+        {tenant.tenantId}
+        <CopyButton
+          value={tenant.tenantId}
+          label={`${tenant.name}のテナント ID をコピー`}
+        />
+      </span>
     ),
   },
   {
@@ -104,10 +122,7 @@ export default function Tenants() {
           columns={TENANT_COLUMNS}
           rows={memberships}
           rowKey={({ tenant }) => tenant.tenantId}
-          rowHref={({ tenant }) => `/tenants/${tenant.tenantId}`}
-          empty={
-            <StateCard message="まだテナントに所属していません。上のフォームから作成してください。" />
-          }
+          empty={<NoTenantCard />}
         />
       </div>
     </PageContainer>
