@@ -5,6 +5,7 @@ import type { paths as measurementPaths } from "../../../../gen/measurement/v1/m
 import type { paths as measurementItemPaths } from "../../../../gen/measurementitem/v1/measurement_item.schema";
 import type { paths as organizationPaths } from "../../../../gen/organization/v1/organization.schema";
 import type { paths as tenantProfilePaths } from "../../../../gen/tenant/v1/profile.schema";
+import type { paths as trainingMenuPaths } from "../../../../gen/training/v1/training_menu.schema";
 
 const FITNESS_SERVICE_URL =
   process.env.FITNESS_SERVICE_URL || "http://localhost:8083";
@@ -30,5 +31,9 @@ export const measurementClient = createClient<measurementPaths>({
 });
 
 export const judgmentClient = createClient<judgmentPaths>({
+  baseUrl: FITNESS_SERVICE_URL,
+});
+
+export const trainingMenuClient = createClient<trainingMenuPaths>({
   baseUrl: FITNESS_SERVICE_URL,
 });
