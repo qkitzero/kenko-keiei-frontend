@@ -2,6 +2,7 @@ import { dateInputValue, isFutureDate, toDateValue } from "@/lib/date";
 import {
   CHOICE_MAX_LENGTH,
   expectedValueCount,
+  levelLabel,
   pairedLabels,
   trialCountOf,
   trialIndexes,
@@ -241,7 +242,9 @@ function formatCell(value: MeasurementValue, item: MeasurementItem): string {
   }
 
   const primary = formatMeasurementNumber(value.value);
-  if (item.valueType !== "VALUE_TYPE_PAIRED") return primary;
+  if (item.valueType !== "VALUE_TYPE_PAIRED") {
+    return levelLabel(item, value.value) || primary;
+  }
 
   const secondary = formatMeasurementNumber(value.valueSecondary);
   if (!primary && !secondary) return "";
