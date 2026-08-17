@@ -22,6 +22,7 @@ import {
   categoryLabel,
   choicesOf,
   groupByCategory,
+  levelOptionsOf,
   pairedLabels,
   trialIndexes,
   unitLabel,
@@ -191,6 +192,33 @@ function MeasurementEntryFields({
     if (item.valueType !== "VALUE_TYPE_NUMERIC") {
       return (
         <p className="text-subtle text-xs">この項目の入力形式には未対応です</p>
+      );
+    }
+
+    const levels = levelOptionsOf(item);
+    if (levels.length > 0) {
+      const known = levels.some(
+        (option) => String(option.level) === values.value,
+      );
+      return (
+        <Select
+          aria-label={label}
+          className="w-32"
+          value={values.value}
+          onChange={(value) => updateCell(key, { value })}
+        >
+          <option value="">未入力</option>
+          {values.value && !known && (
+            <option value={values.value}>
+              {values.value}（一覧にありません）
+            </option>
+          )}
+          {levels.map((option) => (
+            <option key={option.level} value={option.level}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
       );
     }
 
