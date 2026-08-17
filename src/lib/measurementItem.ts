@@ -78,7 +78,7 @@ export function categoryLabel(category: string | undefined): string {
 
 export function unitLabel(unit: string | undefined): string {
   if (!unit) return "";
-  return UNIT_LABELS[unit] ?? unit;
+  return UNIT_LABELS[unit] ?? unit.replace(/^UNIT_/, "");
 }
 
 export function pairedLabels(item: MeasurementItem): [string, string] {
