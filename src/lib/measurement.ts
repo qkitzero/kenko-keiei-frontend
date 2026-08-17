@@ -1,7 +1,6 @@
 import { dateInputValue, isFutureDate, toDateValue } from "@/lib/date";
 import {
   CHOICE_MAX_LENGTH,
-  expectedValueCount,
   levelLabel,
   pairedLabels,
   trialCountOf,
@@ -516,14 +515,6 @@ function buildEntry(
     return {
       ok: true,
       entry: { measurementItemId, unmeasurable: false, note, values: [] },
-    };
-  }
-
-  const expected = expectedValueCount(item);
-  if (!isDraft && values.length !== expected) {
-    return {
-      ok: false,
-      error: `${label}は${expected}件すべての値を入力してください。未入力を残すなら下書きとして保存してください`,
     };
   }
 

@@ -133,10 +133,6 @@ export function trialIndexes(item: MeasurementItem): number[] {
   return Array.from({ length: trialCountOf(item) }, (_, index) => index + 1);
 }
 
-export function expectedValueCount(item: MeasurementItem): number {
-  return trialCountOf(item) * (item.bilateral ? 2 : 1);
-}
-
 export function recordingLabel(item: MeasurementItem): string {
   const parts: string[] = [];
 
