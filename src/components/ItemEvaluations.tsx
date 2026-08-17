@@ -13,18 +13,28 @@ import {
 } from "@/lib/judgment";
 import { formatMeasurementNumber } from "@/lib/measurement";
 import type { MeasurementItem } from "@/lib/measurementItem";
-import { unitLabel } from "@/lib/measurementItem";
+import { levelLabel, unitLabel } from "@/lib/measurementItem";
 
-function valueCell(value: number | undefined, item: MeasurementItem) {
-  const formatted = formatMeasurementNumber(value);
-  if (!formatted) return "";
+function evaluationCell(text: string, item: MeasurementItem) {
+  if (!text) return "";
   const unit = unitLabel(item.unit);
   return (
     <span className="tabular-nums">
-      {formatted}
+      {text}
       {unit && <span className="text-subtle ml-1 text-xs">{unit}</span>}
     </span>
   );
+}
+
+function valueCell(value: number | undefined, item: MeasurementItem) {
+  return evaluationCell(
+    levelLabel(item, value) || formatMeasurementNumber(value),
+    item,
+  );
+}
+
+function meanCell(value: number | undefined, item: MeasurementItem) {
+  return evaluationCell(formatMeasurementNumber(value), item);
 }
 
 const COLUMNS: Column<JudgedItem>[] = [
@@ -39,7 +49,7 @@ const COLUMNS: Column<JudgedItem>[] = [
   },
   {
     header: "同年代の平均",
-    cell: (judged) => valueCell(judged.evaluation.mean, judged.item),
+    cell: (judged) => meanCell(judged.evaluation.mean, judged.item),
     align: "end",
   },
   {

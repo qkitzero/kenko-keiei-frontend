@@ -71,7 +71,8 @@ export interface components {
       | "UNIT_COUNT"
       | "UNIT_MMHG"
       | "UNIT_PERCENT"
-      | "UNIT_BPM";
+      | "UNIT_BPM"
+      | "UNIT_LEVEL";
     /**
      * @default VALUE_TYPE_UNSPECIFIED
      * @enum {string}
