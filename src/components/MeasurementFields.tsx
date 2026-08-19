@@ -291,6 +291,7 @@ function MeasurementEntryFields({
 
       <TextArea
         rows={2}
+        autoComplete="off"
         aria-label={`${name}のメモ`}
         placeholder="測定の条件や気付いたこと（任意）"
         maxLength={TEXT_MAX_LENGTH}
