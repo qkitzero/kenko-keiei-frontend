@@ -30,7 +30,7 @@ import {
   type MeasurementItem,
 } from "@/lib/measurementItem";
 import { TEXT_MAX_LENGTH } from "@/lib/text";
-import { useState } from "react";
+import { useId, useState } from "react";
 
 type MeasurementFieldsProps = {
   items: MeasurementItem[];
@@ -106,6 +106,7 @@ function MeasurementEntryFields({
   onChange,
 }: MeasurementEntryFieldsProps) {
   const [noteExpanded, setNoteExpanded] = useState<boolean | null>(null);
+  const noteId = useId();
 
   const name = item.name ?? "測定項目";
   const unit = unitLabel(item.unit);
@@ -262,8 +263,9 @@ function MeasurementEntryFields({
           <SecondaryButton
             size="sm"
             variant="quiet"
-            aria-label={`${name}のメモ`}
+            aria-label={`${name}のメモの開閉`}
             aria-expanded={noteOpen}
+            aria-controls={noteOpen ? noteId : undefined}
             onClick={() => setNoteExpanded(!noteOpen)}
           >
             メモ
@@ -322,6 +324,7 @@ function MeasurementEntryFields({
 
       {noteOpen && (
         <TextArea
+          id={noteId}
           rows={2}
           autoFocus={noteExpanded === true}
           autoComplete="off"
