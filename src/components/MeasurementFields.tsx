@@ -2,6 +2,7 @@
 
 import Checkbox from "@/components/Checkbox";
 import { FIELD_GRID, FIELD_LEGEND } from "@/components/Field";
+import SecondaryButton from "@/components/SecondaryButton";
 import Select from "@/components/Select";
 import TextArea from "@/components/TextArea";
 import TextField from "@/components/TextField";
@@ -29,6 +30,7 @@ import {
   type MeasurementItem,
 } from "@/lib/measurementItem";
 import { TEXT_MAX_LENGTH } from "@/lib/text";
+import { useState } from "react";
 
 type MeasurementFieldsProps = {
   items: MeasurementItem[];
@@ -103,10 +105,25 @@ function MeasurementEntryFields({
   entry,
   onChange,
 }: MeasurementEntryFieldsProps) {
+  const [noteExpanded, setNoteExpanded] = useState<boolean | null>(null);
+
   const name = item.name ?? "測定項目";
   const unit = unitLabel(item.unit);
   const trials = trialIndexes(item);
   const sides = sidesOf(item);
+
+  const hasNote = entry.note.trim() !== "";
+  const noteOpen = noteExpanded ?? (hasNote || entry.unmeasurable);
+
+  const handleUnmeasurable = (checked: boolean) => {
+    if (checked) setNoteExpanded(true);
+    onChange(setEntryUnmeasurable(entry, checked));
+  };
+
+  const handleNote = (note: string) => {
+    setNoteExpanded(true);
+    onChange({ ...entry, note });
+  };
 
   const updateCell = (key: string, patch: Partial<MeasurementCellValues>) => {
     const cell = entry.cells[key];
@@ -241,12 +258,23 @@ function MeasurementEntryFields({
           {name}
           {unit && <span className="text-subtle font-normal">（{unit}）</span>}
         </p>
-        <Checkbox
-          label="測定不可"
-          aria-label={`${name}は測定不可`}
-          checked={entry.unmeasurable}
-          onChange={(checked) => onChange(setEntryUnmeasurable(entry, checked))}
-        />
+        <div className="flex items-center gap-3">
+          <SecondaryButton
+            size="sm"
+            variant="quiet"
+            aria-label={`${name}のメモ`}
+            aria-expanded={noteOpen}
+            onClick={() => setNoteExpanded(!noteOpen)}
+          >
+            メモ
+          </SecondaryButton>
+          <Checkbox
+            label="測定不可"
+            aria-label={`${name}は測定不可`}
+            checked={entry.unmeasurable}
+            onChange={handleUnmeasurable}
+          />
+        </div>
       </div>
 
       {!entry.unmeasurable && trials.length > 0 && (
@@ -289,16 +317,23 @@ function MeasurementEntryFields({
         </div>
       )}
 
-      <TextArea
-        rows={2}
-        autoComplete="off"
-        aria-label={`${name}のメモ`}
-        placeholder="測定の条件や気付いたこと（任意）"
-        maxLength={TEXT_MAX_LENGTH}
-        className="w-full"
-        value={entry.note}
-        onChange={(note) => onChange({ ...entry, note })}
-      />
+      {noteOpen && (
+        <TextArea
+          rows={2}
+          autoFocus={noteExpanded === true}
+          autoComplete="off"
+          aria-label={`${name}のメモ`}
+          placeholder="測定の条件や気付いたこと（任意）"
+          maxLength={TEXT_MAX_LENGTH}
+          className="w-full"
+          value={entry.note}
+          onChange={handleNote}
+        />
+      )}
+
+      {!noteOpen && hasNote && (
+        <p className="text-subtle text-xs">{entry.note}</p>
+      )}
     </div>
   );
 }
