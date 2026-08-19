@@ -12,7 +12,7 @@ export const FIELD_SIZE = {
 
 export type FieldSize = keyof typeof FIELD_SIZE;
 
-export const FIELD_SIZE_MULTILINE = "rounded-md px-3 py-2 text-sm";
+export const FIELD_SIZE_MULTILINE = "resize-y rounded-md px-3 py-2 text-sm";
 
 const FIELD_LABEL = "text-muted mb-1 block text-sm font-medium";
 
