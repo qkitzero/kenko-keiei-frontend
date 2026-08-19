@@ -267,6 +267,9 @@ function MeasurementEntryFields({
             onClick={() => setNoteExpanded(!noteOpen)}
           >
             メモ
+            <span className="text-subtle text-xs" aria-hidden>
+              {noteOpen ? "▴" : "▾"}
+            </span>
           </SecondaryButton>
           <Checkbox
             label="測定不可"
