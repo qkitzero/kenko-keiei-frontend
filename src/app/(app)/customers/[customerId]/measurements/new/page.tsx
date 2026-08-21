@@ -50,7 +50,7 @@ function MeasurementRegister({ customerId }: { customerId: string }) {
   );
 
   if (userLoading || items.status === "loading") {
-    return <PageSkeleton width="detail" />;
+    return <PageSkeleton width="detail" back />;
   }
 
   if (items.status === "unauthenticated") {
