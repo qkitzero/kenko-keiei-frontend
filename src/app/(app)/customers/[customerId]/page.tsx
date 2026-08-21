@@ -2,8 +2,10 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import CopyableId from "@/components/CopyableId";
 import CustomerFields from "@/components/CustomerFields";
 import DangerZone from "@/components/DangerZone";
+import DetailSummary, { type SummaryItem } from "@/components/DetailSummary";
 import LoginButton from "@/components/LoginButton";
 import MeasurementHistory from "@/components/MeasurementHistory";
 import PageContainer from "@/components/PageContainer";
@@ -12,7 +14,7 @@ import PageMessage from "@/components/PageMessage";
 import PageSkeleton from "@/components/PageSkeleton";
 import PrimaryButton from "@/components/PrimaryButton";
 import SecondaryButton from "@/components/SecondaryButton";
-import { useTenants } from "@/context/TenantsContext";
+import TenantName from "@/components/TenantName";
 import { useUser } from "@/context/UserContext";
 import { ensureOk, runWithError } from "@/lib/apiError";
 import {
@@ -22,10 +24,15 @@ import {
   buildCustomerPayload,
   customerToForm,
   fieldsNeedingInput,
+  genderLabel,
 } from "@/lib/customer";
+import { currentAge, dateLabel } from "@/lib/date";
+import { lastMeasuredLabel } from "@/lib/measurementHistory";
+import { organizationName, type OrganizationOptions } from "@/lib/organization";
+import { useMeasurements } from "@/lib/useMeasurements";
 import { useOrganizations } from "@/lib/useOrganizations";
 import { useRouter } from "next/navigation";
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useMemo, useState } from "react";
 
 type LoadResult =
   | { status: "ok"; data: Customer }
@@ -45,6 +52,24 @@ async function loadCustomer(customerId: string): Promise<LoadResult> {
   return { status: "ok", data: data.customer };
 }
 
+function birthDateValue(customer: Customer): string {
+  const birthDate = dateLabel(customer.birthDate);
+  if (!birthDate) return "";
+  const age = currentAge(customer.birthDate);
+  return age === null ? birthDate : `${birthDate}（${age}歳）`;
+}
+
+function organizationValue(
+  organizations: OrganizationOptions,
+  organizationId: string | undefined,
+): React.ReactNode {
+  if (!organizationId) return "";
+  if (organizations.status === "error") {
+    return <span className="text-subtle">取得できませんでした</span>;
+  }
+  return organizationName(organizations, organizationId);
+}
+
 export default function CustomerDetailPage({
   params,
 }: {
@@ -57,19 +82,12 @@ export default function CustomerDetailPage({
 function CustomerDetail({ customerId }: { customerId: string }) {
   const router = useRouter();
   const { loading: userLoading } = useUser();
-  const {
-    memberships,
-    loading: tenantsLoading,
-    error: tenantsError,
-    refreshTenants,
-  } = useTenants();
 
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [fetched, setFetched] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [unauthenticated, setUnauthenticated] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [retryingTenants, setRetryingTenants] = useState(false);
 
   const [values, setValues] = useState<CustomerFormValues>(EMPTY_CUSTOMER_FORM);
   const [saving, setSaving] = useState(false);
@@ -79,6 +97,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
   const [switchingActive, setSwitchingActive] = useState(false);
   const [activeError, setActiveError] = useState("");
   const organizations = useOrganizations(customer?.tenantId ?? "");
+  const measurements = useMeasurements(customerId);
 
   const applyCustomer = useCallback((data: Customer) => {
     setCustomer(data);
@@ -118,6 +137,37 @@ function CustomerDetail({ customerId }: { customerId: string }) {
       active = false;
     };
   }, [userLoading, customerId, applyResult]);
+
+  const summaryItems = useMemo<SummaryItem[]>(() => {
+    if (!customer) return [];
+    return [
+      {
+        label: "所属テナント",
+        value: <TenantName tenantId={customer.tenantId ?? ""} />,
+      },
+      {
+        label: "所属組織",
+        value: organizationValue(organizations, customer.organizationId),
+        loading:
+          Boolean(customer.organizationId) &&
+          organizations.status === "loading",
+      },
+      { label: "性別", value: genderLabel(customer.gender) },
+      { label: "生年月日", value: birthDateValue(customer) },
+      {
+        label: "最終測定日",
+        value:
+          measurements.status === "ok" ? (
+            lastMeasuredLabel(measurements.data)
+          ) : measurements.status === "loading" ? (
+            ""
+          ) : (
+            <span className="text-subtle">取得できませんでした</span>
+          ),
+        loading: measurements.status === "loading",
+      },
+    ];
+  }, [customer, organizations, measurements]);
 
   const busy = saving || switchingActive;
 
@@ -210,7 +260,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
   };
 
   if (userLoading || !fetched) {
-    return <PageSkeleton width="detail" />;
+    return <PageSkeleton width="detail" shape="section" summary back />;
   }
 
   if (notFound) {
@@ -242,16 +292,7 @@ function CustomerDetail({ customerId }: { customerId: string }) {
     );
   }
 
-  const handleRetryTenants = () => {
-    if (retryingTenants) return;
-    setRetryingTenants(true);
-    void refreshTenants().finally(() => setRetryingTenants(false));
-  };
-
   const isActive = customer.isActive !== false;
-  const tenantId = customer.tenantId ?? "";
-  const tenantName = memberships.find((m) => m.tenant.tenantId === tenantId)
-    ?.tenant.name;
   const needsInput = fieldsNeedingInput(customer);
 
   return (
@@ -264,47 +305,12 @@ function CustomerDetail({ customerId }: { customerId: string }) {
         description={customer.nameKana}
       />
 
+      <DetailSummary items={summaryItems} />
+
+      <MeasurementHistory customerId={customerId} measurements={measurements} />
+
       <Card title="顧客情報">
         <form onSubmit={handleSave} className="flex flex-col gap-6">
-          <dl className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-muted text-sm font-medium">所属テナント</dt>
-              {tenantsLoading ? (
-                <dd className="bg-placeholder mt-1 h-5 w-40 animate-pulse rounded" />
-              ) : tenantName ? (
-                <dd className="text-foreground mt-1 text-sm">{tenantName}</dd>
-              ) : (
-                <dd className="mt-1">
-                  <p className="text-subtle text-sm">
-                    {tenantsError
-                      ? "テナント名を取得できませんでした"
-                      : "あなたが所属していないテナントです"}
-                  </p>
-                  <p className="text-subtle mt-0.5 truncate font-mono text-xs">
-                    {tenantId}
-                  </p>
-                  {tenantsError && (
-                    <div className="mt-2">
-                      <SecondaryButton
-                        size="sm"
-                        onClick={handleRetryTenants}
-                        disabled={retryingTenants}
-                      >
-                        {retryingTenants ? "再取得中..." : "テナント名を再取得"}
-                      </SecondaryButton>
-                    </div>
-                  )}
-                </dd>
-              )}
-            </div>
-            <div>
-              <dt className="text-muted text-sm font-medium">顧客 ID</dt>
-              <dd className="text-subtle mt-1 truncate font-mono text-xs">
-                {customer.customerId}
-              </dd>
-            </div>
-          </dl>
-
           {needsInput.length > 0 && (
             <p className="text-danger text-sm">
               {needsInput.join("・")}
@@ -328,8 +334,6 @@ function CustomerDetail({ customerId }: { customerId: string }) {
           </div>
         </form>
       </Card>
-
-      <MeasurementHistory customerId={customerId} />
 
       <Card title="利用状態">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -358,6 +362,8 @@ function CustomerDetail({ customerId }: { customerId: string }) {
           <p className="text-danger mt-3 text-sm">{activeError}</p>
         )}
       </Card>
+
+      <CopyableId label="顧客 ID" value={customer.customerId ?? ""} />
 
       <DangerZone
         title="顧客の削除"
