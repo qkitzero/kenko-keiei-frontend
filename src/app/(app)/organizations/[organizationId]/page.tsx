@@ -1,7 +1,9 @@
 "use client";
 
 import Card from "@/components/Card";
+import CopyableId from "@/components/CopyableId";
 import DangerZone from "@/components/DangerZone";
+import DetailSummary from "@/components/DetailSummary";
 import LoginButton from "@/components/LoginButton";
 import PageContainer from "@/components/PageContainer";
 import PageHeader from "@/components/PageHeader";
@@ -9,6 +11,7 @@ import PageMessage from "@/components/PageMessage";
 import PageSkeleton from "@/components/PageSkeleton";
 import SecondaryButton from "@/components/SecondaryButton";
 import SecondaryLink from "@/components/SecondaryLink";
+import TenantName from "@/components/TenantName";
 import TextField from "@/components/TextField";
 import { useTenants } from "@/context/TenantsContext";
 import { useUser } from "@/context/UserContext";
@@ -50,20 +53,13 @@ export default function OrganizationDetailPage({
 function OrganizationDetail({ organizationId }: { organizationId: string }) {
   const router = useRouter();
   const { loading: userLoading } = useUser();
-  const {
-    memberships,
-    loading: tenantsLoading,
-    error: tenantsError,
-    selectTenant,
-    refreshTenants,
-  } = useTenants();
+  const { memberships, selectTenant } = useTenants();
 
   const [organization, setOrganization] = useState<Organization | null>(null);
   const [fetched, setFetched] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [unauthenticated, setUnauthenticated] = useState(false);
   const [loadError, setLoadError] = useState(false);
-  const [retryingTenants, setRetryingTenants] = useState(false);
 
   const [name, setName] = useState("");
   const [savingName, setSavingName] = useState(false);
@@ -186,7 +182,7 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
   };
 
   if (userLoading || !fetched) {
-    return <PageSkeleton width="detail" />;
+    return <PageSkeleton width="detail" summary back />;
   }
 
   if (notFound) {
@@ -218,16 +214,6 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
     );
   }
 
-  const handleRetryTenants = () => {
-    if (retryingTenants) return;
-    setRetryingTenants(true);
-    void refreshTenants().finally(() => setRetryingTenants(false));
-  };
-
-  const tenantName = memberships.find(
-    ({ tenant }) => tenant.tenantId === organization.tenantId,
-  )?.tenant.name;
-
   return (
     <PageContainer width="detail">
       <PageHeader
@@ -241,47 +227,17 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
         }
       />
 
-      <Card title="組織設定">
-        <dl className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <dt className="text-muted text-sm font-medium">所属テナント</dt>
-            {tenantsLoading ? (
-              <dd className="bg-placeholder mt-1 h-5 w-40 animate-pulse rounded" />
-            ) : tenantName ? (
-              <dd className="text-foreground mt-1 text-sm">{tenantName}</dd>
-            ) : (
-              <dd className="mt-1">
-                <p className="text-subtle text-sm">
-                  {tenantsError
-                    ? "テナント名を取得できませんでした"
-                    : "あなたが所属していないテナントです"}
-                </p>
-                <p className="text-subtle mt-0.5 truncate font-mono text-xs">
-                  {organization.tenantId}
-                </p>
-                {tenantsError && (
-                  <div className="mt-2">
-                    <SecondaryButton
-                      size="sm"
-                      onClick={handleRetryTenants}
-                      disabled={retryingTenants}
-                    >
-                      {retryingTenants ? "再取得中..." : "テナント名を再取得"}
-                    </SecondaryButton>
-                  </div>
-                )}
-              </dd>
-            )}
-          </div>
-          <div>
-            <dt className="text-muted text-sm font-medium">組織 ID</dt>
-            <dd className="text-subtle mt-1 truncate font-mono text-xs">
-              {organization.organizationId}
-            </dd>
-          </div>
-        </dl>
+      <DetailSummary
+        items={[
+          {
+            label: "所属テナント",
+            value: <TenantName tenantId={orgTenantId} />,
+          },
+        ]}
+      />
 
-        <form onSubmit={handleRename} className="mt-6 flex gap-2">
+      <Card title="組織設定">
+        <form onSubmit={handleRename} className="flex gap-2">
           <TextField
             value={name}
             onChange={setName}
@@ -297,6 +253,8 @@ function OrganizationDetail({ organizationId }: { organizationId: string }) {
         </form>
         {saveError && <p className="text-danger mt-3 text-sm">{saveError}</p>}
       </Card>
+
+      <CopyableId label="組織 ID" value={organization.organizationId ?? ""} />
 
       <DangerZone
         title="組織の削除"
