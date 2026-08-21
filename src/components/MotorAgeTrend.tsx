@@ -8,6 +8,7 @@ import { dateLabel } from "@/lib/date";
 import {
   STANDARD_MAX_AGE,
   STANDARD_MIN_AGE,
+  signedAgeLabel,
   usesRoundedStandards,
 } from "@/lib/judgment";
 import type { Measurement } from "@/lib/measurement";
@@ -22,9 +23,7 @@ type AgeRow = {
 
 function ageText(value: number | null, signed: boolean): string {
   if (value === null) return "";
-  if (!signed) return `${value}歳`;
-  if (value === 0) return "±0歳";
-  return value > 0 ? `+${value}歳` : `${value}歳`;
+  return signed ? signedAgeLabel(value) : `${value}歳`;
 }
 
 function ageColumns(measurements: Measurement[]): Column<AgeRow>[] {
