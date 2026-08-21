@@ -34,18 +34,28 @@ const EMPTY_FAILED: string[] = [];
 
 async function loadJudgment(
   measurementId: string,
-  signal: AbortSignal,
+  parent: AbortSignal,
 ): Promise<Fetched> {
-  const res = await fetch(
-    `/api/fitness/measurement/${measurementId}/judgment`,
-    { signal },
-  );
-  if (res.status === 401) return { status: "unauthenticated", measurementId };
-  if (!res.ok) return { status: "error", measurementId };
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  parent.addEventListener("abort", abort);
+  const timer = setTimeout(abort, JUDGMENTS_TIMEOUT_MS);
 
-  const body = (await res.json()) as { judgment?: Judgment } | null;
-  const judgment = body?.judgment?.measurementId ? body.judgment : null;
-  return { status: "ok", measurementId, judgment };
+  try {
+    const res = await fetch(
+      `/api/fitness/measurement/${measurementId}/judgment`,
+      { signal: controller.signal },
+    );
+    if (res.status === 401) return { status: "unauthenticated", measurementId };
+    if (!res.ok) return { status: "error", measurementId };
+
+    const body = (await res.json()) as { judgment?: Judgment } | null;
+    const judgment = body?.judgment?.measurementId ? body.judgment : null;
+    return { status: "ok", measurementId, judgment };
+  } finally {
+    clearTimeout(timer);
+    parent.removeEventListener("abort", abort);
+  }
 }
 
 export function useJudgments(measurementIds: string[]): JudgmentsState {
@@ -63,7 +73,6 @@ export function useJudgments(measurementIds: string[]): JudgmentsState {
 
     let active = true;
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), JUDGMENTS_TIMEOUT_MS);
 
     (async () => {
       const results = await Promise.all(
@@ -73,7 +82,6 @@ export function useJudgments(measurementIds: string[]): JudgmentsState {
           ),
         ),
       );
-      clearTimeout(timer);
       if (!active) return;
 
       const judgments: Judgments = new Map();
@@ -99,7 +107,6 @@ export function useJudgments(measurementIds: string[]): JudgmentsState {
 
     return () => {
       active = false;
-      clearTimeout(timer);
       controller.abort();
     };
   }, [key, requestKey]);
