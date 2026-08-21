@@ -45,7 +45,7 @@ export default function CustomerTrendPage({
 }) {
   const { customerId } = use(params);
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<PageSkeleton back />}>
       <CustomerTrend key={customerId} customerId={customerId} />
     </Suspense>
   );
@@ -80,7 +80,7 @@ function CustomerTrend({ customerId }: { customerId: string }) {
     measurements.status === "loading" ||
     items.status === "loading"
   ) {
-    return <PageSkeleton />;
+    return <PageSkeleton back />;
   }
 
   if (

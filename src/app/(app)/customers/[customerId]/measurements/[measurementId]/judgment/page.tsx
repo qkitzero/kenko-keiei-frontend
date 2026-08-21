@@ -74,7 +74,7 @@ function JudgmentDetail({
     items.status === "loading" ||
     customer.status === "loading"
   ) {
-    return <PageSkeleton width="detail" />;
+    return <PageSkeleton width="detail" back />;
   }
 
   if (

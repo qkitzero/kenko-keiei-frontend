@@ -2,6 +2,7 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import CopyableId from "@/components/CopyableId";
 import CopyButton from "@/components/CopyButton";
 import DangerZone from "@/components/DangerZone";
 import DataTable, { type Column } from "@/components/DataTable";
@@ -311,7 +312,7 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
   };
 
   if (userLoading || !fetched) {
-    return <PageSkeleton width="detail" />;
+    return <PageSkeleton width="detail" back />;
   }
 
   if (notFound) {
@@ -452,35 +453,6 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
         meta={myRole && <Badge>{roleLabel(myRole)}</Badge>}
       />
 
-      <Card title="テナント設定">
-        <dl>
-          <dt className="text-muted text-sm font-medium">テナント ID</dt>
-          <dd className="text-subtle mt-1 flex items-center gap-1 font-mono text-xs">
-            <span className="truncate">{tenant.tenantId}</span>
-            <CopyButton value={tenant.tenantId} label="テナント ID をコピー" />
-          </dd>
-        </dl>
-        {canManage && (
-          <form onSubmit={handleRename} className="mt-6 flex gap-2">
-            <TextField
-              value={name}
-              onChange={setName}
-              aria-label="テナント名"
-              required
-              className="max-w-sm flex-1"
-            />
-            <SecondaryButton type="submit" disabled={savingName}>
-              {savingName ? "保存中..." : "名前を更新"}
-            </SecondaryButton>
-          </form>
-        )}
-        {renameError && (
-          <p className="text-danger mt-3 text-sm">{renameError}</p>
-        )}
-      </Card>
-
-      {isMember && <TenantProfileCard tenantId={tenantId} />}
-
       <section className="flex flex-col gap-3">
         <SectionHeader
           title="メンバー"
@@ -580,6 +552,30 @@ function TenantDetail({ tenantId }: { tenantId: string }) {
           />
         </section>
       )}
+
+      {canManage && (
+        <Card title="テナント設定">
+          <form onSubmit={handleRename} className="flex gap-2">
+            <TextField
+              value={name}
+              onChange={setName}
+              aria-label="テナント名"
+              required
+              className="max-w-sm flex-1"
+            />
+            <SecondaryButton type="submit" disabled={savingName}>
+              {savingName ? "保存中..." : "名前を更新"}
+            </SecondaryButton>
+          </form>
+          {renameError && (
+            <p className="text-danger mt-3 text-sm">{renameError}</p>
+          )}
+        </Card>
+      )}
+
+      {isMember && <TenantProfileCard tenantId={tenantId} />}
+
+      <CopyableId label="テナント ID" value={tenant.tenantId} />
 
       {owner && (
         <DangerZone

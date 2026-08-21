@@ -1,3 +1,4 @@
+import RankCounts from "@/components/RankCounts";
 import { RANK_GROUPS, type RankGroupCounts } from "@/lib/organizationReport";
 
 export type DistributionBar = {
@@ -88,25 +89,6 @@ function Bar({ counts, scale }: { counts: RankGroupCounts; scale: number }) {
   );
 }
 
-function Counts({ counts }: { counts: RankGroupCounts }) {
-  return (
-    <span className="text-muted text-xs tabular-nums">
-      {RANK_GROUPS.map((group, index) => (
-        <span key={group.key}>
-          {index > 0 && (
-            <span aria-hidden className="text-subtle mx-1">
-              /
-            </span>
-          )}
-          <span className="sr-only">{group.label} </span>
-          {counts[index]}
-          <span className="sr-only">人</span>
-        </span>
-      ))}
-    </span>
-  );
-}
-
 export default function RankDistribution({
   groups,
   scale,
@@ -136,7 +118,7 @@ export default function RankDistribution({
                   </span>
                   <Bar counts={bar.counts} scale={scale} />
                   <span className="text-right">
-                    <Counts counts={bar.counts} />
+                    <RankCounts counts={bar.counts} unit="人" />
                   </span>
                 </div>
               ))}

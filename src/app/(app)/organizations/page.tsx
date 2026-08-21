@@ -28,15 +28,6 @@ type LoadedList = { key: string; result: LoadResult };
 
 const ORGANIZATION_COLUMNS: Column<Organization>[] = [
   { header: "組織名", cell: (organization) => organization.name },
-  {
-    header: "ID",
-    cell: (organization) => (
-      <span className="text-subtle font-mono text-xs">
-        {organization.organizationId}
-      </span>
-    ),
-    align: "end",
-  },
 ];
 
 async function loadOrganizations(tenantId: string): Promise<LoadResult> {
@@ -57,7 +48,7 @@ async function loadOrganizations(tenantId: string): Promise<LoadResult> {
 
 export default function OrganizationsPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<PageSkeleton shape="count" form />}>
       <Organizations />
     </Suspense>
   );
@@ -138,7 +129,7 @@ function Organizations() {
   };
 
   if (tenantsLoading) {
-    return <PageSkeleton />;
+    return <PageSkeleton shape="count" form />;
   }
 
   if (tenantsError) {

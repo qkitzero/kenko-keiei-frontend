@@ -39,6 +39,19 @@ export function rankGroup(rank: string | undefined): RankGroup | null {
   return RANK_GROUP_BY_RANK[rank] ?? null;
 }
 
+const RANK_GROUP_INDEX = new Map<RankGroup, number>(
+  RANK_GROUPS.map((entry, index) => [entry.key, index]),
+);
+
+export function countRankGroups(groups: RankGroup[]): RankGroupCounts {
+  const counts: RankGroupCounts = [0, 0, 0];
+  for (const group of groups) {
+    const index = RANK_GROUP_INDEX.get(group);
+    if (index !== undefined) counts[index] += 1;
+  }
+  return counts;
+}
+
 const COLLATOR = new Intl.Collator("ja");
 
 export type PreparedJudgments = {
@@ -278,18 +291,17 @@ function distributionOf(
   judgments: OrganizationJudgment[],
   element: Element,
 ): RankGroupCounts {
-  const counts: RankGroupCounts = [0, 0, 0];
+  const groups = judgments
+    .map((judgment) =>
+      rankGroup(
+        (judgment.elementEvaluations ?? []).find(
+          (candidate) => candidate.element === element,
+        )?.rank,
+      ),
+    )
+    .filter((group): group is RankGroup => group !== null);
 
-  for (const judgment of judgments) {
-    const evaluation = (judgment.elementEvaluations ?? []).find(
-      (candidate) => candidate.element === element,
-    );
-    const group = rankGroup(evaluation?.rank);
-    if (!group) continue;
-    counts[RANK_GROUPS.findIndex((entry) => entry.key === group)] += 1;
-  }
-
-  return counts;
+  return countRankGroups(groups);
 }
 
 function needsAttention(judgment: OrganizationJudgment): boolean {
