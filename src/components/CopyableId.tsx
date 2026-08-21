@@ -6,15 +6,17 @@ type CopyableIdProps = {
 };
 
 export default function CopyableId({ label, value }: CopyableIdProps) {
+  if (!value) return null;
+
   return (
-    <div className="flex items-start gap-1.5">
-      <div className="min-w-0 flex-1">
-        <p className="text-subtle text-xs">{label}</p>
-        <p className="text-foreground mt-0.5 font-mono text-xs break-all">
+    <div>
+      <p className="text-subtle text-xs">{label}</p>
+      <div className="mt-0.5 flex items-center gap-1">
+        <span className="text-foreground min-w-0 font-mono text-xs break-all">
           {value}
-        </p>
+        </span>
+        <CopyButton value={value} label={`${label}をコピー`} />
       </div>
-      <CopyButton value={value} label={`${label}をコピー`} />
     </div>
   );
 }

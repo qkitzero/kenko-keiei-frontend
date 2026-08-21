@@ -2,7 +2,6 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
-import CopyButton from "@/components/CopyButton";
 import DataTable, { type Column } from "@/components/DataTable";
 import NoTenantCard from "@/components/NoTenantCard";
 import PageContainer from "@/components/PageContainer";
@@ -25,18 +24,6 @@ const TENANT_COLUMNS: Column<TenantMembership>[] = [
       >
         {tenant.name}
       </Link>
-    ),
-  },
-  {
-    header: "ID",
-    cell: ({ tenant }) => (
-      <span className="text-subtle flex items-center gap-1 font-mono text-xs">
-        {tenant.tenantId}
-        <CopyButton
-          value={tenant.tenantId}
-          label={`${tenant.name}のテナント ID をコピー`}
-        />
-      </span>
     ),
   },
   {
@@ -86,7 +73,7 @@ export default function Tenants() {
   };
 
   if (tenantsLoading) {
-    return <PageSkeleton />;
+    return <PageSkeleton shape="count" form />;
   }
 
   return (
