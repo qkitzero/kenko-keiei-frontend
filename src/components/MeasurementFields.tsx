@@ -2,6 +2,7 @@
 
 import Checkbox from "@/components/Checkbox";
 import { FIELD_GRID, FIELD_LEGEND } from "@/components/Field";
+import SecondaryButton from "@/components/SecondaryButton";
 import Select from "@/components/Select";
 import TextArea from "@/components/TextArea";
 import TextField from "@/components/TextField";
@@ -29,6 +30,7 @@ import {
   type MeasurementItem,
 } from "@/lib/measurementItem";
 import { TEXT_MAX_LENGTH } from "@/lib/text";
+import { useId, useState } from "react";
 
 type MeasurementFieldsProps = {
   items: MeasurementItem[];
@@ -103,10 +105,26 @@ function MeasurementEntryFields({
   entry,
   onChange,
 }: MeasurementEntryFieldsProps) {
+  const [noteExpanded, setNoteExpanded] = useState<boolean | null>(null);
+  const noteId = useId();
+
   const name = item.name ?? "測定項目";
   const unit = unitLabel(item.unit);
   const trials = trialIndexes(item);
   const sides = sidesOf(item);
+
+  const hasNote = entry.note.trim() !== "";
+  const noteOpen = noteExpanded ?? (hasNote || entry.unmeasurable);
+
+  const handleUnmeasurable = (checked: boolean) => {
+    if (checked) setNoteExpanded(true);
+    onChange(setEntryUnmeasurable(entry, checked));
+  };
+
+  const handleNote = (note: string) => {
+    setNoteExpanded(true);
+    onChange({ ...entry, note });
+  };
 
   const updateCell = (key: string, patch: Partial<MeasurementCellValues>) => {
     const cell = entry.cells[key];
@@ -235,71 +253,93 @@ function MeasurementEntryFields({
   }
 
   return (
-    <div className="py-3">
+    <div className="flex flex-col gap-2 py-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-foreground text-sm font-medium">
           {name}
           {unit && <span className="text-subtle font-normal">（{unit}）</span>}
         </p>
-        <Checkbox
-          label="測定不可"
-          aria-label={`${name}は測定不可`}
-          checked={entry.unmeasurable}
-          onChange={(checked) => onChange(setEntryUnmeasurable(entry, checked))}
-        />
+        <div className="flex items-center gap-3">
+          <SecondaryButton
+            size="sm"
+            variant="quiet"
+            aria-label={`${name}のメモの開閉`}
+            aria-expanded={noteOpen}
+            aria-controls={noteOpen ? noteId : undefined}
+            onClick={() => setNoteExpanded(!noteOpen)}
+          >
+            メモ
+            <span className="text-subtle text-xs" aria-hidden>
+              {noteOpen ? "▴" : "▾"}
+            </span>
+          </SecondaryButton>
+          <Checkbox
+            label="測定不可"
+            aria-label={`${name}は測定不可`}
+            checked={entry.unmeasurable}
+            onChange={handleUnmeasurable}
+          />
+        </div>
       </div>
 
-      <div className="mt-2 flex flex-wrap items-start gap-4">
-        {!entry.unmeasurable && trials.length > 0 && (
-          <div className="overflow-x-auto">
-            <table className="border-separate border-spacing-x-3 border-spacing-y-1 text-sm">
-              {trials.length > 1 && (
-                <thead>
-                  <tr>
-                    {item.bilateral && <td />}
-                    {trials.map((trialIndex) => (
-                      <th
-                        key={trialIndex}
-                        scope="col"
-                        className="text-subtle text-xs font-medium"
-                      >
-                        {trialIndex}回目
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-              )}
-              <tbody>
-                {sides.map((side) => (
-                  <tr key={side}>
-                    {item.bilateral && (
-                      <th
-                        scope="row"
-                        className="text-muted text-xs font-medium whitespace-nowrap"
-                      >
-                        {sideLabel(side)}
-                      </th>
-                    )}
-                    {trials.map((trialIndex) => (
-                      <td key={trialIndex}>{cell(trialIndex, side)}</td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+      {!entry.unmeasurable && trials.length > 0 && (
+        <div className="overflow-x-auto">
+          <table className="border-separate border-spacing-x-3 border-spacing-y-1 text-sm">
+            {trials.length > 1 && (
+              <thead>
+                <tr>
+                  {item.bilateral && <td />}
+                  {trials.map((trialIndex) => (
+                    <th
+                      key={trialIndex}
+                      scope="col"
+                      className="text-subtle text-xs font-medium"
+                    >
+                      {trialIndex}回目
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody>
+              {sides.map((side) => (
+                <tr key={side}>
+                  {item.bilateral && (
+                    <th
+                      scope="row"
+                      className="text-muted text-xs font-medium whitespace-nowrap"
+                    >
+                      {sideLabel(side)}
+                    </th>
+                  )}
+                  {trials.map((trialIndex) => (
+                    <td key={trialIndex}>{cell(trialIndex, side)}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
+      {noteOpen && (
         <TextArea
-          rows={1}
+          id={noteId}
+          rows={2}
+          autoFocus={noteExpanded === true}
+          autoComplete="off"
           aria-label={`${name}のメモ`}
-          placeholder="メモ（任意）"
+          placeholder="測定の条件や気付いたこと（任意）"
           maxLength={TEXT_MAX_LENGTH}
-          className="min-w-56 flex-1"
+          className="w-full"
           value={entry.note}
-          onChange={(note) => onChange({ ...entry, note })}
+          onChange={handleNote}
         />
-      </div>
+      )}
+
+      {!noteOpen && hasNote && (
+        <p className="text-subtle text-xs">{entry.note}</p>
+      )}
     </div>
   );
 }

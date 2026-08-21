@@ -42,7 +42,7 @@ export default function CustomerRegister() {
   }
 
   if (tenantsLoading) {
-    return <PageSkeleton width="detail" />;
+    return <PageSkeleton width="detail" back />;
   }
 
   if (tenantsError) {

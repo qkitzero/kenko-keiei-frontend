@@ -119,7 +119,7 @@ function customerColumns(
 
 export default function CustomersPage() {
   return (
-    <Suspense fallback={<PageSkeleton />}>
+    <Suspense fallback={<PageSkeleton shape="list" />}>
       <Customers />
     </Suspense>
   );
@@ -187,7 +187,7 @@ function Customers() {
   }, [tenantId, includeInactive, requestKey]);
 
   if (tenantsLoading) {
-    return <PageSkeleton />;
+    return <PageSkeleton shape="list" />;
   }
 
   if (tenantsError) {

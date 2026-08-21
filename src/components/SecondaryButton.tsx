@@ -9,6 +9,7 @@ import {
 const VARIANT = {
   default: "border-border bg-surface text-foreground hover:bg-hover",
   danger: "border-danger/40 bg-surface text-danger hover:bg-danger/5",
+  quiet: "border-transparent text-muted hover:bg-hover",
 } as const;
 
 export type SecondaryVariant = keyof typeof VARIANT;

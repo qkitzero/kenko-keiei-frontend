@@ -85,6 +85,22 @@ export function todayInputValue(): string {
   return dateInputValueOf(new Date());
 }
 
+export function ageOn(
+  birthDate: DateValue | undefined,
+  today: string,
+): number | null {
+  if (!isValidDate(birthDate)) return null;
+  const birth = dateInputValue(birthDate);
+  if (!birth || birth > today) return null;
+
+  const age = Number(today.slice(0, 4)) - (birthDate?.year ?? 0);
+  return today.slice(5) < birth.slice(5) ? age - 1 : age;
+}
+
+export function currentAge(birthDate: DateValue | undefined): number | null {
+  return ageOn(birthDate, todayInputValue());
+}
+
 export const TIMEZONE_TOLERANCE_DAYS = 1;
 
 export function isFutureDate(date: DateValue, toleranceDays = 0): boolean {

@@ -174,6 +174,11 @@ export function motorAgeDifference(
   return motorAge - age;
 }
 
+export function signedAgeLabel(difference: number): string {
+  if (difference === 0) return "±0歳";
+  return difference > 0 ? `+${difference}歳` : `${difference}歳`;
+}
+
 export function motorAgeDifferenceLabel(difference: number): string {
   if (difference === 0) return "実年齢と同じ";
   if (difference < 0) return `実年齢より${-difference}歳若い`;

@@ -2,6 +2,7 @@
 
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import CopyableId from "@/components/CopyableId";
 import DangerZone from "@/components/DangerZone";
 import LoginButton from "@/components/LoginButton";
 import MeasurementFields from "@/components/MeasurementFields";
@@ -127,11 +128,11 @@ function MeasurementDetail({
   );
 
   if (userLoading) {
-    return <PageSkeleton width="detail" />;
+    return <PageSkeleton width="detail" back />;
   }
 
   if (!fetched || items.status === "loading") {
-    return <PageSkeleton width="detail" />;
+    return <PageSkeleton width="detail" back />;
   }
 
   if (unauthenticated || items.status === "unauthenticated") {
@@ -278,12 +279,6 @@ function MeasurementDetail({
       />
 
       <Card title="測定結果">
-        <dl className="mb-6">
-          <dt className="text-muted text-sm font-medium">測定 ID</dt>
-          <dd className="text-subtle mt-1 truncate font-mono text-xs">
-            {measurement.measurementId}
-          </dd>
-        </dl>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -337,6 +332,8 @@ function MeasurementDetail({
           </div>
         </form>
       </Card>
+
+      <CopyableId label="測定 ID" value={measurement.measurementId ?? ""} />
 
       <DangerZone
         title="測定の削除"
