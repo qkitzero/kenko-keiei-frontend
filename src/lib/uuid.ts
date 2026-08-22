@@ -5,11 +5,13 @@ export function isValidUuid(value: string): boolean {
   return UUID_PATTERN.test(value.trim());
 }
 
+export function normalizeId(value: string | undefined): string {
+  return (value ?? "").trim().toLowerCase();
+}
+
 export function isSameId(
   left: string | undefined,
   right: string | undefined,
 ): boolean {
-  return (
-    (left ?? "").trim().toLowerCase() === (right ?? "").trim().toLowerCase()
-  );
+  return normalizeId(left) === normalizeId(right);
 }
