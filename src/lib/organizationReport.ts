@@ -252,7 +252,7 @@ export type FiscalSummary = {
   distributions: ElementDistribution[];
 };
 
-function supersedes(
+export function supersedes(
   current: OrganizationJudgment,
   candidate: OrganizationJudgment,
 ): boolean {

@@ -4,6 +4,7 @@ import Badge from "@/components/Badge";
 import Checkbox from "@/components/Checkbox";
 import DataTable, { type Column, type SortOrder } from "@/components/DataTable";
 import LoginButton from "@/components/LoginButton";
+import Missing from "@/components/Missing";
 import PageContainer from "@/components/PageContainer";
 import PageHeader from "@/components/PageHeader";
 import PageSkeleton from "@/components/PageSkeleton";
@@ -15,20 +16,28 @@ import TextField from "@/components/TextField";
 import { useTenantScope, useTenants } from "@/context/TenantsContext";
 import { Customer, genderLabel } from "@/lib/customer";
 import {
+  CUSTOMER_STATUS_FILTERS,
   NO_ORGANIZATION,
   canSortByOrganization,
   customerListHref,
+  customerStatusLabel,
   filterCustomers,
   hasCustomerConditions,
   organizationFilterValue,
   readCustomerFilters,
   sortCustomers,
   toCustomerSortKey,
+  toCustomerStatusFilter,
   type CustomerFilters,
 } from "@/lib/customerList";
-import { dateLabel } from "@/lib/date";
+import { currentFiscalYear, dateInputLabel, dateLabel } from "@/lib/date";
 import { organizationName, type OrganizationOptions } from "@/lib/organization";
+import { customerStatus } from "@/lib/tenantSummary";
 import { useOrganizations } from "@/lib/useOrganizations";
+import {
+  useTenantSummary,
+  type TenantSummaryState,
+} from "@/lib/useTenantSummary";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
@@ -60,15 +69,21 @@ async function loadCustomers(
   return { status: "ok", customers };
 }
 
+function CellPlaceholder({ width }: { width: string }) {
+  return (
+    <span
+      className={`bg-placeholder inline-block h-4 ${width} animate-pulse rounded align-middle`}
+    />
+  );
+}
+
 function organizationCell(
   organizations: OrganizationOptions,
   organizationId: string | undefined,
 ) {
   if (!organizationId) return "—";
   if (organizations.status === "loading") {
-    return (
-      <span className="bg-placeholder inline-block h-4 w-24 animate-pulse rounded align-middle" />
-    );
+    return <CellPlaceholder width="w-24" />;
   }
   if (organizations.status === "error") {
     return <span className="text-subtle">取得できませんでした</span>;
@@ -76,8 +91,21 @@ function organizationCell(
   return organizationName(organizations, organizationId) || "—";
 }
 
+function measuredCell(summary: TenantSummaryState, customer: Customer) {
+  if (summary.status === "loading") {
+    return <CellPlaceholder width="w-20" />;
+  }
+  if (summary.status !== "ok") {
+    return <span className="text-subtle">取得できませんでした</span>;
+  }
+  const status = customerStatus(summary.summary.statuses, customer.customerId);
+  if (!status.covered) return <span className="text-subtle">不明</span>;
+  return dateInputLabel(status.lastMeasuredOn) || <Missing />;
+}
+
 function customerColumns(
   organizations: OrganizationOptions,
+  summary: TenantSummaryState,
 ): Column<Customer>[] {
   return [
     {
@@ -114,6 +142,11 @@ function customerColumns(
       cell: (customer) => dateLabel(customer.birthDate) || "—",
       align: "end",
     },
+    {
+      header: "最終測定日",
+      cell: (customer) => measuredCell(summary, customer),
+      align: "end",
+    },
   ];
 }
 
@@ -140,6 +173,8 @@ function Customers() {
 
   const tenantId = useTenantScope();
   const organizations = useOrganizations(tenantId);
+  const fiscalYear = currentFiscalYear();
+  const summary = useTenantSummary(tenantId, fiscalYear);
   const filters = readCustomerFilters(searchParams);
   const includeInactive = filters.includeInactive;
 
@@ -152,11 +187,15 @@ function Customers() {
     if (filters.q !== writtenQuery) setQuery(filters.q);
   }
 
+  const statusReady = summary.status === "ok";
+  const statusAvailable = statusReady || summary.status === "loading";
   const applied: CustomerFilters = {
     ...filters,
     q: query,
     organizationId: organizationFilterValue(filters, organizations),
+    status: statusAvailable ? filters.status : "",
   };
+  const statusPending = Boolean(applied.status) && !statusReady;
 
   const scopeHref = customerListHref(tenantId, {
     ...filters,
@@ -252,13 +291,18 @@ function Customers() {
 
   const clearConditions = () => {
     setQuery("");
-    writeFilters({ ...filters, q: "", organizationId: "" });
+    writeFilters({ ...filters, q: "", organizationId: "", status: "" });
   };
 
   const customers = result?.status === "ok" ? result.customers : null;
   const rows = customers
     ? sortCustomers(
-        filterCustomers(customers, applied, organizations),
+        filterCustomers(
+          customers,
+          applied,
+          organizations,
+          statusReady ? summary.summary.statuses : {},
+        ),
         applied,
         organizations,
       )
@@ -307,6 +351,26 @@ function Customers() {
                   </option>
                 ))}
             </Select>
+            <Select
+              value={applied.status}
+              onChange={(value) =>
+                writeFilters({
+                  ...filters,
+                  q: query,
+                  status: toCustomerStatusFilter(value),
+                })
+              }
+              aria-label="測定状況で絞り込む"
+              disabled={!statusAvailable}
+              className="w-48"
+            >
+              <option value="">すべての測定状況</option>
+              {CUSTOMER_STATUS_FILTERS.map((status) => (
+                <option key={status} value={status}>
+                  {customerStatusLabel(status, fiscalYear)}
+                </option>
+              ))}
+            </Select>
             <Checkbox
               label="無効な顧客も表示する"
               checked={includeInactive}
@@ -317,6 +381,7 @@ function Customers() {
           </div>
           <p role="status" className="text-subtle text-sm tabular-nums">
             {customers &&
+              !statusPending &&
               (narrowed
                 ? `${customers.length}件中 ${rows.length}件`
                 : `${customers.length}件`)}
@@ -332,7 +397,22 @@ function Customers() {
           </p>
         )}
 
-        {!result ? (
+        {summary.status === "error" && (
+          <p className="text-subtle flex items-center gap-2 text-sm">
+            測定状況を取得できませんでした。測定状況での絞り込みは使えません。
+            <SecondaryButton size="sm" onClick={summary.retry}>
+              再取得
+            </SecondaryButton>
+          </p>
+        )}
+
+        {summary.status === "forbidden" && (
+          <p className="text-subtle text-sm">
+            このテナントの測定状況を表示する権限がないため、測定状況での絞り込みは使えません。
+          </p>
+        )}
+
+        {!result || statusPending ? (
           <div className="bg-placeholder h-64 w-full animate-pulse rounded-lg" />
         ) : result.status === "unauthenticated" ? (
           <StateCard
@@ -353,7 +433,7 @@ function Customers() {
         ) : (
           <DataTable
             caption="顧客一覧"
-            columns={customerColumns(organizations)}
+            columns={customerColumns(organizations, summary)}
             rows={rows}
             rowKey={(customer) => customer.customerId ?? ""}
             rowHref={(customer) => `/customers/${customer.customerId}`}
