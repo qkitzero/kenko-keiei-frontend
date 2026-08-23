@@ -1,5 +1,6 @@
 import Card from "@/components/Card";
 import PageContainer from "@/components/PageContainer";
+import { STAT_TILE_GRID } from "@/components/StatTile";
 
 export const SKELETON_SECTION_TABLE = "h-32";
 
@@ -7,11 +8,15 @@ const SKELETON_TABLE = "h-64";
 
 type PageSkeletonProps = {
   width?: "wide" | "detail";
-  shape?: "block" | "list" | "count" | "section";
+  shape?: "block" | "list" | "count" | "section" | "home";
   summary?: boolean;
   form?: boolean;
   back?: boolean;
 };
+
+type Shape = NonNullable<PageSkeletonProps["shape"]>;
+
+const TILES = ["a", "b", "c"];
 
 const SUMMARY_ITEMS = ["a", "b", "c", "d", "e"];
 
@@ -27,7 +32,7 @@ function Header({ back }: { back?: boolean }) {
   );
 }
 
-function Table({ height }: { height: string }) {
+export function SkeletonTable({ height }: { height: string }) {
   return (
     <div
       className={`bg-placeholder ${height} w-full animate-pulse rounded-lg`}
@@ -40,6 +45,63 @@ function Toolbar() {
     <div className="flex flex-wrap items-center gap-2">
       <div className="bg-placeholder h-9 w-56 animate-pulse rounded-md" />
       <div className="bg-placeholder h-9 w-44 animate-pulse rounded-md" />
+      <div className="bg-placeholder h-9 w-48 animate-pulse rounded-md" />
+    </div>
+  );
+}
+
+function Tiles() {
+  return (
+    <div className={STAT_TILE_GRID}>
+      {TILES.map((key) => (
+        <Card key={key} as="div" padding="md">
+          <div className="bg-placeholder h-4 w-20 animate-pulse rounded" />
+          <div className="bg-placeholder mt-2 h-7 w-12 animate-pulse rounded" />
+          <div className="bg-placeholder mt-2 h-4 w-28 animate-pulse rounded" />
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+export function SkeletonNote() {
+  return (
+    <div className="bg-placeholder h-4 w-full max-w-md animate-pulse rounded" />
+  );
+}
+
+function Section({ height }: { height: string }) {
+  return (
+    <div className="flex flex-col gap-3">
+      <HeadingRow />
+      <SkeletonTable height={height} />
+    </div>
+  );
+}
+
+function Body({ shape }: { shape: Shape }) {
+  if (shape === "home") {
+    return (
+      <>
+        <div className="flex flex-col gap-3">
+          <HeadingRow />
+          <Tiles />
+          <SkeletonNote />
+        </div>
+        <Section height={SKELETON_SECTION_TABLE} />
+        <Section height={SKELETON_SECTION_TABLE} />
+      </>
+    );
+  }
+
+  if (shape === "block") return <SkeletonTable height={SKELETON_TABLE} />;
+
+  return (
+    <div className="flex flex-col gap-3">
+      {shape === "list" ? <Toolbar /> : <HeadingRow />}
+      <SkeletonTable
+        height={shape === "section" ? SKELETON_SECTION_TABLE : SKELETON_TABLE}
+      />
     </div>
   );
 }
@@ -87,18 +149,7 @@ export default function PageSkeleton({
       <Header back={back} />
       {summary && <Summary />}
       {form && <Form />}
-      {shape === "block" ? (
-        <Table height={SKELETON_TABLE} />
-      ) : (
-        <div className="flex flex-col gap-3">
-          {shape === "list" ? <Toolbar /> : <HeadingRow />}
-          <Table
-            height={
-              shape === "section" ? SKELETON_SECTION_TABLE : SKELETON_TABLE
-            }
-          />
-        </div>
-      )}
+      <Body shape={shape} />
     </PageContainer>
   );
 }
