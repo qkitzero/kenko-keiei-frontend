@@ -58,7 +58,17 @@ export interface components {
       trialCount?: number;
       bilateral?: boolean;
       valueType?: components["schemas"]["v1ValueType"];
+      sideMode?: components["schemas"]["v1SideMode"];
     };
+    /**
+     * @default SIDE_MODE_UNSPECIFIED
+     * @enum {string}
+     */
+    v1SideMode:
+      | "SIDE_MODE_UNSPECIFIED"
+      | "SIDE_MODE_NONE"
+      | "SIDE_MODE_BILATERAL"
+      | "SIDE_MODE_OPTIONAL_BILATERAL";
     /**
      * @default UNIT_UNSPECIFIED
      * @enum {string}
