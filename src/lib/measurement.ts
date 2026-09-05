@@ -1,6 +1,7 @@
 import { dateInputValue, isFutureDate, toDateValue } from "@/lib/date";
 import {
   CHOICE_MAX_LENGTH,
+  isLevelItem,
   isOptionalBilateral,
   levelLabel,
   pairedLabels,
@@ -379,8 +380,33 @@ export type MeasurementDisplayEntry = {
   item: MeasurementItem;
   unmeasurable: boolean;
   text: string;
+  representativeNote: string;
   note: string;
 };
+
+function recordedLevels(
+  entry: MeasurementEntry,
+  item: MeasurementItem,
+): number[] {
+  return sidesOf(item).flatMap((side) =>
+    trialIndexes(item)
+      .map((trialIndex) => cellValue(entry, trialIndex, side)?.value)
+      .filter((level): level is number => typeof level === "number"),
+  );
+}
+
+function representativeNote(
+  entry: MeasurementEntry,
+  item: MeasurementItem,
+): string {
+  if (!isOptionalBilateral(item) || !isLevelItem(item)) return "";
+
+  const levels = recordedLevels(entry, item);
+  if (levels.length < 2) return "";
+  if (Math.min(...levels) === Math.max(...levels)) return "";
+
+  return "判定は低い方の段で行われます";
+}
 
 export function measurementDisplayEntries(
   measurement: Measurement,
@@ -404,7 +430,13 @@ export function measurementDisplayEntries(
     const note = entry.note?.trim() ?? "";
     if (!unmeasurable && !text && !note) continue;
 
-    displayed.push({ item, unmeasurable, text, note });
+    displayed.push({
+      item,
+      unmeasurable,
+      text,
+      representativeNote: unmeasurable ? "" : representativeNote(entry, item),
+      note,
+    });
   }
   return displayed;
 }
