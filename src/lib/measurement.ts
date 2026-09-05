@@ -49,6 +49,17 @@ export function sideLabel(side: string | undefined): string {
   return SIDE_LABELS[side] ?? "";
 }
 
+export function cellValue(
+  entry: MeasurementEntry,
+  trialIndex: number,
+  side: Side,
+): MeasurementValue | undefined {
+  return (entry.values ?? []).find(
+    (candidate) =>
+      candidate.trialIndex === trialIndex && candidate.side === side,
+  );
+}
+
 export function sidesOf(item: MeasurementItem): Side[] {
   return item.bilateral ? ["SIDE_LEFT", "SIDE_RIGHT"] : ["SIDE_NONE"];
 }
@@ -261,10 +272,7 @@ export function formatEntryValues(
   const groups = sidesOf(item).map((side) => {
     const trials = trialIndexes(item)
       .map((trialIndex) => {
-        const value = (entry.values ?? []).find(
-          (candidate) =>
-            candidate.trialIndex === trialIndex && candidate.side === side,
-        );
+        const value = cellValue(entry, trialIndex, side);
         return value ? formatCell(value, item) : "";
       })
       .filter(Boolean);
