@@ -1,8 +1,10 @@
 import { dateInputValue, isFutureDate, toDateValue } from "@/lib/date";
 import {
   CHOICE_MAX_LENGTH,
+  isOptionalBilateral,
   levelLabel,
   pairedLabels,
+  sideNoneLabel,
   trialCountOf,
   trialIndexes,
   type MeasurementItem,
@@ -44,7 +46,7 @@ const SIDE_LABELS: Record<string, string> = {
   SIDE_RIGHT: "右",
 };
 
-export function sideLabel(side: string | undefined): string {
+function sideLabel(side: string | undefined): string {
   if (!side) return "";
   return SIDE_LABELS[side] ?? "";
 }
@@ -60,8 +62,20 @@ export function cellValue(
   );
 }
 
+export function sideHeading(item: MeasurementItem, side: Side): string {
+  if (side !== "SIDE_NONE") return sideLabel(side);
+  return isOptionalBilateral(item) ? sideNoneLabel(item) : "";
+}
+
 export function sidesOf(item: MeasurementItem): Side[] {
-  return item.bilateral ? ["SIDE_LEFT", "SIDE_RIGHT"] : ["SIDE_NONE"];
+  switch (item.sideMode) {
+    case "SIDE_MODE_BILATERAL":
+      return ["SIDE_LEFT", "SIDE_RIGHT"];
+    case "SIDE_MODE_OPTIONAL_BILATERAL":
+      return [...SIDES];
+    default:
+      return ["SIDE_NONE"];
+  }
 }
 
 export function isValidMeasurementNumber(value: number): boolean {
@@ -233,8 +247,10 @@ export function valuePositionLabel(
 ): string {
   const parts: string[] = [];
   if (trialCountOf(item) > 1) parts.push(`${trialIndex}回目`);
-  if (item.bilateral) parts.push(sideLabel(side));
-  return parts.length > 0 ? `（${parts.join("・")}）` : "";
+  if (sidesOf(item).length > 1) parts.push(sideHeading(item, side));
+
+  const labeled = parts.filter(Boolean);
+  return labeled.length > 0 ? `（${labeled.join("・")}）` : "";
 }
 
 export function valueRangeHint(): string {

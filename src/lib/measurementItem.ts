@@ -56,6 +56,18 @@ const LEVEL_LABELS_BY_CODE: Record<string, string[]> = {
   ],
 };
 
+const SIDED_LEVEL_START_BY_CODE: Record<string, number> = {
+  stand_up_test: 6,
+};
+
+const SIDE_NONE_LABELS_BY_CODE: Record<string, string> = {
+  stand_up_test: "両足",
+};
+
+const SIDED_LABELS_BY_CODE: Record<string, string> = {
+  stand_up_test: "片足",
+};
+
 const SHORT_NAMES_BY_CODE: Record<string, string> = {
   back_strength: "背筋",
   grip_strength: "握力",
@@ -100,11 +112,23 @@ function levelLabelsOf(item: MeasurementItem): string[] {
   return (item.code && LEVEL_LABELS_BY_CODE[item.code]) || [];
 }
 
-export function levelOptionsOf(item: MeasurementItem): LevelOption[] {
-  return levelLabelsOf(item).map((label, index) => ({
+export function levelOptionsOf(
+  item: MeasurementItem,
+  sided: boolean,
+): LevelOption[] {
+  const options = levelLabelsOf(item).map((label, index) => ({
     level: index + 1,
     label,
   }));
+
+  if (!isOptionalBilateral(item)) return options;
+
+  const start = sidedLevelStartOf(item);
+  if (start === 0) return options;
+
+  return options.filter((option) =>
+    sided ? option.level >= start : option.level < start,
+  );
 }
 
 export function levelLabel(
@@ -113,6 +137,22 @@ export function levelLabel(
 ): string {
   if (typeof level !== "number") return "";
   return levelLabelsOf(item)[level - 1] ?? "";
+}
+
+export function isOptionalBilateral(item: MeasurementItem): boolean {
+  return item.sideMode === "SIDE_MODE_OPTIONAL_BILATERAL";
+}
+
+function sidedLevelStartOf(item: MeasurementItem): number {
+  return (item.code && SIDED_LEVEL_START_BY_CODE[item.code]) || 0;
+}
+
+export function sideNoneLabel(item: MeasurementItem): string {
+  return (item.code && SIDE_NONE_LABELS_BY_CODE[item.code]) || "左右なし";
+}
+
+export function sidedLabel(item: MeasurementItem): string {
+  return (item.code && SIDED_LABELS_BY_CODE[item.code]) || "左右別";
 }
 
 export function shortItemName(item: MeasurementItem): string {
@@ -149,7 +189,10 @@ export function recordingLabel(item: MeasurementItem): string {
   const levels = levelLabelsOf(item).length;
   if (levels > 0) parts.push(`${levels}段階`);
 
-  if (item.bilateral) parts.push("左右");
+  if (item.sideMode === "SIDE_MODE_BILATERAL") parts.push("左右");
+  if (isOptionalBilateral(item)) {
+    parts.push(`${sideNoneLabel(item)}または左右`);
+  }
 
   const trials = trialCountOf(item);
   if (trials > 1) parts.push(`${trials}回`);
