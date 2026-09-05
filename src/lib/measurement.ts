@@ -528,6 +528,20 @@ function buildEntry(
     }
   }
 
+  if (!isDraft && isOptionalBilateral(item)) {
+    for (const trialIndex of trialIndexes(item)) {
+      const count = values.filter(
+        (value) => value.trialIndex === trialIndex,
+      ).length;
+      if (count > 2) {
+        return {
+          ok: false,
+          error: `${label}は${sideNoneLabel(item)}・左・右の3つを同時に記録できません。できた側と、できなかった側の${sideNoneLabel(item)}の2つまでにしてください`,
+        };
+      }
+    }
+  }
+
   if (values.length === 0) {
     if (!note) return { ok: true, entry: null };
     if (!isDraft) {
