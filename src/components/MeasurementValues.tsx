@@ -19,10 +19,12 @@ type DerivedRow = { label: string; text: string };
 function ValueRow({
   label,
   children,
+  hint,
   note,
 }: {
   label: string;
   children: React.ReactNode;
+  hint?: string;
   note?: string;
 }) {
   return (
@@ -33,6 +35,7 @@ function ValueRow({
           {children}
         </dd>
       </div>
+      {hint && <p className="text-subtle text-xs">{hint}</p>}
       {note && <p className="text-subtle text-xs">{note}</p>}
     </div>
   );
@@ -68,6 +71,7 @@ function EntryRows({ entries }: { entries: MeasurementDisplayEntry[] }) {
         <ValueRow
           key={entry.item.measurementItemId}
           label={entry.item.name ?? ""}
+          hint={entry.representativeNote}
           note={entry.note}
         >
           {entryValue(entry)}

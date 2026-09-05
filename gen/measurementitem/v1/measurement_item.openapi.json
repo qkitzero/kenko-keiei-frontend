@@ -117,8 +117,21 @@
           },
           "valueType": {
             "$ref": "#/components/schemas/v1ValueType"
+          },
+          "sideMode": {
+            "$ref": "#/components/schemas/v1SideMode"
           }
         }
+      },
+      "v1SideMode": {
+        "type": "string",
+        "enum": [
+          "SIDE_MODE_UNSPECIFIED",
+          "SIDE_MODE_NONE",
+          "SIDE_MODE_BILATERAL",
+          "SIDE_MODE_OPTIONAL_BILATERAL"
+        ],
+        "default": "SIDE_MODE_UNSPECIFIED"
       },
       "v1Unit": {
         "type": "string",
