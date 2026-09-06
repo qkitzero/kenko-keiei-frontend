@@ -41,18 +41,20 @@ const DEFAULT_PAIRED_LABELS: [string, string] = ["1つ目", "2つ目"];
 
 const CHOICES_BY_CODE: Record<string, string[]> = {};
 
-const LEVEL_LABELS_BY_CODE: Record<string, string[]> = {
+type LevelLabelParts = { stance: string; height: string };
+
+const LEVEL_LABEL_PARTS_BY_CODE: Record<string, LevelLabelParts[]> = {
   stand_up_test: [
-    "両足 50cm",
-    "両足 40cm",
-    "両足 30cm",
-    "両足 20cm",
-    "両足 10cm",
-    "片足 40cm",
-    "片足 30cm",
-    "片足 20cm",
-    "片足 10cm",
-    "片足 0cm",
+    { stance: "両足", height: "50cm" },
+    { stance: "両足", height: "40cm" },
+    { stance: "両足", height: "30cm" },
+    { stance: "両足", height: "20cm" },
+    { stance: "両足", height: "10cm" },
+    { stance: "片足", height: "40cm" },
+    { stance: "片足", height: "30cm" },
+    { stance: "片足", height: "20cm" },
+    { stance: "片足", height: "10cm" },
+    { stance: "片足", height: "0cm" },
   ],
 };
 
@@ -107,18 +109,22 @@ export function isLevelItem(item: MeasurementItem): boolean {
   return item.unit === UNIT_LEVEL;
 }
 
-function levelLabelsOf(item: MeasurementItem): string[] {
+function levelPartsOf(item: MeasurementItem): LevelLabelParts[] {
   if (!isLevelItem(item)) return [];
-  return (item.code && LEVEL_LABELS_BY_CODE[item.code]) || [];
+  return (item.code && LEVEL_LABEL_PARTS_BY_CODE[item.code]) || [];
+}
+
+function joinLevelParts(parts: LevelLabelParts): string {
+  return [parts.stance, parts.height].filter(Boolean).join(" ");
 }
 
 export function levelOptionsOf(
   item: MeasurementItem,
   sided: boolean,
 ): LevelOption[] {
-  const options = levelLabelsOf(item).map((label, index) => ({
+  const options = levelPartsOf(item).map((parts, index) => ({
     level: index + 1,
-    label,
+    label: joinLevelParts(parts),
   }));
 
   if (!isOptionalBilateral(item)) return options;
@@ -136,7 +142,8 @@ export function levelLabel(
   level: number | undefined,
 ): string {
   if (typeof level !== "number") return "";
-  return levelLabelsOf(item)[level - 1] ?? "";
+  const parts = levelPartsOf(item)[level - 1];
+  return parts ? joinLevelParts(parts) : "";
 }
 
 export function isOptionalBilateral(item: MeasurementItem): boolean {
@@ -186,7 +193,7 @@ export function recordingLabel(item: MeasurementItem): string {
     parts.push("選択");
   }
 
-  const levels = levelLabelsOf(item).length;
+  const levels = levelPartsOf(item).length;
   if (levels > 0) parts.push(`${levels}段階`);
 
   if (item.sideMode === "SIDE_MODE_BILATERAL") parts.push("左右");
