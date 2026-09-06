@@ -11,11 +11,12 @@ import {
   type JudgedItem,
   type Judgment,
 } from "@/lib/judgment";
-import { formatItemValue, formatMeasurementNumber } from "@/lib/measurement";
+import { formatItemValue } from "@/lib/measurement";
 import type { MeasurementItem } from "@/lib/measurementItem";
-import { levelRangeLabel, unitLabel } from "@/lib/measurementItem";
+import { unitLabel } from "@/lib/measurementItem";
 
-function evaluationCell(text: string, item: MeasurementItem) {
+function evaluationCell(value: number | undefined, item: MeasurementItem) {
+  const text = formatItemValue(item, value);
   if (!text) return "";
   const unit = unitLabel(item.unit);
   return (
@@ -26,17 +27,6 @@ function evaluationCell(text: string, item: MeasurementItem) {
   );
 }
 
-function valueCell(value: number | undefined, item: MeasurementItem) {
-  return evaluationCell(formatItemValue(item, value), item);
-}
-
-function meanCell(value: number | undefined, item: MeasurementItem) {
-  return evaluationCell(
-    levelRangeLabel(item, value) || formatMeasurementNumber(value),
-    item,
-  );
-}
-
 const COLUMNS: Column<JudgedItem>[] = [
   {
     header: "項目",
@@ -44,12 +34,12 @@ const COLUMNS: Column<JudgedItem>[] = [
   },
   {
     header: "記録値",
-    cell: (judged) => valueCell(judged.evaluation.value, judged.item),
+    cell: (judged) => evaluationCell(judged.evaluation.value, judged.item),
     align: "end",
   },
   {
     header: "同年代の平均",
-    cell: (judged) => meanCell(judged.evaluation.mean, judged.item),
+    cell: (judged) => evaluationCell(judged.evaluation.mean, judged.item),
     align: "end",
   },
   {
