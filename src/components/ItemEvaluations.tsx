@@ -19,7 +19,7 @@ function evaluationCell(text: string, item: MeasurementItem) {
   if (!text) return "";
   const unit = unitLabel(item.unit);
   return (
-    <span className="tabular-nums">
+    <span className="whitespace-nowrap tabular-nums">
       {text}
       {unit && <span className="text-subtle ml-1 text-xs">{unit}</span>}
     </span>
