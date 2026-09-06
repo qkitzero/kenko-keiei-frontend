@@ -392,6 +392,24 @@ export function bodyComposition(
   };
 }
 
+export function hasRecordedHeight(
+  measurement: Measurement,
+  items: MeasurementItem[],
+): boolean {
+  const item = items.find((candidate) => candidate.code === HEIGHT_CODE);
+  if (!item || item.unit !== "UNIT_CM") return false;
+  if (item.valueType !== "VALUE_TYPE_NUMERIC") return false;
+
+  const entry = (measurement.entries ?? []).find((candidate) =>
+    isSameId(candidate.measurementItemId, item.measurementItemId),
+  );
+  if (!entry || entry.unmeasurable) return false;
+
+  return (entry.values ?? []).some(
+    (value) => typeof value.value === "number" && value.value > 0,
+  );
+}
+
 export function hasHeightInput(
   values: MeasurementFormValues,
   items: MeasurementItem[],
