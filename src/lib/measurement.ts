@@ -130,6 +130,10 @@ export function hasCellInput(cell: MeasurementCellValues): boolean {
   );
 }
 
+export function hasEntryInput(entry: MeasurementEntryFormValues): boolean {
+  return Object.values(entry.cells).some(hasCellInput);
+}
+
 export function emptyEntryForm(
   item: MeasurementItem,
 ): MeasurementEntryFormValues {
@@ -549,7 +553,7 @@ function buildEntry(
   }
 
   if (entry.unmeasurable) {
-    if (Object.values(entry.cells).some(hasCellInput)) {
+    if (hasEntryInput(entry)) {
       return {
         ok: false,
         error: `${label}は測定不可にすると値を保存できません。値を消すか測定不可を外してください`,
