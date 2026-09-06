@@ -4,7 +4,10 @@ import Badge from "@/components/Badge";
 import DataTable, { type Column } from "@/components/DataTable";
 import LoginButton from "@/components/LoginButton";
 import Missing from "@/components/Missing";
-import { SKELETON_SECTION_TABLE } from "@/components/PageSkeleton";
+import {
+  SKELETON_SECTION_TABLE,
+  SkeletonTable,
+} from "@/components/PageSkeleton";
 import PrimaryLink from "@/components/PrimaryLink";
 import RankCounts from "@/components/RankCounts";
 import SecondaryButton from "@/components/SecondaryButton";
@@ -185,9 +188,7 @@ export default function MeasurementHistory({
       />
 
       {measurements.status === "loading" ? (
-        <div
-          className={`bg-placeholder ${SKELETON_SECTION_TABLE} w-full animate-pulse rounded-lg`}
-        />
+        <SkeletonTable height={SKELETON_SECTION_TABLE} />
       ) : measurements.status === "unauthenticated" ? (
         <StateCard
           message="サインインの有効期限が切れました。再度サインインしてください。"

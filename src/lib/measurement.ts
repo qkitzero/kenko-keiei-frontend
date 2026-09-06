@@ -1,8 +1,11 @@
 import { dateInputValue, isFutureDate, toDateValue } from "@/lib/date";
 import {
   CHOICE_MAX_LENGTH,
+  isLevelItem,
+  isOptionalBilateral,
   levelLabel,
   pairedLabels,
+  sideNoneLabel,
   trialCountOf,
   trialIndexes,
   type MeasurementItem,
@@ -44,13 +47,36 @@ const SIDE_LABELS: Record<string, string> = {
   SIDE_RIGHT: "右",
 };
 
-export function sideLabel(side: string | undefined): string {
+function sideLabel(side: string | undefined): string {
   if (!side) return "";
   return SIDE_LABELS[side] ?? "";
 }
 
+export function cellValue(
+  entry: MeasurementEntry,
+  trialIndex: number,
+  side: Side,
+): MeasurementValue | undefined {
+  return (entry.values ?? []).find(
+    (candidate) =>
+      candidate.trialIndex === trialIndex && candidate.side === side,
+  );
+}
+
+export function sideHeading(item: MeasurementItem, side: Side): string {
+  if (side !== "SIDE_NONE") return sideLabel(side);
+  return isOptionalBilateral(item) ? sideNoneLabel(item) : "";
+}
+
 export function sidesOf(item: MeasurementItem): Side[] {
-  return item.bilateral ? ["SIDE_LEFT", "SIDE_RIGHT"] : ["SIDE_NONE"];
+  switch (item.sideMode) {
+    case "SIDE_MODE_BILATERAL":
+      return ["SIDE_LEFT", "SIDE_RIGHT"];
+    case "SIDE_MODE_OPTIONAL_BILATERAL":
+      return [...SIDES];
+    default:
+      return ["SIDE_NONE"];
+  }
 }
 
 export function isValidMeasurementNumber(value: number): boolean {
@@ -222,8 +248,10 @@ export function valuePositionLabel(
 ): string {
   const parts: string[] = [];
   if (trialCountOf(item) > 1) parts.push(`${trialIndex}回目`);
-  if (item.bilateral) parts.push(sideLabel(side));
-  return parts.length > 0 ? `（${parts.join("・")}）` : "";
+  if (sidesOf(item).length > 1) parts.push(sideHeading(item, side));
+
+  const labeled = parts.filter(Boolean);
+  return labeled.length > 0 ? `（${labeled.join("・")}）` : "";
 }
 
 export function valueRangeHint(): string {
@@ -261,10 +289,7 @@ export function formatEntryValues(
   const groups = sidesOf(item).map((side) => {
     const trials = trialIndexes(item)
       .map((trialIndex) => {
-        const value = (entry.values ?? []).find(
-          (candidate) =>
-            candidate.trialIndex === trialIndex && candidate.side === side,
-        );
+        const value = cellValue(entry, trialIndex, side);
         return value ? formatCell(value, item) : "";
       })
       .filter(Boolean);
@@ -355,8 +380,33 @@ export type MeasurementDisplayEntry = {
   item: MeasurementItem;
   unmeasurable: boolean;
   text: string;
+  representativeNote: string;
   note: string;
 };
+
+function recordedLevels(
+  entry: MeasurementEntry,
+  item: MeasurementItem,
+): number[] {
+  return sidesOf(item).flatMap((side) =>
+    trialIndexes(item)
+      .map((trialIndex) => cellValue(entry, trialIndex, side)?.value)
+      .filter((level): level is number => typeof level === "number"),
+  );
+}
+
+function representativeNote(
+  entry: MeasurementEntry,
+  item: MeasurementItem,
+): string {
+  if (!isOptionalBilateral(item) || !isLevelItem(item)) return "";
+
+  const levels = recordedLevels(entry, item);
+  if (levels.length < 2) return "";
+  if (Math.min(...levels) === Math.max(...levels)) return "";
+
+  return "判定は低い方の段で行われます";
+}
 
 export function measurementDisplayEntries(
   measurement: Measurement,
@@ -380,7 +430,13 @@ export function measurementDisplayEntries(
     const note = entry.note?.trim() ?? "";
     if (!unmeasurable && !text && !note) continue;
 
-    displayed.push({ item, unmeasurable, text, note });
+    displayed.push({
+      item,
+      unmeasurable,
+      text,
+      representativeNote: unmeasurable ? "" : representativeNote(entry, item),
+      note,
+    });
   }
   return displayed;
 }
@@ -501,6 +557,20 @@ function buildEntry(
       const built = buildValue(item, cell, trialIndex, side, label);
       if (!built.ok) return built;
       if (built.value) values.push(built.value);
+    }
+  }
+
+  if (!isDraft && isOptionalBilateral(item)) {
+    for (const trialIndex of trialIndexes(item)) {
+      const count = values.filter(
+        (value) => value.trialIndex === trialIndex,
+      ).length;
+      if (count > 2) {
+        return {
+          ok: false,
+          error: `${label}は${sideNoneLabel(item)}・左・右の3つを同時に記録できません。できた側と、できなかった側の${sideNoneLabel(item)}の2つまでにしてください`,
+        };
+      }
     }
   }
 

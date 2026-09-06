@@ -10,7 +10,7 @@ import { todayInputValue } from "@/lib/date";
 import {
   cellKey,
   setEntryUnmeasurable,
-  sideLabel,
+  sideHeading,
   sidesOf,
   valuePositionLabel,
   type MeasurementCellValues,
@@ -23,8 +23,11 @@ import {
   categoryLabel,
   choicesOf,
   groupByCategory,
+  isOptionalBilateral,
   levelOptionsOf,
   pairedLabels,
+  sideNoneLabel,
+  sidedLabel,
   trialIndexes,
   unitLabel,
   type MeasurementItem,
@@ -111,7 +114,9 @@ function MeasurementEntryFields({
   const name = item.name ?? "測定項目";
   const unit = unitLabel(item.unit);
   const trials = trialIndexes(item);
+  const optional = isOptionalBilateral(item);
   const sides = sidesOf(item);
+  const showSides = sides.length > 1;
 
   const hasNote = entry.note.trim() !== "";
   const noteOpen = noteExpanded ?? (hasNote || entry.unmeasurable);
@@ -213,7 +218,7 @@ function MeasurementEntryFields({
       );
     }
 
-    const levels = levelOptionsOf(item);
+    const levels = levelOptionsOf(item, side !== "SIDE_NONE");
     if (levels.length > 0) {
       const known = levels.some(
         (option) => String(option.level) === values.value,
@@ -288,7 +293,7 @@ function MeasurementEntryFields({
             {trials.length > 1 && (
               <thead>
                 <tr>
-                  {item.bilateral && <td />}
+                  {showSides && <td />}
                   {trials.map((trialIndex) => (
                     <th
                       key={trialIndex}
@@ -304,12 +309,12 @@ function MeasurementEntryFields({
             <tbody>
               {sides.map((side) => (
                 <tr key={side}>
-                  {item.bilateral && (
+                  {showSides && (
                     <th
                       scope="row"
                       className="text-muted text-xs font-medium whitespace-nowrap"
                     >
-                      {sideLabel(side)}
+                      {sideHeading(item, side)}
                     </th>
                   )}
                   {trials.map((trialIndex) => (
@@ -320,6 +325,12 @@ function MeasurementEntryFields({
             </tbody>
           </table>
         </div>
+      )}
+
+      {optional && !entry.unmeasurable && trials.length > 0 && (
+        <p className="text-subtle text-xs">
+          {`${sidedLabel(item)}でできなければ${sideNoneLabel(item)}の段を記録します（${sideNoneLabel(item)}・左・右のうち2つまで）`}
+        </p>
       )}
 
       {noteOpen && (

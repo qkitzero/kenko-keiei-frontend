@@ -8,6 +8,7 @@ import {
 } from "@/lib/judgment";
 import {
   bodyComposition,
+  cellValue,
   formatEntryValues,
   formatMeasurementNumber,
   sidesOf,
@@ -141,10 +142,7 @@ function configuredCells(
   const cells: MeasurementValue[] = [];
   for (const trialIndex of trialIndexes(item)) {
     for (const side of sidesOf(item)) {
-      const value = (entry.values ?? []).find(
-        (candidate) =>
-          candidate.trialIndex === trialIndex && candidate.side === side,
-      );
+      const value = cellValue(entry, trialIndex, side);
       if (value) cells.push(value);
     }
   }

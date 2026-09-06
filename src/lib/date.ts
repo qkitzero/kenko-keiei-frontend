@@ -42,6 +42,10 @@ export function dateLabel(date: DateValue | undefined): string {
   return value ? value.replaceAll("-", "/") : "";
 }
 
+export function dateInputLabel(value: string): string {
+  return value ? value.replaceAll("-", "/") : "";
+}
+
 export function toDateValue(value: string): DateValue | null {
   const matched = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
   if (!matched) return null;
