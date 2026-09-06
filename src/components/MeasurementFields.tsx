@@ -32,7 +32,7 @@ import {
   unitLabel,
   type MeasurementItem,
 } from "@/lib/measurementItem";
-import { TEXT_MAX_LENGTH } from "@/lib/text";
+import { TEXT_MAX_LENGTH, outOfListLabel } from "@/lib/text";
 import { useId, useState } from "react";
 
 type MeasurementFieldsProps = {
@@ -199,7 +199,7 @@ function MeasurementEntryFields({
           <option value="">未入力</option>
           {values.valueChoice && !choices.includes(values.valueChoice) && (
             <option value={values.valueChoice}>
-              {values.valueChoice}（一覧にありません）
+              {outOfListLabel(values.valueChoice)}
             </option>
           )}
           {choices.map((choice) => (
@@ -232,9 +232,7 @@ function MeasurementEntryFields({
         >
           <option value="">未入力</option>
           {values.value && !known && (
-            <option value={values.value}>
-              {values.value}（一覧にありません）
-            </option>
+            <option value={values.value}>{outOfListLabel(values.value)}</option>
           )}
           {levels.map((option) => (
             <option key={option.level} value={option.level}>
