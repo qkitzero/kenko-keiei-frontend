@@ -13,13 +13,13 @@ import {
 } from "@/lib/judgment";
 import { formatMeasurementNumber } from "@/lib/measurement";
 import type { MeasurementItem } from "@/lib/measurementItem";
-import { levelLabel, unitLabel } from "@/lib/measurementItem";
+import { levelLabel, levelRangeLabel, unitLabel } from "@/lib/measurementItem";
 
 function evaluationCell(text: string, item: MeasurementItem) {
   if (!text) return "";
   const unit = unitLabel(item.unit);
   return (
-    <span className="tabular-nums">
+    <span className="whitespace-nowrap tabular-nums">
       {text}
       {unit && <span className="text-subtle ml-1 text-xs">{unit}</span>}
     </span>
@@ -34,7 +34,10 @@ function valueCell(value: number | undefined, item: MeasurementItem) {
 }
 
 function meanCell(value: number | undefined, item: MeasurementItem) {
-  return evaluationCell(formatMeasurementNumber(value), item);
+  return evaluationCell(
+    levelRangeLabel(item, value) || formatMeasurementNumber(value),
+    item,
+  );
 }
 
 const COLUMNS: Column<JudgedItem>[] = [
