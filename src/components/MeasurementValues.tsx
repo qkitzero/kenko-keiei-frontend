@@ -1,7 +1,10 @@
 import Badge from "@/components/Badge";
 import Card from "@/components/Card";
+import type { Judgment } from "@/lib/judgment";
 import {
   bodyComposition,
+  formatMeasurementNumber,
+  hasRecordedHeight,
   measurementDataLoss,
   measurementDisplayEntries,
   type Measurement,
@@ -10,9 +13,11 @@ import {
 import {
   CATEGORY_MOTOR_FUNCTION,
   categoryLabel,
+  isNormalized,
   unitLabel,
   type MeasurementItem,
 } from "@/lib/measurementItem";
+import { isSameId } from "@/lib/uuid";
 
 type DerivedRow = { label: string; text: string };
 
@@ -64,14 +69,20 @@ function groupEntriesByCategory(
   return groups;
 }
 
-function EntryRows({ entries }: { entries: MeasurementDisplayEntry[] }) {
+function EntryRows({
+  entries,
+  hintOf,
+}: {
+  entries: MeasurementDisplayEntry[];
+  hintOf: (entry: MeasurementDisplayEntry) => string;
+}) {
   return (
     <dl className="divide-border mt-1 divide-y">
       {entries.map((entry) => (
         <ValueRow
           key={entry.item.measurementItemId}
           label={entry.item.name ?? ""}
-          hint={entry.representativeNote}
+          hint={entry.representativeNote || hintOf(entry)}
           note={entry.note}
         >
           {entryValue(entry)}
@@ -106,13 +117,28 @@ function entryValue(displayed: MeasurementDisplayEntry) {
 export default function MeasurementValues({
   measurement,
   items,
+  judgment,
 }: {
   measurement: Measurement;
   items: MeasurementItem[];
+  judgment?: Judgment | null;
 }) {
   const displayed = measurementDisplayEntries(measurement, items);
   const dataLoss = measurementDataLoss(measurement, items);
   const composition = bodyComposition(measurement, items);
+  const heightRecorded = hasRecordedHeight(measurement, items);
+
+  const normalizedHint = (entry: MeasurementDisplayEntry) => {
+    if (!isNormalized(entry.item) || entry.unmeasurable) return "";
+
+    const evaluated = (judgment?.itemEvaluations ?? []).find((candidate) =>
+      isSameId(candidate.measurementItemId, entry.item.measurementItemId),
+    );
+    const value = formatMeasurementNumber(evaluated?.value);
+    if (value) return `判定に使う値 ${value}（身長で割った値）`;
+
+    return heightRecorded ? "" : "身長を記録していないため判定されていません";
+  };
 
   const derived: DerivedRow[] = composition
     ? [
@@ -166,7 +192,7 @@ export default function MeasurementValues({
                 <h3 className="text-subtle text-xs font-medium print:break-after-avoid">
                   {categoryLabel(group.category)}
                 </h3>
-                <EntryRows entries={group.entries} />
+                <EntryRows entries={group.entries} hintOf={normalizedHint} />
               </section>
             ))}
 
@@ -193,7 +219,7 @@ export default function MeasurementValues({
 
       {motor && (
         <Card title="運動機能の記録" splittable>
-          <EntryRows entries={motor.entries} />
+          <EntryRows entries={motor.entries} hintOf={normalizedHint} />
         </Card>
       )}
     </>

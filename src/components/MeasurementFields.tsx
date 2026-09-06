@@ -9,6 +9,8 @@ import TextField from "@/components/TextField";
 import { todayInputValue } from "@/lib/date";
 import {
   cellKey,
+  hasEntryInput,
+  hasHeightInput,
   setEntryUnmeasurable,
   sideHeading,
   sidesOf,
@@ -23,6 +25,7 @@ import {
   categoryLabel,
   choicesOf,
   groupByCategory,
+  isNormalized,
   isOptionalBilateral,
   levelOptionsOf,
   pairedLabels,
@@ -52,6 +55,8 @@ export default function MeasurementFields({
 }: MeasurementFieldsProps) {
   const updateEntry = (itemId: string, entry: MeasurementEntryFormValues) =>
     onChange({ ...values, entries: { ...values.entries, [itemId]: entry } });
+
+  const heightRecorded = hasHeightInput(values, items);
 
   return (
     <div className="flex flex-col gap-6">
@@ -86,6 +91,7 @@ export default function MeasurementFields({
                   key={itemId}
                   item={item}
                   entry={entry}
+                  heightMissing={isNormalized(item) && !heightRecorded}
                   onChange={(next) => updateEntry(itemId, next)}
                 />
               );
@@ -100,12 +106,14 @@ export default function MeasurementFields({
 type MeasurementEntryFieldsProps = {
   item: MeasurementItem;
   entry: MeasurementEntryFormValues;
+  heightMissing: boolean;
   onChange: (entry: MeasurementEntryFormValues) => void;
 };
 
 function MeasurementEntryFields({
   item,
   entry,
+  heightMissing,
   onChange,
 }: MeasurementEntryFieldsProps) {
   const [noteExpanded, setNoteExpanded] = useState<boolean | null>(null);
@@ -117,6 +125,8 @@ function MeasurementEntryFields({
   const optional = isOptionalBilateral(item);
   const sides = sidesOf(item);
   const showSides = sides.length > 1;
+
+  const hasValue = !entry.unmeasurable && hasEntryInput(entry);
 
   const hasNote = entry.note.trim() !== "";
   const noteOpen = noteExpanded ?? (hasNote || entry.unmeasurable);
@@ -328,6 +338,12 @@ function MeasurementEntryFields({
       {optional && !entry.unmeasurable && trials.length > 0 && (
         <p className="text-subtle text-xs">
           {`${sidedLabel(item)}でできなければ${sideNoneLabel(item)}の段を記録します（${sideNoneLabel(item)}・左・右のうち2つまで）`}
+        </p>
+      )}
+
+      {heightMissing && hasValue && (
+        <p className="text-warning text-xs">
+          身長を記録しないとこの項目は判定されません（記録値を身長で割って評価します）
         </p>
       )}
 

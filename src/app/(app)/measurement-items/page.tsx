@@ -12,6 +12,7 @@ import { itemDescription } from "@/lib/measurementGuide";
 import {
   categoryLabel,
   groupByCategory,
+  judgingLabel,
   recordingLabel,
   type MeasurementItem,
 } from "@/lib/measurementItem";
@@ -19,6 +20,7 @@ import { useMeasurementItems } from "@/lib/useMeasurementItems";
 
 function ItemRow({ item }: { item: MeasurementItem }) {
   const recording = recordingLabel(item);
+  const judging = judgingLabel(item);
   const description = itemDescription(item.code);
 
   return (
@@ -26,6 +28,7 @@ function ItemRow({ item }: { item: MeasurementItem }) {
       <div className="sm:w-52 sm:shrink-0">
         <p className="text-foreground text-sm font-medium">{item.name}</p>
         {recording && <p className="text-subtle text-xs">{recording}</p>}
+        {judging && <p className="text-subtle text-xs">{judging}</p>}
       </div>
       {description ? (
         <p className="text-muted text-sm">{description}</p>

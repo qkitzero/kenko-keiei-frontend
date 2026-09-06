@@ -130,6 +130,10 @@ export function hasCellInput(cell: MeasurementCellValues): boolean {
   );
 }
 
+export function hasEntryInput(entry: MeasurementEntryFormValues): boolean {
+  return Object.values(entry.cells).some(hasCellInput);
+}
+
 export function emptyEntryForm(
   item: MeasurementItem,
 ): MeasurementEntryFormValues {
@@ -388,6 +392,43 @@ export function bodyComposition(
   };
 }
 
+export function hasRecordedHeight(
+  measurement: Measurement,
+  items: MeasurementItem[],
+): boolean {
+  const item = items.find((candidate) => candidate.code === HEIGHT_CODE);
+  if (!item || item.unit !== "UNIT_CM") return false;
+  if (item.valueType !== "VALUE_TYPE_NUMERIC") return false;
+
+  const entry = (measurement.entries ?? []).find((candidate) =>
+    isSameId(candidate.measurementItemId, item.measurementItemId),
+  );
+  if (!entry || entry.unmeasurable) return false;
+
+  return (entry.values ?? []).some(
+    (value) => typeof value.value === "number" && value.value > 0,
+  );
+}
+
+export function hasHeightInput(
+  values: MeasurementFormValues,
+  items: MeasurementItem[],
+): boolean {
+  const item = items.find((candidate) => candidate.code === HEIGHT_CODE);
+  if (!item || item.unit !== "UNIT_CM") return false;
+  if (item.valueType !== "VALUE_TYPE_NUMERIC") return false;
+
+  const entry = item.measurementItemId
+    ? values.entries[item.measurementItemId]
+    : undefined;
+  if (!entry || entry.unmeasurable) return false;
+
+  return Object.values(entry.cells).some((cell) => {
+    const value = normalizeMeasurementValue(cell.value);
+    return isValidMeasurementValue(value) && Number(value) > 0;
+  });
+}
+
 export type MeasurementDisplayEntry = {
   item: MeasurementItem;
   unmeasurable: boolean;
@@ -549,7 +590,7 @@ function buildEntry(
   }
 
   if (entry.unmeasurable) {
-    if (Object.values(entry.cells).some(hasCellInput)) {
+    if (hasEntryInput(entry)) {
       return {
         ok: false,
         error: `${label}は測定不可にすると値を保存できません。値を消すか測定不可を外してください`,

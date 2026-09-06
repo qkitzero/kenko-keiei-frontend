@@ -1,7 +1,7 @@
 import type { Customer } from "@/lib/customer";
 import { genderLabel } from "@/lib/customer";
-import type { Measurement } from "@/lib/measurement";
-import type { MeasurementItem } from "@/lib/measurementItem";
+import { hasRecordedHeight, type Measurement } from "@/lib/measurement";
+import { isNormalized, type MeasurementItem } from "@/lib/measurementItem";
 import { hasControlCharExceptBreaks, isTooLong } from "@/lib/text";
 import type { components } from "../../gen/judgment/v1/judgment.schema";
 
@@ -185,27 +185,56 @@ export function motorAgeDifferenceLabel(difference: number): string {
   return `実年齢より${difference}歳上`;
 }
 
-function hasJudgeableItems(
-  measurement: Measurement,
-  items: MeasurementItem[],
-): boolean {
-  const motorFunctionItemIds = new Set(
-    items
-      .filter((item) => item.category === "CATEGORY_MOTOR_FUNCTION")
-      .map((item) => item.measurementItemId?.trim().toLowerCase() ?? ""),
-  );
+function recordedItemIds(measurement: Measurement): Set<string> {
+  const recorded = new Set<string>();
 
-  return (measurement.entries ?? []).some((entry) => {
-    const itemId = entry.measurementItemId?.trim().toLowerCase() ?? "";
-    if (!motorFunctionItemIds.has(itemId)) return false;
-    if (entry.unmeasurable) return false;
-    return (entry.values ?? []).some(
+  for (const entry of measurement.entries ?? []) {
+    if (entry.unmeasurable) continue;
+
+    const hasValue = (entry.values ?? []).some(
       (value) =>
         typeof value.value === "number" ||
         typeof value.valueSecondary === "number" ||
         (value.valueChoice ?? "").trim() !== "",
     );
-  });
+    if (!hasValue) continue;
+
+    const itemId = entry.measurementItemId?.trim().toLowerCase() ?? "";
+    if (itemId) recorded.add(itemId);
+  }
+
+  return recorded;
+}
+
+function hasJudgeableItems(
+  measurement: Measurement,
+  items: MeasurementItem[],
+): boolean {
+  const recorded = recordedItemIds(measurement);
+
+  return items.some(
+    (item) =>
+      item.category === "CATEGORY_MOTOR_FUNCTION" &&
+      recorded.has(item.measurementItemId?.trim().toLowerCase() ?? ""),
+  );
+}
+
+function itemNamesNeedingHeight(
+  measurement: Measurement,
+  items: MeasurementItem[],
+): string[] {
+  if (hasRecordedHeight(measurement, items)) return [];
+
+  const recorded = recordedItemIds(measurement);
+
+  return items
+    .filter(
+      (item) =>
+        isNormalized(item) &&
+        recorded.has(item.measurementItemId?.trim().toLowerCase() ?? ""),
+    )
+    .map((item) => item.name ?? "")
+    .filter(Boolean);
 }
 
 export function emptyJudgmentMessage(
@@ -235,6 +264,11 @@ export function emptyJudgmentMessage(
 
   if (!hasJudgeableItems(measurement, items)) {
     return "判定の対象は運動機能の項目です。この測定には運動機能の記録がありません。";
+  }
+
+  const needingHeight = itemNamesNeedingHeight(measurement, items);
+  if (needingHeight.length > 0) {
+    return `${needingHeight.join("・")}は身長で割った値で判定します。この測定には身長の記録が無いため、判定できません。`;
   }
 
   return "この測定には基準値が登録されている項目が含まれていないため、判定できません。";

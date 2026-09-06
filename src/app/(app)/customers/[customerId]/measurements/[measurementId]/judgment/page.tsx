@@ -189,7 +189,11 @@ function JudgmentDetail({
           </p>
         )}
 
-        <MeasurementValues measurement={measurement.data} items={items.data} />
+        <MeasurementValues
+          measurement={measurement.data}
+          items={items.data}
+          judgment={judged}
+        />
 
         {!judged ? (
           <StateCard

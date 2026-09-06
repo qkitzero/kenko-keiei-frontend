@@ -13,6 +13,8 @@ export const CATEGORY_MOTOR_FUNCTION = "CATEGORY_MOTOR_FUNCTION";
 
 const UNIT_LEVEL = "UNIT_LEVEL";
 
+const NORMALIZATION_HEIGHT_RATIO = "NORMALIZATION_HEIGHT_RATIO";
+
 const CATEGORY_LABELS: Record<string, string> = {
   CATEGORY_UNSPECIFIED: "その他",
   CATEGORY_VITAL: "バイタル",
@@ -93,6 +95,14 @@ export function categoryLabel(category: string | undefined): string {
 export function unitLabel(unit: string | undefined): string {
   if (!unit) return "";
   return UNIT_LABELS[unit] ?? unit.replace(/^UNIT_/, "");
+}
+
+export function isNormalized(item: MeasurementItem): boolean {
+  return item.normalization === NORMALIZATION_HEIGHT_RATIO;
+}
+
+export function evaluationUnitLabel(item: MeasurementItem): string {
+  return isNormalized(item) ? "" : unitLabel(item.unit);
 }
 
 export function pairedLabels(item: MeasurementItem): [string, string] {
@@ -218,6 +228,10 @@ export function recordingLabel(item: MeasurementItem): string {
   if (trials > 1) parts.push(`${trials}回`);
 
   return parts.join(" ・ ");
+}
+
+export function judgingLabel(item: MeasurementItem): string {
+  return isNormalized(item) ? "身長で割った値で判定" : "";
 }
 
 export type MeasurementItemGroup = {
