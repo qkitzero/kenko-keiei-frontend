@@ -1,5 +1,6 @@
 import Badge from "@/components/Badge";
 import DataTable, { type Column } from "@/components/DataTable";
+import Missing from "@/components/Missing";
 import RankLegend from "@/components/RankLegend";
 import SectionHeader from "@/components/SectionHeader";
 import StateCard from "@/components/StateCard";
@@ -11,32 +12,19 @@ import {
   type JudgedItem,
   type Judgment,
 } from "@/lib/judgment";
-import { formatMeasurementNumber } from "@/lib/measurement";
+import { formatItemValue } from "@/lib/measurement";
 import type { MeasurementItem } from "@/lib/measurementItem";
-import { levelLabel, levelRangeLabel, unitLabel } from "@/lib/measurementItem";
+import { unitLabel } from "@/lib/measurementItem";
 
-function evaluationCell(text: string, item: MeasurementItem) {
-  if (!text) return "";
+function evaluationCell(value: number | undefined, item: MeasurementItem) {
+  const text = formatItemValue(item, value);
+  if (!text) return <Missing />;
   const unit = unitLabel(item.unit);
   return (
     <span className="whitespace-nowrap tabular-nums">
       {text}
       {unit && <span className="text-subtle ml-1 text-xs">{unit}</span>}
     </span>
-  );
-}
-
-function valueCell(value: number | undefined, item: MeasurementItem) {
-  return evaluationCell(
-    levelLabel(item, value) || formatMeasurementNumber(value),
-    item,
-  );
-}
-
-function meanCell(value: number | undefined, item: MeasurementItem) {
-  return evaluationCell(
-    levelRangeLabel(item, value) || formatMeasurementNumber(value),
-    item,
   );
 }
 
@@ -47,12 +35,12 @@ const COLUMNS: Column<JudgedItem>[] = [
   },
   {
     header: "記録値",
-    cell: (judged) => valueCell(judged.evaluation.value, judged.item),
+    cell: (judged) => evaluationCell(judged.evaluation.value, judged.item),
     align: "end",
   },
   {
     header: "同年代の平均",
-    cell: (judged) => meanCell(judged.evaluation.mean, judged.item),
+    cell: (judged) => evaluationCell(judged.evaluation.mean, judged.item),
     align: "end",
   },
   {

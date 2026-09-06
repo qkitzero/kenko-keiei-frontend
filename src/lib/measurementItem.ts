@@ -139,15 +139,6 @@ export function levelOptionsOf(
 
 export function levelLabel(
   item: MeasurementItem,
-  level: number | undefined,
-): string {
-  if (typeof level !== "number") return "";
-  const parts = levelPartsOf(item)[level - 1];
-  return parts ? joinLevelParts(parts) : "";
-}
-
-export function levelRangeLabel(
-  item: MeasurementItem,
   value: number | undefined,
 ): string {
   if (typeof value !== "number" || !Number.isFinite(value)) return "";
