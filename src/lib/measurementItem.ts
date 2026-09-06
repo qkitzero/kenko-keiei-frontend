@@ -146,6 +146,28 @@ export function levelLabel(
   return parts ? joinLevelParts(parts) : "";
 }
 
+export function levelRangeLabel(
+  item: MeasurementItem,
+  value: number | undefined,
+): string {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "";
+
+  const level = Number(value.toFixed(2));
+  const low = Math.floor(level);
+  const high = Math.ceil(level);
+
+  const parts = levelPartsOf(item);
+  const lower = parts[low - 1];
+  const upper = parts[high - 1];
+  if (!lower || !upper) return "";
+
+  if (low === high) return joinLevelParts(lower);
+  if (lower.stance === upper.stance) {
+    return `${joinLevelParts(lower)}〜${upper.height}`;
+  }
+  return `${joinLevelParts(lower)}〜${joinLevelParts(upper)}`;
+}
+
 export function isOptionalBilateral(item: MeasurementItem): boolean {
   return item.sideMode === "SIDE_MODE_OPTIONAL_BILATERAL";
 }
