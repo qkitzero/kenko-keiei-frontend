@@ -56,10 +56,18 @@ export interface components {
       unit?: components["schemas"]["v1Unit"];
       /** Format: int64 */
       trialCount?: number;
-      bilateral?: boolean;
       valueType?: components["schemas"]["v1ValueType"];
       sideMode?: components["schemas"]["v1SideMode"];
+      normalization?: components["schemas"]["v1Normalization"];
     };
+    /**
+     * @default NORMALIZATION_UNSPECIFIED
+     * @enum {string}
+     */
+    v1Normalization:
+      | "NORMALIZATION_UNSPECIFIED"
+      | "NORMALIZATION_NONE"
+      | "NORMALIZATION_HEIGHT_RATIO";
     /**
      * @default SIDE_MODE_UNSPECIFIED
      * @enum {string}

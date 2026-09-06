@@ -1,5 +1,6 @@
 import Badge from "@/components/Badge";
 import DataTable, { type Column } from "@/components/DataTable";
+import Missing from "@/components/Missing";
 import RankLegend from "@/components/RankLegend";
 import SectionHeader from "@/components/SectionHeader";
 import StateCard from "@/components/StateCard";
@@ -11,30 +12,32 @@ import {
   type JudgedItem,
   type Judgment,
 } from "@/lib/judgment";
-import { formatMeasurementNumber } from "@/lib/measurement";
+import { formatItemValue } from "@/lib/measurement";
 import type { MeasurementItem } from "@/lib/measurementItem";
-import { levelLabel, unitLabel } from "@/lib/measurementItem";
+import { evaluationUnitLabel, isNormalized } from "@/lib/measurementItem";
 
-function evaluationCell(text: string, item: MeasurementItem) {
-  if (!text) return "";
-  const unit = unitLabel(item.unit);
+const REPRESENTATIVE_NOTE =
+  "記録値は試行と左右をまとめた代表値で、入力した値とは異なることがあります。";
+
+function normalizedNote(judged: JudgedItem[]): string {
+  const names = judged
+    .filter(({ item }) => isNormalized(item))
+    .map(({ item }) => item.name ?? "")
+    .filter(Boolean);
+  if (names.length === 0) return "";
+  return `${names.join("・")}の記録値と同年代の平均は、身長で割った値のため単位がありません。`;
+}
+
+function evaluationCell(value: number | undefined, item: MeasurementItem) {
+  const text = formatItemValue(item, value);
+  if (!text) return <Missing />;
+  const unit = evaluationUnitLabel(item);
   return (
-    <span className="tabular-nums">
+    <span className="whitespace-nowrap tabular-nums">
       {text}
       {unit && <span className="text-subtle ml-1 text-xs">{unit}</span>}
     </span>
   );
-}
-
-function valueCell(value: number | undefined, item: MeasurementItem) {
-  return evaluationCell(
-    levelLabel(item, value) || formatMeasurementNumber(value),
-    item,
-  );
-}
-
-function meanCell(value: number | undefined, item: MeasurementItem) {
-  return evaluationCell(formatMeasurementNumber(value), item);
 }
 
 const COLUMNS: Column<JudgedItem>[] = [
@@ -44,12 +47,12 @@ const COLUMNS: Column<JudgedItem>[] = [
   },
   {
     header: "記録値",
-    cell: (judged) => valueCell(judged.evaluation.value, judged.item),
+    cell: (judged) => evaluationCell(judged.evaluation.value, judged.item),
     align: "end",
   },
   {
     header: "同年代の平均",
-    cell: (judged) => meanCell(judged.evaluation.mean, judged.item),
+    cell: (judged) => evaluationCell(judged.evaluation.mean, judged.item),
     align: "end",
   },
   {
@@ -102,7 +105,7 @@ export default function ItemEvaluations({
           empty={<StateCard message="表示できる項目別評価がありません。" />}
         />
 
-        <RankLegend note="記録値は試行と左右をまとめた代表値で、入力した値とは異なることがあります。" />
+        <RankLegend note={`${REPRESENTATIVE_NOTE}${normalizedNote(judged)}`} />
       </div>
     </section>
   );

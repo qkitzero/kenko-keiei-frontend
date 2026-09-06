@@ -8,7 +8,7 @@ import { PREFECTURES, isValidPrefecture } from "@/lib/address";
 import { CustomerFormValues, GENDERS, genderLabel } from "@/lib/customer";
 import { todayInputValue } from "@/lib/date";
 import type { OrganizationOptions } from "@/lib/organization";
-import { TEXT_MAX_LENGTH } from "@/lib/text";
+import { TEXT_MAX_LENGTH, outOfListLabel } from "@/lib/text";
 
 type CustomerFieldsProps = {
   values: CustomerFormValues;
@@ -95,7 +95,7 @@ export default function CustomerFields({
             <option value="">未選択</option>
             {unlisted && (
               <option value={values.organizationId}>
-                選択中の組織（一覧にありません）
+                {outOfListLabel("選択中の組織")}
               </option>
             )}
             {listed.map((organization) => (
@@ -166,7 +166,7 @@ export default function CustomerFields({
             <option value="">未選択</option>
             {values.prefecture && !isValidPrefecture(values.prefecture) && (
               <option value={values.prefecture}>
-                {values.prefecture}（一覧にありません）
+                {outOfListLabel(values.prefecture)}
               </option>
             )}
             {PREFECTURES.map((prefecture) => (

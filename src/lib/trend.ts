@@ -10,6 +10,7 @@ import {
   bodyComposition,
   cellValue,
   formatEntryValues,
+  formatItemValue,
   formatMeasurementNumber,
   sidesOf,
   type Measurement,
@@ -18,8 +19,9 @@ import {
 } from "@/lib/measurement";
 import {
   CATEGORY_MOTOR_FUNCTION,
+  evaluationUnitLabel,
   isLevelItem,
-  levelLabel,
+  isNormalized,
   pairedLabels,
   trialIndexes,
   unitLabel,
@@ -276,9 +278,7 @@ function evaluationPoint(
   if (!evaluation) return null;
 
   return {
-    text:
-      levelLabel(item, evaluation.value) ||
-      formatMeasurementNumber(evaluation.value),
+    text: formatItemValue(item, evaluation.value),
     value: isLevelItem(item) ? null : numberOrNull(evaluation.value),
     rank: evaluation.rank ?? null,
     unmeasurable: false,
@@ -318,17 +318,18 @@ export function judgedItemRows(
 
     const points = measurements.map((measurement) => {
       if (!judgments.has(measurement.measurementId ?? "")) return EMPTY_POINT;
-      return (
-        evaluationPoint(measurement, judgments, item) ??
-        recordedPoint(measurement, item)
-      );
+      const evaluated = evaluationPoint(measurement, judgments, item);
+      if (evaluated) return evaluated;
+      return isNormalized(item)
+        ? EMPTY_POINT
+        : recordedPoint(measurement, item);
     });
     if (points.every(isEmptyPoint)) continue;
 
     rows.push({
       key: rowKey(item),
       label: item.name ?? "",
-      unit: unitLabel(item.unit),
+      unit: evaluationUnitLabel(item),
       hasRank: points.some((point) => point.rank !== null),
       minRange: null,
       points,

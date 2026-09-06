@@ -27,3 +27,7 @@ export function toHalfWidthDigits(value: string): string {
 export function toHalfWidthNumber(value: string): string {
   return toHalfWidthDigits(value).replace(/[．。]/g, ".");
 }
+
+export function outOfListLabel(value: string): string {
+  return `${value}（一覧にありません）`;
+}

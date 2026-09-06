@@ -13,6 +13,8 @@ export const CATEGORY_MOTOR_FUNCTION = "CATEGORY_MOTOR_FUNCTION";
 
 const UNIT_LEVEL = "UNIT_LEVEL";
 
+const NORMALIZATION_HEIGHT_RATIO = "NORMALIZATION_HEIGHT_RATIO";
+
 const CATEGORY_LABELS: Record<string, string> = {
   CATEGORY_UNSPECIFIED: "その他",
   CATEGORY_VITAL: "バイタル",
@@ -41,18 +43,20 @@ const DEFAULT_PAIRED_LABELS: [string, string] = ["1つ目", "2つ目"];
 
 const CHOICES_BY_CODE: Record<string, string[]> = {};
 
-const LEVEL_LABELS_BY_CODE: Record<string, string[]> = {
+type LevelLabelParts = { stance: string; height: string };
+
+const LEVEL_LABEL_PARTS_BY_CODE: Record<string, LevelLabelParts[]> = {
   stand_up_test: [
-    "両足 50cm",
-    "両足 40cm",
-    "両足 30cm",
-    "両足 20cm",
-    "両足 10cm",
-    "片足 40cm",
-    "片足 30cm",
-    "片足 20cm",
-    "片足 10cm",
-    "片足 0cm",
+    { stance: "両足", height: "50cm" },
+    { stance: "両足", height: "40cm" },
+    { stance: "両足", height: "30cm" },
+    { stance: "両足", height: "20cm" },
+    { stance: "両足", height: "10cm" },
+    { stance: "片足", height: "40cm" },
+    { stance: "片足", height: "30cm" },
+    { stance: "片足", height: "20cm" },
+    { stance: "片足", height: "10cm" },
+    { stance: "片足", height: "0cm" },
   ],
 };
 
@@ -93,6 +97,14 @@ export function unitLabel(unit: string | undefined): string {
   return UNIT_LABELS[unit] ?? unit.replace(/^UNIT_/, "");
 }
 
+export function isNormalized(item: MeasurementItem): boolean {
+  return item.normalization === NORMALIZATION_HEIGHT_RATIO;
+}
+
+export function evaluationUnitLabel(item: MeasurementItem): string {
+  return isNormalized(item) ? "" : unitLabel(item.unit);
+}
+
 export function pairedLabels(item: MeasurementItem): [string, string] {
   return (item.code && PAIRED_LABELS[item.code]) || DEFAULT_PAIRED_LABELS;
 }
@@ -107,18 +119,22 @@ export function isLevelItem(item: MeasurementItem): boolean {
   return item.unit === UNIT_LEVEL;
 }
 
-function levelLabelsOf(item: MeasurementItem): string[] {
+function levelPartsOf(item: MeasurementItem): LevelLabelParts[] {
   if (!isLevelItem(item)) return [];
-  return (item.code && LEVEL_LABELS_BY_CODE[item.code]) || [];
+  return (item.code && LEVEL_LABEL_PARTS_BY_CODE[item.code]) || [];
+}
+
+function joinLevelParts(parts: LevelLabelParts): string {
+  return [parts.stance, parts.height].filter(Boolean).join(" ");
 }
 
 export function levelOptionsOf(
   item: MeasurementItem,
   sided: boolean,
 ): LevelOption[] {
-  const options = levelLabelsOf(item).map((label, index) => ({
+  const options = levelPartsOf(item).map((parts, index) => ({
     level: index + 1,
-    label,
+    label: joinLevelParts(parts),
   }));
 
   if (!isOptionalBilateral(item)) return options;
@@ -133,10 +149,24 @@ export function levelOptionsOf(
 
 export function levelLabel(
   item: MeasurementItem,
-  level: number | undefined,
+  value: number | undefined,
 ): string {
-  if (typeof level !== "number") return "";
-  return levelLabelsOf(item)[level - 1] ?? "";
+  if (typeof value !== "number" || !Number.isFinite(value)) return "";
+
+  const level = Number(value.toFixed(2));
+  const low = Math.floor(level);
+  const high = Math.ceil(level);
+
+  const parts = levelPartsOf(item);
+  const lower = parts[low - 1];
+  const upper = parts[high - 1];
+  if (!lower || !upper) return "";
+
+  if (low === high) return joinLevelParts(lower);
+  if (lower.stance === upper.stance) {
+    return `${joinLevelParts(lower)}〜${upper.height}`;
+  }
+  return `${joinLevelParts(lower)}〜${joinLevelParts(upper)}`;
 }
 
 export function isOptionalBilateral(item: MeasurementItem): boolean {
@@ -186,7 +216,7 @@ export function recordingLabel(item: MeasurementItem): string {
     parts.push("選択");
   }
 
-  const levels = levelLabelsOf(item).length;
+  const levels = levelPartsOf(item).length;
   if (levels > 0) parts.push(`${levels}段階`);
 
   if (item.sideMode === "SIDE_MODE_BILATERAL") parts.push("左右");
@@ -198,6 +228,10 @@ export function recordingLabel(item: MeasurementItem): string {
   if (trials > 1) parts.push(`${trials}回`);
 
   return parts.join(" ・ ");
+}
+
+export function judgingLabel(item: MeasurementItem): string {
+  return isNormalized(item) ? "身長で割った値で判定" : "";
 }
 
 export type MeasurementItemGroup = {

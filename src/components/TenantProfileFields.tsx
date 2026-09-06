@@ -6,7 +6,7 @@ import TextArea from "@/components/TextArea";
 import TextField from "@/components/TextField";
 import { PREFECTURES, isValidPrefecture } from "@/lib/address";
 import type { TenantProfileFormValues } from "@/lib/tenantProfile";
-import { TEXT_MAX_LENGTH } from "@/lib/text";
+import { TEXT_MAX_LENGTH, outOfListLabel } from "@/lib/text";
 
 type TenantProfileFieldsProps = {
   values: TenantProfileFormValues;
@@ -42,7 +42,7 @@ export default function TenantProfileFields({
             <option value="">未選択</option>
             {values.prefecture && !isValidPrefecture(values.prefecture) && (
               <option value={values.prefecture}>
-                {values.prefecture}（一覧にありません）
+                {outOfListLabel(values.prefecture)}
               </option>
             )}
             {PREFECTURES.map((prefecture) => (

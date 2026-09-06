@@ -15,6 +15,7 @@ import {
   hasControlChar,
   hasControlCharExceptBreaks,
   isTooLong,
+  outOfListLabel,
   toHalfWidthNumber,
 } from "@/lib/text";
 import { isSameId } from "@/lib/uuid";
@@ -127,6 +128,10 @@ export function hasCellInput(cell: MeasurementCellValues): boolean {
     cell.valueSecondary.trim() !== "" ||
     cell.valueChoice.trim() !== ""
   );
+}
+
+export function hasEntryInput(entry: MeasurementEntryFormValues): boolean {
+  return Object.values(entry.cells).some(hasCellInput);
 }
 
 export function emptyEntryForm(
@@ -263,16 +268,27 @@ export function formatMeasurementNumber(value: number | undefined): string {
   return String(Number(value.toFixed(2)));
 }
 
+export function formatItemValue(
+  item: MeasurementItem,
+  value: number | undefined,
+): string {
+  const label = levelLabel(item, value);
+  if (label) return label;
+
+  const text = formatMeasurementNumber(value);
+  if (!text || !isLevelItem(item)) return text;
+  return outOfListLabel(text);
+}
+
 function formatCell(value: MeasurementValue, item: MeasurementItem): string {
   if (item.valueType === "VALUE_TYPE_CHOICE") {
     return value.valueChoice?.trim() ?? "";
   }
-
-  const primary = formatMeasurementNumber(value.value);
   if (item.valueType !== "VALUE_TYPE_PAIRED") {
-    return levelLabel(item, value.value) || primary;
+    return formatItemValue(item, value.value);
   }
 
+  const primary = formatMeasurementNumber(value.value);
   const secondary = formatMeasurementNumber(value.valueSecondary);
   if (!primary && !secondary) return "";
 
@@ -374,6 +390,43 @@ export function bodyComposition(
     category: bmiCategory(bmi),
     idealWeight: Number((STANDARD_BMI * meters * meters).toFixed(1)),
   };
+}
+
+export function hasRecordedHeight(
+  measurement: Measurement,
+  items: MeasurementItem[],
+): boolean {
+  const item = items.find((candidate) => candidate.code === HEIGHT_CODE);
+  if (!item || item.unit !== "UNIT_CM") return false;
+  if (item.valueType !== "VALUE_TYPE_NUMERIC") return false;
+
+  const entry = (measurement.entries ?? []).find((candidate) =>
+    isSameId(candidate.measurementItemId, item.measurementItemId),
+  );
+  if (!entry || entry.unmeasurable) return false;
+
+  return (entry.values ?? []).some(
+    (value) => typeof value.value === "number" && value.value > 0,
+  );
+}
+
+export function hasHeightInput(
+  values: MeasurementFormValues,
+  items: MeasurementItem[],
+): boolean {
+  const item = items.find((candidate) => candidate.code === HEIGHT_CODE);
+  if (!item || item.unit !== "UNIT_CM") return false;
+  if (item.valueType !== "VALUE_TYPE_NUMERIC") return false;
+
+  const entry = item.measurementItemId
+    ? values.entries[item.measurementItemId]
+    : undefined;
+  if (!entry || entry.unmeasurable) return false;
+
+  return Object.values(entry.cells).some((cell) => {
+    const value = normalizeMeasurementValue(cell.value);
+    return isValidMeasurementValue(value) && Number(value) > 0;
+  });
 }
 
 export type MeasurementDisplayEntry = {
@@ -537,7 +590,7 @@ function buildEntry(
   }
 
   if (entry.unmeasurable) {
-    if (Object.values(entry.cells).some(hasCellInput)) {
+    if (hasEntryInput(entry)) {
       return {
         ok: false,
         error: `${label}は測定不可にすると値を保存できません。値を消すか測定不可を外してください`,
