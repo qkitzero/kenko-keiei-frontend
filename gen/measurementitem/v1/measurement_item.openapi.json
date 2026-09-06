@@ -112,16 +112,25 @@
             "type": "integer",
             "format": "int64"
           },
-          "bilateral": {
-            "type": "boolean"
-          },
           "valueType": {
             "$ref": "#/components/schemas/v1ValueType"
           },
           "sideMode": {
             "$ref": "#/components/schemas/v1SideMode"
+          },
+          "normalization": {
+            "$ref": "#/components/schemas/v1Normalization"
           }
         }
+      },
+      "v1Normalization": {
+        "type": "string",
+        "enum": [
+          "NORMALIZATION_UNSPECIFIED",
+          "NORMALIZATION_NONE",
+          "NORMALIZATION_HEIGHT_RATIO"
+        ],
+        "default": "NORMALIZATION_UNSPECIFIED"
       },
       "v1SideMode": {
         "type": "string",
