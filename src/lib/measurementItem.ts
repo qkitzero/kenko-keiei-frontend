@@ -230,6 +230,10 @@ export function recordingLabel(item: MeasurementItem): string {
   return parts.join(" ・ ");
 }
 
+export function judgingLabel(item: MeasurementItem): string {
+  return isNormalized(item) ? "身長で割った値で判定" : "";
+}
+
 export type MeasurementItemGroup = {
   category: string;
   items: MeasurementItem[];
