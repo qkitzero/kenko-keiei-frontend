@@ -1,5 +1,6 @@
 import Badge from "@/components/Badge";
 import DataTable, { type Column } from "@/components/DataTable";
+import Missing from "@/components/Missing";
 import RankLegend from "@/components/RankLegend";
 import SectionHeader from "@/components/SectionHeader";
 import StateCard from "@/components/StateCard";
@@ -17,7 +18,7 @@ import { unitLabel } from "@/lib/measurementItem";
 
 function evaluationCell(value: number | undefined, item: MeasurementItem) {
   const text = formatItemValue(item, value);
-  if (!text) return "";
+  if (!text) return <Missing />;
   const unit = unitLabel(item.unit);
   return (
     <span className="whitespace-nowrap tabular-nums">
