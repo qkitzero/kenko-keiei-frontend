@@ -15,6 +15,7 @@ import {
   hasControlChar,
   hasControlCharExceptBreaks,
   isTooLong,
+  outOfListLabel,
   toHalfWidthNumber,
 } from "@/lib/text";
 import { isSameId } from "@/lib/uuid";
@@ -263,16 +264,27 @@ export function formatMeasurementNumber(value: number | undefined): string {
   return String(Number(value.toFixed(2)));
 }
 
+export function formatItemValue(
+  item: MeasurementItem,
+  value: number | undefined,
+): string {
+  const label = levelLabel(item, value);
+  if (label) return label;
+
+  const text = formatMeasurementNumber(value);
+  if (!text || !isLevelItem(item)) return text;
+  return outOfListLabel(text);
+}
+
 function formatCell(value: MeasurementValue, item: MeasurementItem): string {
   if (item.valueType === "VALUE_TYPE_CHOICE") {
     return value.valueChoice?.trim() ?? "";
   }
-
-  const primary = formatMeasurementNumber(value.value);
   if (item.valueType !== "VALUE_TYPE_PAIRED") {
-    return levelLabel(item, value.value) || primary;
+    return formatItemValue(item, value.value);
   }
 
+  const primary = formatMeasurementNumber(value.value);
   const secondary = formatMeasurementNumber(value.valueSecondary);
   if (!primary && !secondary) return "";
 

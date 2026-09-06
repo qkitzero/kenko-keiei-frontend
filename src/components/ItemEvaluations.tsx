@@ -11,9 +11,9 @@ import {
   type JudgedItem,
   type Judgment,
 } from "@/lib/judgment";
-import { formatMeasurementNumber } from "@/lib/measurement";
+import { formatItemValue, formatMeasurementNumber } from "@/lib/measurement";
 import type { MeasurementItem } from "@/lib/measurementItem";
-import { levelLabel, levelRangeLabel, unitLabel } from "@/lib/measurementItem";
+import { levelRangeLabel, unitLabel } from "@/lib/measurementItem";
 
 function evaluationCell(text: string, item: MeasurementItem) {
   if (!text) return "";
@@ -27,10 +27,7 @@ function evaluationCell(text: string, item: MeasurementItem) {
 }
 
 function valueCell(value: number | undefined, item: MeasurementItem) {
-  return evaluationCell(
-    levelLabel(item, value) || formatMeasurementNumber(value),
-    item,
-  );
+  return evaluationCell(formatItemValue(item, value), item);
 }
 
 function meanCell(value: number | undefined, item: MeasurementItem) {

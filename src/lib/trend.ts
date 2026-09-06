@@ -10,6 +10,7 @@ import {
   bodyComposition,
   cellValue,
   formatEntryValues,
+  formatItemValue,
   formatMeasurementNumber,
   sidesOf,
   type Measurement,
@@ -19,7 +20,6 @@ import {
 import {
   CATEGORY_MOTOR_FUNCTION,
   isLevelItem,
-  levelLabel,
   pairedLabels,
   trialIndexes,
   unitLabel,
@@ -276,9 +276,7 @@ function evaluationPoint(
   if (!evaluation) return null;
 
   return {
-    text:
-      levelLabel(item, evaluation.value) ||
-      formatMeasurementNumber(evaluation.value),
+    text: formatItemValue(item, evaluation.value),
     value: isLevelItem(item) ? null : numberOrNull(evaluation.value),
     rank: evaluation.rank ?? null,
     unmeasurable: false,
