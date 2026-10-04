@@ -12,11 +12,17 @@ import {
   rankTone,
   type Judgment,
 } from "@/lib/judgment";
+import {
+  typicalZScoreRange,
+  type JudgmentCriteria,
+} from "@/lib/judgmentCriteria";
 
 export default function ElementEvaluations({
   judgment,
+  criteria,
 }: {
   judgment: Judgment;
+  criteria: JudgmentCriteria | null;
 }) {
   const byElement = elementEvaluationsByElement(judgment);
 
@@ -52,10 +58,13 @@ export default function ElementEvaluations({
                   values: zScores,
                 },
               ]}
+              criteria={criteria}
             />
-            <p className="text-subtle text-xs">
-              灰色の帯が「年代相応」の範囲です
-            </p>
+            {typicalZScoreRange(criteria) && (
+              <p className="text-subtle text-xs">
+                灰色の帯が「年代相応」の範囲です
+              </p>
+            )}
           </div>
         )}
 

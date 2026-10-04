@@ -29,6 +29,7 @@ import { printFileName } from "@/lib/print";
 import type { TrainingMenu } from "@/lib/trainingMenu";
 import { useCustomer } from "@/lib/useCustomer";
 import { useJudgment } from "@/lib/useJudgment";
+import { loadedCriteria, useJudgmentCriteria } from "@/lib/useJudgmentCriteria";
 import { useMeasurement } from "@/lib/useMeasurement";
 import { useMeasurementItems } from "@/lib/useMeasurementItems";
 import { usePrescription } from "@/lib/usePrescription";
@@ -64,6 +65,7 @@ function JudgmentDetail({
   const items = useMeasurementItems();
   const trainingMenus = useTrainingMenus();
   const customer = useCustomer(customerId);
+  const criteria = loadedCriteria(useJudgmentCriteria());
   const { memberships } = useTenants();
 
   const measurementHref = `/customers/${customerId}/measurements/${measurementId}`;
@@ -217,7 +219,7 @@ function JudgmentDetail({
         ) : (
           <>
             <ItemEvaluations judgment={judged} items={items.data} />
-            <ElementEvaluations judgment={judged} />
+            <ElementEvaluations judgment={judged} criteria={criteria} />
             <JudgmentSummary judgment={judged} measurement={measurement.data} />
           </>
         )}
