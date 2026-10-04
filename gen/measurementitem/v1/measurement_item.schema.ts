@@ -45,6 +45,18 @@ export interface components {
       | "CATEGORY_PHYSIQUE"
       | "CATEGORY_BODY_COMPOSITION"
       | "CATEGORY_MOTOR_FUNCTION";
+    /**
+     * @default ITEM_ELEMENT_UNSPECIFIED
+     * @enum {string}
+     */
+    v1ItemElement:
+      | "ITEM_ELEMENT_UNSPECIFIED"
+      | "ITEM_ELEMENT_MUSCLE_STRENGTH"
+      | "ITEM_ELEMENT_MUSCLE_ENDURANCE"
+      | "ITEM_ELEMENT_FLEXIBILITY"
+      | "ITEM_ELEMENT_AGILITY"
+      | "ITEM_ELEMENT_BALANCE"
+      | "ITEM_ELEMENT_MOBILITY";
     v1ListMeasurementItemsResponse: {
       measurementItems?: components["schemas"]["v1MeasurementItem"][];
     };
@@ -59,6 +71,10 @@ export interface components {
       valueType?: components["schemas"]["v1ValueType"];
       sideMode?: components["schemas"]["v1SideMode"];
       normalization?: components["schemas"]["v1Normalization"];
+      scoreDirection?: components["schemas"]["v1ScoreDirection"];
+      trialAggregation?: components["schemas"]["v1TrialAggregation"];
+      sideAggregation?: components["schemas"]["v1SideAggregation"];
+      elements?: components["schemas"]["v1ItemElement"][];
     };
     /**
      * @default NORMALIZATION_UNSPECIFIED
@@ -69,6 +85,23 @@ export interface components {
       | "NORMALIZATION_NONE"
       | "NORMALIZATION_HEIGHT_RATIO";
     /**
+     * @default SCORE_DIRECTION_UNSPECIFIED
+     * @enum {string}
+     */
+    v1ScoreDirection:
+      | "SCORE_DIRECTION_UNSPECIFIED"
+      | "SCORE_DIRECTION_HIGHER_IS_BETTER"
+      | "SCORE_DIRECTION_LOWER_IS_BETTER";
+    /**
+     * @default SIDE_AGGREGATION_UNSPECIFIED
+     * @enum {string}
+     */
+    v1SideAggregation:
+      | "SIDE_AGGREGATION_UNSPECIFIED"
+      | "SIDE_AGGREGATION_MEAN"
+      | "SIDE_AGGREGATION_BEST"
+      | "SIDE_AGGREGATION_WORST";
+    /**
      * @default SIDE_MODE_UNSPECIFIED
      * @enum {string}
      */
@@ -77,6 +110,14 @@ export interface components {
       | "SIDE_MODE_NONE"
       | "SIDE_MODE_BILATERAL"
       | "SIDE_MODE_OPTIONAL_BILATERAL";
+    /**
+     * @default TRIAL_AGGREGATION_UNSPECIFIED
+     * @enum {string}
+     */
+    v1TrialAggregation:
+      | "TRIAL_AGGREGATION_UNSPECIFIED"
+      | "TRIAL_AGGREGATION_MEAN"
+      | "TRIAL_AGGREGATION_BEST";
     /**
      * @default UNIT_UNSPECIFIED
      * @enum {string}

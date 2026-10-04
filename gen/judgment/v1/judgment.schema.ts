@@ -4,6 +4,22 @@
  */
 
 export interface paths {
+  "/v1/judgment-criteria": {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations["JudgmentService_GetJudgmentCriteria"];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   "/v1/measurement/{measurementId}/judgment": {
     parameters: {
       query?: never;
@@ -127,6 +143,24 @@ export interface components {
        */
       day?: number;
     };
+    v1AgeGroupFallback: {
+      /** Format: int64 */
+      maxYoungerYears?: number;
+      /** Format: int64 */
+      maxOlderYears?: number;
+    };
+    v1AgeGroupStandard: {
+      measurementItemId?: string;
+      gender?: components["schemas"]["v1StandardGender"];
+      /** Format: int64 */
+      ageFrom?: number;
+      /** Format: int64 */
+      ageTo?: number;
+      /** Format: double */
+      mean?: number;
+      /** Format: double */
+      standardDeviation?: number;
+    };
     v1DeletePrescriptionResponse: Record<string, never>;
     /**
      * @default ELEMENT_UNSPECIFIED
@@ -146,6 +180,11 @@ export interface components {
       zScore?: number;
       rank?: components["schemas"]["v1Rank"];
     };
+    v1GetJudgmentCriteriaResponse: {
+      rankStandards?: components["schemas"]["v1RankStandard"][];
+      ageGroupStandards?: components["schemas"]["v1AgeGroupStandard"][];
+      ageGroupFallback?: components["schemas"]["v1AgeGroupFallback"];
+    };
     v1GetJudgmentResponse: {
       judgment?: components["schemas"]["v1Judgment"];
     };
@@ -158,6 +197,12 @@ export interface components {
       /** Format: double */
       zScore?: number;
       rank?: components["schemas"]["v1Rank"];
+      /** Format: double */
+      standardDeviation?: number;
+      /** Format: int64 */
+      ageFrom?: number;
+      /** Format: int64 */
+      ageTo?: number;
     };
     v1Judgment: {
       measurementId?: string;
@@ -240,6 +285,21 @@ export interface components {
      */
     v1Rank:
       "RANK_UNSPECIFIED" | "RANK_A" | "RANK_B" | "RANK_C" | "RANK_D" | "RANK_E";
+    v1RankStandard: {
+      rank?: components["schemas"]["v1Rank"];
+      /** Format: double */
+      zScoreMin?: number;
+      /** Format: double */
+      zScoreMax?: number;
+    };
+    /**
+     * @default STANDARD_GENDER_UNSPECIFIED
+     * @enum {string}
+     */
+    v1StandardGender:
+      | "STANDARD_GENDER_UNSPECIFIED"
+      | "STANDARD_GENDER_MALE"
+      | "STANDARD_GENDER_FEMALE";
     v1UpsertJudgmentAdviceResponse: {
       measurementId?: string;
       advice?: string;
@@ -257,6 +317,35 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+  JudgmentService_GetJudgmentCriteria: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description A successful response. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["v1GetJudgmentCriteriaResponse"];
+        };
+      };
+      /** @description An unexpected error response. */
+      default: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          "application/json": components["schemas"]["rpcStatus"];
+        };
+      };
+    };
+  };
   JudgmentService_GetJudgment: {
     parameters: {
       query?: never;
