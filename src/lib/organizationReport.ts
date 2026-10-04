@@ -5,7 +5,7 @@ import {
   ELEMENTS,
   JUDGMENT_MAX_AGE,
   JUDGMENT_MIN_AGE,
-  isWithinStandardAges,
+  usesFallbackStandards,
   type Element,
 } from "@/lib/judgment";
 import type { MeasurementItem } from "@/lib/measurementItem";
@@ -321,7 +321,7 @@ function motorAgeDifferenceOf(judgments: OrganizationJudgment[]): {
     const motorAge = judgment.motorAge;
     const age = judgment.ageAtMeasurement;
     if (typeof motorAge !== "number" || typeof age !== "number") continue;
-    if (!isWithinStandardAges(age)) {
+    if (usesFallbackStandards(judgment, age)) {
       outsideStandardCount += 1;
       continue;
     }

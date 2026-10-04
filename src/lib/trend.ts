@@ -4,6 +4,7 @@ import {
   elementEvaluationsByElement,
   elementLabel,
   formatZScore,
+  usesFallbackStandards,
   type Judgment,
 } from "@/lib/judgment";
 import {
@@ -213,6 +214,7 @@ export type MotorAgeTrend = {
   ages: (number | null)[];
   differences: (number | null)[];
   measuredCount: number;
+  usesFallbackStandards: boolean;
 };
 
 export function motorAgeTrend(
@@ -235,6 +237,14 @@ export function motorAgeTrend(
     ages,
     differences,
     measuredCount: motorAges.filter((value) => value !== null).length,
+    usesFallbackStandards: measurements.some((measurement, index) => {
+      const judgment = judgmentOf(judgments, measurement);
+      return (
+        motorAges[index] !== null &&
+        judgment !== null &&
+        usesFallbackStandards(judgment, ages[index])
+      );
+    }),
   };
 }
 
