@@ -1,5 +1,10 @@
 export type NavIconName =
-  "home" | "customers" | "organizations" | "measurementItems" | "tenants";
+  | "home"
+  | "customers"
+  | "organizations"
+  | "measurementItems"
+  | "judgmentCriteria"
+  | "tenants";
 
 export type NavItem = {
   label: string;
@@ -38,6 +43,13 @@ export const FEATURE_NAV_ITEMS: NavItem[] = [
     href: "/measurement-items",
     activePrefix: "/measurement-items",
     icon: "measurementItems",
+  },
+  {
+    label: "判定基準",
+    description: "判定（A〜E）の基準値と計算方法を確認します。",
+    href: "/judgment-criteria",
+    activePrefix: "/judgment-criteria",
+    icon: "judgmentCriteria",
   },
   {
     label: "テナント",

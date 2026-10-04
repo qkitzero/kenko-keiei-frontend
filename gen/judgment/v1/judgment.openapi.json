@@ -10,6 +10,34 @@
     }
   ],
   "paths": {
+    "/v1/judgment-criteria": {
+      "get": {
+        "operationId": "JudgmentService_GetJudgmentCriteria",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/v1GetJudgmentCriteriaResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/rpcStatus"
+                }
+              }
+            }
+          }
+        },
+        "tags": ["JudgmentService"]
+      }
+    },
     "/v1/measurement/{measurementId}/judgment": {
       "get": {
         "operationId": "JudgmentService_GetJudgment",
@@ -297,6 +325,46 @@
         "description": "* A full date, with non-zero year, month, and day values.\n* A month and day, with a zero year (for example, an anniversary).\n* A year on its own, with a zero month and a zero day.\n* A year and month, with a zero day (for example, a credit card expiration\n  date).\n\nRelated types:\n\n* [google.type.TimeOfDay][google.type.TimeOfDay]\n* [google.type.DateTime][google.type.DateTime]\n* [google.protobuf.Timestamp][google.protobuf.Timestamp]",
         "title": "Represents a whole or partial calendar date, such as a birthday. The time of\nday and time zone are either specified elsewhere or are insignificant. The\ndate is relative to the Gregorian Calendar. This can represent one of the\nfollowing:"
       },
+      "v1AgeGroupFallback": {
+        "type": "object",
+        "properties": {
+          "maxYoungerYears": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "maxOlderYears": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "v1AgeGroupStandard": {
+        "type": "object",
+        "properties": {
+          "measurementItemId": {
+            "type": "string"
+          },
+          "gender": {
+            "$ref": "#/components/schemas/v1StandardGender"
+          },
+          "ageFrom": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ageTo": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "mean": {
+            "type": "number",
+            "format": "double"
+          },
+          "standardDeviation": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
       "v1DeletePrescriptionResponse": {
         "type": "object"
       },
@@ -328,6 +396,26 @@
           }
         }
       },
+      "v1GetJudgmentCriteriaResponse": {
+        "type": "object",
+        "properties": {
+          "rankStandards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v1RankStandard"
+            }
+          },
+          "ageGroupStandards": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/v1AgeGroupStandard"
+            }
+          },
+          "ageGroupFallback": {
+            "$ref": "#/components/schemas/v1AgeGroupFallback"
+          }
+        }
+      },
       "v1GetJudgmentResponse": {
         "type": "object",
         "properties": {
@@ -356,6 +444,18 @@
           },
           "rank": {
             "$ref": "#/components/schemas/v1Rank"
+          },
+          "standardDeviation": {
+            "type": "number",
+            "format": "double"
+          },
+          "ageFrom": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ageTo": {
+            "type": "integer",
+            "format": "int64"
           }
         }
       },
@@ -541,6 +641,31 @@
           "RANK_E"
         ],
         "default": "RANK_UNSPECIFIED"
+      },
+      "v1RankStandard": {
+        "type": "object",
+        "properties": {
+          "rank": {
+            "$ref": "#/components/schemas/v1Rank"
+          },
+          "zScoreMin": {
+            "type": "number",
+            "format": "double"
+          },
+          "zScoreMax": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "v1StandardGender": {
+        "type": "string",
+        "enum": [
+          "STANDARD_GENDER_UNSPECIFIED",
+          "STANDARD_GENDER_MALE",
+          "STANDARD_GENDER_FEMALE"
+        ],
+        "default": "STANDARD_GENDER_UNSPECIFIED"
       },
       "v1UpsertJudgmentAdviceResponse": {
         "type": "object",

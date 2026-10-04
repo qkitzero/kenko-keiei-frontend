@@ -23,6 +23,7 @@ import StatTile from "@/components/StatTile";
 import { useTenants } from "@/context/TenantsContext";
 import { currentFiscalYear, dateLabel, fiscalYearLabel } from "@/lib/date";
 import { ELEMENTS, elementLabel, rankLetter, rankTone } from "@/lib/judgment";
+import type { JudgmentCriteria } from "@/lib/judgmentCriteria";
 import { shortItemName, type MeasurementItem } from "@/lib/measurementItem";
 import type { Organization } from "@/lib/organization";
 import {
@@ -46,6 +47,7 @@ import {
 } from "@/lib/organizationReport";
 import { printFileName } from "@/lib/print";
 import { useCustomers } from "@/lib/useCustomers";
+import { loadedCriteria, useJudgmentCriteria } from "@/lib/useJudgmentCriteria";
 import { useDetailedMeasurementItems } from "@/lib/useMeasurementItems";
 import { useOrganization } from "@/lib/useOrganization";
 import { useOrganizationJudgments } from "@/lib/useOrganizationJudgments";
@@ -168,12 +170,12 @@ function nameCell(row: ReportRow) {
   );
 }
 
-function measuredCell(row: ReportRow) {
+function measuredCell(row: ReportRow, criteria: JudgmentCriteria | null) {
   if (!row.judgment) return <span className="text-subtle">未測定</span>;
 
   const note = hasEvaluations(row.judgment)
     ? ""
-    : emptyJudgmentNote(row.customer, row.judgment);
+    : emptyJudgmentNote(row.customer, row.judgment, criteria);
 
   return (
     <span className="flex flex-col items-end">
@@ -198,12 +200,15 @@ function rankCell(row: ReportRow, item: MeasurementItem) {
   );
 }
 
-function reportColumns(items: MeasurementItem[]): Column<ReportRow>[] {
+function reportColumns(
+  items: MeasurementItem[],
+  criteria: JudgmentCriteria | null,
+): Column<ReportRow>[] {
   return [
     { header: "氏名", cell: nameCell, className: TIGHT_CELL },
     {
       header: "測定日",
-      cell: measuredCell,
+      cell: (row) => measuredCell(row, criteria),
       align: "end",
       className: TIGHT_CELL,
     },
@@ -236,6 +241,7 @@ function OrganizationReport({ organization }: { organization: Organization }) {
   const customers = useCustomers(tenantId, true);
   const judgments = useOrganizationJudgments(organizationId, true);
   const items = useDetailedMeasurementItems();
+  const criteria = loadedCriteria(useJudgmentCriteria());
 
   const issuer =
     tenantsLoading || tenantsError
@@ -545,7 +551,7 @@ function OrganizationReport({ organization }: { organization: Organization }) {
               <div className="flex flex-col gap-4">
                 <DataTable
                   caption="従業員ごとの測定結果"
-                  columns={reportColumns(columns)}
+                  columns={reportColumns(columns, criteria)}
                   rows={rows}
                   rowKey={(row) => row.key}
                   empty={

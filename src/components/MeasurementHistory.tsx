@@ -16,9 +16,8 @@ import SectionHeader from "@/components/SectionHeader";
 import StateCard from "@/components/StateCard";
 import { dateLabel } from "@/lib/date";
 import {
-  STANDARD_MAX_AGE,
-  STANDARD_MIN_AGE,
-  usesRoundedStandards,
+  FALLBACK_STANDARDS_NOTE,
+  usesFallbackStandards,
   type Judgment,
 } from "@/lib/judgment";
 import type { Measurement } from "@/lib/measurement";
@@ -153,13 +152,13 @@ export default function MeasurementHistory({
 
   const recorded = measurements.status === "ok" ? measurements.data : [];
   const failedCount = judgments.status === "ok" ? judgments.failed.length : 0;
-  const hasRoundedAge =
+  const hasFallbackStandards =
     judgments.status === "ok" &&
     recorded.some((measurement) => {
       const judgment = judgments.judgments.get(measurement.measurementId ?? "");
       return (
         typeof judgment?.motorAge === "number" &&
-        usesRoundedStandards(measurement.ageAtMeasurement)
+        usesFallbackStandards(judgment, measurement.ageAtMeasurement)
       );
     });
 
@@ -236,8 +235,7 @@ export default function MeasurementHistory({
                   「注意/相応/良い」は判定できた要素（筋力・バランスなど）の内訳です。注意
                   = D・E、相応 = C、良い =
                   A・B。運動器年齢の括弧内は測定時の年齢との差です。
-                  {hasRoundedAge &&
-                    `測定時の年齢に対応する基準値が無い測定は、最も近い年代（${STANDARD_MIN_AGE}〜${STANDARD_MAX_AGE}歳）の基準値で比べているため、差が大きく出ます。`}
+                  {hasFallbackStandards && FALLBACK_STANDARDS_NOTE}
                 </p>
               </>
             ))}

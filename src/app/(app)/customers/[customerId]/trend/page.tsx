@@ -31,6 +31,7 @@ import {
   type TrendLimit,
 } from "@/lib/trend";
 import { useCustomer } from "@/lib/useCustomer";
+import { loadedCriteria, useJudgmentCriteria } from "@/lib/useJudgmentCriteria";
 import { useJudgments } from "@/lib/useJudgments";
 import { useMeasurementItems } from "@/lib/useMeasurementItems";
 import { useMeasurements } from "@/lib/useMeasurements";
@@ -65,6 +66,7 @@ function CustomerTrend({ customerId }: { customerId: string }) {
   const customer = useCustomer(customerId);
   const measurements = useMeasurements(customerId);
   const items = useMeasurementItems();
+  const criteria = loadedCriteria(useJudgmentCriteria());
   const { memberships } = useTenants();
 
   const all = measurements.status === "ok" ? measurements.data : [];
@@ -310,7 +312,11 @@ function CustomerTrend({ customerId }: { customerId: string }) {
 
                 <MotorAgeTrend measurements={shown} judgments={judged} />
 
-                <ElementTrend measurements={shown} judgments={judged} />
+                <ElementTrend
+                  measurements={shown}
+                  judgments={judged}
+                  criteria={criteria}
+                />
 
                 <Card title="運動機能の項目別" splittable>
                   <div className="flex flex-col gap-4">
