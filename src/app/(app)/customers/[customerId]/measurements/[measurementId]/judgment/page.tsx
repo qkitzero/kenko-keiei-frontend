@@ -25,6 +25,7 @@ import {
   isEmptyJudgment,
   type Judgment,
 } from "@/lib/judgment";
+import { judgedAgeRange, standardGenderOf } from "@/lib/judgmentCriteria";
 import { printFileName } from "@/lib/print";
 import type { TrainingMenu } from "@/lib/trainingMenu";
 import { useCustomer } from "@/lib/useCustomer";
@@ -214,6 +215,7 @@ function JudgmentDetail({
               measurement.data,
               items.data,
               customer.data,
+              judgedAgeRange(criteria, standardGenderOf(customer.data?.gender)),
             )}
           />
         ) : (

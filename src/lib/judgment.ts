@@ -16,27 +16,8 @@ export type AdvicePayload = Schemas["JudgmentServiceUpsertJudgmentAdviceBody"];
 
 export const ADVICE_MAX_LENGTH = 2000;
 
-export const JUDGMENT_MIN_AGE = 18;
-export const JUDGMENT_MAX_AGE = 99;
-
-export const STANDARD_MIN_AGE = 20;
-export const STANDARD_MAX_AGE = 79;
-
-export function isWithinStandardAges(age: number | undefined): boolean {
-  if (typeof age !== "number") return false;
-  return age >= STANDARD_MIN_AGE && age <= STANDARD_MAX_AGE;
-}
-
-export function usesRoundedStandards(age: number | null | undefined): boolean {
-  return typeof age === "number" && !isWithinStandardAges(age);
-}
-
 export const Z_SCORE_MIN = -2.5;
 export const Z_SCORE_MAX = 2.5;
-
-export const RANK_BOUNDARIES = [-1.5, -0.5, 0.5, 1.5];
-
-export const TYPICAL_Z_SCORE_RANGE: [number, number] = [-0.5, 0.5];
 
 export const MIN_RADAR_ELEMENTS = 3;
 
@@ -288,6 +269,7 @@ export function emptyJudgmentMessage(
   measurement: Measurement,
   items: MeasurementItem[],
   customer: Customer | null,
+  judgedAges: AgeRange | null,
 ): string {
   if (!customer) {
     return "判定できる項目がありません。顧客情報を取得できなかったため、理由を特定できません。";
@@ -304,9 +286,10 @@ export function emptyJudgmentMessage(
   const age = measurement.ageAtMeasurement;
   if (
     typeof age === "number" &&
-    (age < JUDGMENT_MIN_AGE || age > JUDGMENT_MAX_AGE)
+    judgedAges &&
+    !isWithinAgeRange(judgedAges, age)
   ) {
-    return `測定時の年齢（${age}歳）に対応する基準値が登録されていないため、判定できません。`;
+    return `測定時の年齢（${age}歳）に対応する基準値が登録されていないため、判定できません。判定の対象は${ageRangeLabel(judgedAges)}です。`;
   }
 
   if (!hasJudgeableItems(measurement, items)) {
@@ -316,6 +299,10 @@ export function emptyJudgmentMessage(
   const needingHeight = itemNamesNeedingHeight(measurement, items);
   if (needingHeight.length > 0) {
     return `${needingHeight.join("・")}は身長で割った値で判定します。この測定には身長の記録が無いため、判定できません。`;
+  }
+
+  if (!judgedAges) {
+    return "測定時の年齢に対応する基準値が無いか、この測定に基準値が登録されている項目が含まれていないため、判定できません。";
   }
 
   return "この測定には基準値が登録されている項目が含まれていないため、判定できません。";
