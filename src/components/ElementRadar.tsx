@@ -1,11 +1,10 @@
 import { lineSegments } from "@/lib/chart";
+import { MIN_RADAR_ELEMENTS, Z_SCORE_MAX, Z_SCORE_MIN } from "@/lib/judgment";
 import {
-  MIN_RADAR_ELEMENTS,
-  RANK_BOUNDARIES,
-  TYPICAL_Z_SCORE_RANGE,
-  Z_SCORE_MAX,
-  Z_SCORE_MIN,
-} from "@/lib/judgment";
+  rankBoundaries,
+  typicalZScoreRange,
+  type JudgmentCriteria,
+} from "@/lib/judgmentCriteria";
 
 const RADIUS = 92;
 const LABEL_GAP = 16;
@@ -81,9 +80,11 @@ function closedSegments(plotted: ([number, number] | null)[]) {
 export default function ElementRadar({
   axes,
   series,
+  criteria,
 }: {
   axes: RadarAxis[];
   series: RadarSeries[];
+  criteria: JudgmentCriteria | null;
 }) {
   const count = axes.length;
   const drawable = series.filter(
@@ -94,7 +95,7 @@ export default function ElementRadar({
 
   if (count < MIN_RADAR_ELEMENTS || drawable.length === 0) return null;
 
-  const [typicalMin, typicalMax] = TYPICAL_Z_SCORE_RANGE;
+  const typical = typicalZScoreRange(criteria);
 
   return (
     <svg
@@ -102,17 +103,19 @@ export default function ElementRadar({
       style={{ width: WIDTH, maxWidth: "100%" }}
       aria-hidden
     >
-      <path
-        d={ringPath(
-          radiusForZScore(typicalMax),
-          radiusForZScore(typicalMin),
-          count,
-        )}
-        fillRule="evenodd"
-        className="fill-surface-muted"
-      />
+      {typical && (
+        <path
+          d={ringPath(
+            radiusForZScore(typical[1]),
+            radiusForZScore(typical[0]),
+            count,
+          )}
+          fillRule="evenodd"
+          className="fill-surface-muted"
+        />
+      )}
 
-      {RANK_BOUNDARIES.map((boundary) => (
+      {rankBoundaries(criteria).map((boundary) => (
         <polygon
           key={boundary}
           points={polygonPoints(radiusForZScore(boundary), count)}

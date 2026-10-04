@@ -5,12 +5,7 @@ import StateCard from "@/components/StateCard";
 import TrendLine from "@/components/TrendLine";
 import { hasAdjacentPair } from "@/lib/chart";
 import { dateLabel } from "@/lib/date";
-import {
-  STANDARD_MAX_AGE,
-  STANDARD_MIN_AGE,
-  signedAgeLabel,
-  usesRoundedStandards,
-} from "@/lib/judgment";
+import { FALLBACK_STANDARDS_NOTE, signedAgeLabel } from "@/lib/judgment";
 import type { Measurement } from "@/lib/measurement";
 import { motorAgeTrend, type Judgments } from "@/lib/trend";
 
@@ -63,7 +58,7 @@ export default function MotorAgeTrend({
   if (trend.measuredCount === 0) {
     return (
       <Card title="運動器年齢">
-        <StateCard message="運動器年齢を算出できた測定がありません。すべての年代の基準値がそろっている項目が必要です。" />
+        <StateCard message="運動器年齢を算出できた測定がありません。基準値で判定できた項目が1つ以上必要です。" />
       </Card>
     );
   }
@@ -81,10 +76,6 @@ export default function MotorAgeTrend({
 
   const latest = trend.motorAges.filter((value) => value !== null).at(-1);
   const latestAge = trend.ages.filter((value) => value !== null).at(-1);
-  const hasRoundedAge = trend.ages.some(
-    (age, index) =>
-      trend.motorAges[index] !== null && usesRoundedStandards(age),
-  );
 
   return (
     <Card title="運動器年齢" splittable>
@@ -127,9 +118,8 @@ export default function MotorAgeTrend({
         />
 
         <p className="text-subtle text-xs">
-          運動器年齢は、すべての年代の基準値がそろっている項目から算出します。項目がそろわない測定では空欄になります。
-          {hasRoundedAge &&
-            `測定時の年齢に対応する基準値が無い測定は、最も近い年代（${STANDARD_MIN_AGE}〜${STANDARD_MAX_AGE}歳）の基準値で比べているため、差が大きく出ます。`}
+          運動器年齢は、基準値で判定できた項目の記録値から算出します。判定できた項目が無い測定では空欄になります。
+          {trend.usesFallbackStandards && FALLBACK_STANDARDS_NOTE}
         </p>
       </div>
     </Card>

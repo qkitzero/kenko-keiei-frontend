@@ -25,10 +25,12 @@ import {
   isEmptyJudgment,
   type Judgment,
 } from "@/lib/judgment";
+import { judgedAgeRange, standardGenderOf } from "@/lib/judgmentCriteria";
 import { printFileName } from "@/lib/print";
 import type { TrainingMenu } from "@/lib/trainingMenu";
 import { useCustomer } from "@/lib/useCustomer";
 import { useJudgment } from "@/lib/useJudgment";
+import { loadedCriteria, useJudgmentCriteria } from "@/lib/useJudgmentCriteria";
 import { useMeasurement } from "@/lib/useMeasurement";
 import { useMeasurementItems } from "@/lib/useMeasurementItems";
 import { usePrescription } from "@/lib/usePrescription";
@@ -64,6 +66,7 @@ function JudgmentDetail({
   const items = useMeasurementItems();
   const trainingMenus = useTrainingMenus();
   const customer = useCustomer(customerId);
+  const criteria = loadedCriteria(useJudgmentCriteria());
   const { memberships } = useTenants();
 
   const measurementHref = `/customers/${customerId}/measurements/${measurementId}`;
@@ -212,12 +215,18 @@ function JudgmentDetail({
               measurement.data,
               items.data,
               customer.data,
+              judgedAgeRange(criteria, standardGenderOf(customer.data?.gender)),
             )}
           />
         ) : (
           <>
-            <ItemEvaluations judgment={judged} items={items.data} />
-            <ElementEvaluations judgment={judged} />
+            <ItemEvaluations
+              judgment={judged}
+              items={items.data}
+              customer={customer.data}
+              age={age}
+            />
+            <ElementEvaluations judgment={judged} criteria={criteria} />
             <JudgmentSummary judgment={judged} measurement={measurement.data} />
           </>
         )}

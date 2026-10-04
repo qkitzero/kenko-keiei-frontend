@@ -1,13 +1,12 @@
 import type { BadgeTone } from "@/components/Badge";
 import { genderLabel, type Customer } from "@/lib/customer";
 import { dateInputValue, fiscalYear, isValidDate } from "@/lib/date";
+import { ELEMENTS, usesFallbackStandards, type Element } from "@/lib/judgment";
 import {
-  ELEMENTS,
-  JUDGMENT_MAX_AGE,
-  JUDGMENT_MIN_AGE,
-  isWithinStandardAges,
-  type Element,
-} from "@/lib/judgment";
+  judgedAgeRange,
+  standardGenderOf,
+  type JudgmentCriteria,
+} from "@/lib/judgmentCriteria";
 import type { MeasurementItem } from "@/lib/measurementItem";
 import { isSameId } from "@/lib/uuid";
 import type { components } from "../../gen/judgment/v1/judgment.schema";
@@ -215,6 +214,7 @@ export function hasEvaluations(judgment: OrganizationJudgment): boolean {
 export function emptyJudgmentNote(
   customer: Customer,
   judgment: OrganizationJudgment,
+  criteria: JudgmentCriteria | null,
 ): string {
   const gender = customer.gender;
   if (gender !== "GENDER_MALE" && gender !== "GENDER_FEMALE") {
@@ -224,12 +224,13 @@ export function emptyJudgmentNote(
   }
 
   const age = judgment.ageAtMeasurement;
-  if (typeof age === "number") {
-    if (age < JUDGMENT_MIN_AGE) {
-      return `${JUDGMENT_MIN_AGE}歳未満のため判定できません`;
+  const judgedAges = judgedAgeRange(criteria, standardGenderOf(gender));
+  if (typeof age === "number" && judgedAges) {
+    if (age < judgedAges.from) {
+      return `${judgedAges.from}歳未満のため判定できません`;
     }
-    if (age > JUDGMENT_MAX_AGE) {
-      return `${JUDGMENT_MAX_AGE + 1}歳以上のため判定できません`;
+    if (age > judgedAges.to) {
+      return `${judgedAges.to + 1}歳以上のため判定できません`;
     }
   }
 
@@ -321,7 +322,7 @@ function motorAgeDifferenceOf(judgments: OrganizationJudgment[]): {
     const motorAge = judgment.motorAge;
     const age = judgment.ageAtMeasurement;
     if (typeof motorAge !== "number" || typeof age !== "number") continue;
-    if (!isWithinStandardAges(age)) {
+    if (usesFallbackStandards(judgment, age)) {
       outsideStandardCount += 1;
       continue;
     }

@@ -9,11 +9,15 @@ import TrendTable from "@/components/TrendTable";
 import { dateLabel } from "@/lib/date";
 import {
   ELEMENTS,
-  JUDGMENT_MAX_AGE,
-  JUDGMENT_MIN_AGE,
   MIN_RADAR_ELEMENTS,
+  ageRangeLabel,
   elementLabel,
 } from "@/lib/judgment";
+import {
+  judgedAgeRange,
+  typicalZScoreRange,
+  type JudgmentCriteria,
+} from "@/lib/judgmentCriteria";
 import type { Measurement } from "@/lib/measurement";
 import {
   elementRows,
@@ -51,21 +55,29 @@ function LegendItem({ tone, label }: { tone: string; label: string }) {
   );
 }
 
+function emptyMessage(criteria: JudgmentCriteria | null): string {
+  const judgedAges = judgedAgeRange(criteria);
+  const target = judgedAges
+    ? `${ageRangeLabel(judgedAges)}・男女`
+    : "基準値が登録されている年齢・男女";
+  return `要素別の評価が出た測定がありません。判定の対象は${target}の運動機能の項目です。`;
+}
+
 export default function ElementTrend({
   measurements,
   judgments,
+  criteria,
 }: {
   measurements: Measurement[];
   judgments: Judgments;
+  criteria: JudgmentCriteria | null;
 }) {
   const rows = elementRows(measurements, judgments);
 
   if (!hasAnyValue(rows)) {
     return (
       <Card title="6要素の変化">
-        <StateCard
-          message={`要素別の評価が出た測定がありません。判定の対象は${JUDGMENT_MIN_AGE}〜${JUDGMENT_MAX_AGE}歳・男女の運動機能の項目です。`}
-        />
+        <StateCard message={emptyMessage(criteria)} />
       </Card>
     );
   }
@@ -104,19 +116,21 @@ export default function ElementTrend({
       <div className="flex flex-col gap-6">
         {series.length > 0 && (
           <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:gap-8 print:break-inside-avoid">
-            <ElementRadar axes={AXES} series={series} />
+            <ElementRadar axes={AXES} series={series} criteria={criteria} />
             <div className="text-muted flex flex-col gap-1.5 text-xs">
               {overlaid && (
                 <LegendItem tone="bg-trend-old" label={dateAt(firstIndex)} />
               )}
               <LegendItem tone="bg-trend-new" label={dateAt(lastIndex)} />
-              <span className="inline-flex items-center gap-1.5">
-                <span
-                  aria-hidden
-                  className="bg-surface-muted border-border inline-block h-3 w-4 rounded-sm border"
-                />
-                年代相応（C）の範囲
-              </span>
+              {typicalZScoreRange(criteria) && (
+                <span className="inline-flex items-center gap-1.5">
+                  <span
+                    aria-hidden
+                    className="bg-surface-muted border-border inline-block h-3 w-4 rounded-sm border"
+                  />
+                  年代相応（C）の範囲
+                </span>
+              )}
               <p className="text-subtle mt-1 max-w-64">
                 外側ほど良い評価です。
                 {overlaid

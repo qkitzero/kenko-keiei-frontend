@@ -8,19 +8,33 @@ import PageMessage from "@/components/PageMessage";
 import PageSkeleton from "@/components/PageSkeleton";
 import SecondaryButton from "@/components/SecondaryButton";
 import StateCard from "@/components/StateCard";
+import { elementLabel } from "@/lib/judgment";
+import { itemElements } from "@/lib/judgmentCriteria";
 import { itemDescription } from "@/lib/measurementGuide";
 import {
   categoryLabel,
   groupByCategory,
+  isJudgedItem,
   judgingLabel,
   recordingLabel,
   type MeasurementItem,
 } from "@/lib/measurementItem";
 import { useMeasurementItems } from "@/lib/useMeasurementItems";
 
+function judgmentLabel(item: MeasurementItem): string {
+  if (!isJudgedItem(item)) return "記録のみ";
+  return [
+    "判定の対象",
+    itemElements(item).map(elementLabel).join("・"),
+    judgingLabel(item),
+  ]
+    .filter(Boolean)
+    .join(" ・ ");
+}
+
 function ItemRow({ item }: { item: MeasurementItem }) {
   const recording = recordingLabel(item);
-  const judging = judgingLabel(item);
+  const judgment = judgmentLabel(item);
   const description = itemDescription(item.code);
 
   return (
@@ -28,7 +42,7 @@ function ItemRow({ item }: { item: MeasurementItem }) {
       <div className="sm:w-52 sm:shrink-0">
         <p className="text-foreground text-sm font-medium">{item.name}</p>
         {recording && <p className="text-subtle text-xs">{recording}</p>}
-        {judging && <p className="text-subtle text-xs">{judging}</p>}
+        <p className="text-subtle text-xs">{judgment}</p>
       </div>
       {description ? (
         <p className="text-muted text-sm">{description}</p>
@@ -75,21 +89,15 @@ export default function MeasurementItemsPage() {
       ) : groups.length === 0 ? (
         <StateCard message="測定項目が登録されていません。" />
       ) : (
-        <>
-          {groups.map((group) => (
-            <Card key={group.category} title={categoryLabel(group.category)}>
-              <div className="divide-border divide-y">
-                {group.items.map((item) => (
-                  <ItemRow key={item.measurementItemId} item={item} />
-                ))}
-              </div>
-            </Card>
-          ))}
-
-          <p className="text-subtle text-xs">
-            判定（A〜E）と同年代の平均は運動機能の項目にだけ付きます。バイタル・体格・体組成は記録のみです。
-          </p>
-        </>
+        groups.map((group) => (
+          <Card key={group.category} title={categoryLabel(group.category)}>
+            <div className="divide-border divide-y">
+              {group.items.map((item) => (
+                <ItemRow key={item.measurementItemId} item={item} />
+              ))}
+            </div>
+          </Card>
+        ))
       )}
     </PageContainer>
   );

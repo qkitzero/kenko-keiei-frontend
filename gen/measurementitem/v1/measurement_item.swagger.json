@@ -73,6 +73,19 @@
       ],
       "default": "CATEGORY_UNSPECIFIED"
     },
+    "v1ItemElement": {
+      "type": "string",
+      "enum": [
+        "ITEM_ELEMENT_UNSPECIFIED",
+        "ITEM_ELEMENT_MUSCLE_STRENGTH",
+        "ITEM_ELEMENT_MUSCLE_ENDURANCE",
+        "ITEM_ELEMENT_FLEXIBILITY",
+        "ITEM_ELEMENT_AGILITY",
+        "ITEM_ELEMENT_BALANCE",
+        "ITEM_ELEMENT_MOBILITY"
+      ],
+      "default": "ITEM_ELEMENT_UNSPECIFIED"
+    },
     "v1ListMeasurementItemsResponse": {
       "type": "object",
       "properties": {
@@ -115,6 +128,21 @@
         },
         "normalization": {
           "$ref": "#/definitions/v1Normalization"
+        },
+        "scoreDirection": {
+          "$ref": "#/definitions/v1ScoreDirection"
+        },
+        "trialAggregation": {
+          "$ref": "#/definitions/v1TrialAggregation"
+        },
+        "sideAggregation": {
+          "$ref": "#/definitions/v1SideAggregation"
+        },
+        "elements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/v1ItemElement"
+          }
         }
       }
     },
@@ -127,6 +155,25 @@
       ],
       "default": "NORMALIZATION_UNSPECIFIED"
     },
+    "v1ScoreDirection": {
+      "type": "string",
+      "enum": [
+        "SCORE_DIRECTION_UNSPECIFIED",
+        "SCORE_DIRECTION_HIGHER_IS_BETTER",
+        "SCORE_DIRECTION_LOWER_IS_BETTER"
+      ],
+      "default": "SCORE_DIRECTION_UNSPECIFIED"
+    },
+    "v1SideAggregation": {
+      "type": "string",
+      "enum": [
+        "SIDE_AGGREGATION_UNSPECIFIED",
+        "SIDE_AGGREGATION_MEAN",
+        "SIDE_AGGREGATION_BEST",
+        "SIDE_AGGREGATION_WORST"
+      ],
+      "default": "SIDE_AGGREGATION_UNSPECIFIED"
+    },
     "v1SideMode": {
       "type": "string",
       "enum": [
@@ -136,6 +183,15 @@
         "SIDE_MODE_OPTIONAL_BILATERAL"
       ],
       "default": "SIDE_MODE_UNSPECIFIED"
+    },
+    "v1TrialAggregation": {
+      "type": "string",
+      "enum": [
+        "TRIAL_AGGREGATION_UNSPECIFIED",
+        "TRIAL_AGGREGATION_MEAN",
+        "TRIAL_AGGREGATION_BEST"
+      ],
+      "default": "TRIAL_AGGREGATION_UNSPECIFIED"
     },
     "v1Unit": {
       "type": "string",
