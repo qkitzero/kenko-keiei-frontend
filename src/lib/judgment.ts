@@ -108,9 +108,9 @@ export function rankTone(rank: string | undefined): RankTone {
   return RANK_TONES[rank] ?? "muted";
 }
 
-export const RANK_LEGEND = (
-  ["RANK_A", "RANK_B", "RANK_C", "RANK_D", "RANK_E"] as Rank[]
-).map((rank) => ({
+export const RANKS: Rank[] = ["RANK_A", "RANK_B", "RANK_C", "RANK_D", "RANK_E"];
+
+export const RANK_LEGEND = RANKS.map((rank) => ({
   rank,
   letter: rankLetter(rank),
   meaning: rankMeaning(rank),
@@ -121,6 +121,53 @@ export function formatZScore(zScore: number | undefined): string {
   const rounded = zScore.toFixed(1);
   return Number(rounded) > 0 ? `+${rounded}` : rounded;
 }
+
+export type AgeRange = { from: number; to: number };
+
+export function ageRangeLabel(range: AgeRange): string {
+  return `${range.from}〜${range.to}歳`;
+}
+
+export function evaluatedAgeRange(evaluation: ItemEvaluation): AgeRange | null {
+  const { ageFrom, ageTo } = evaluation;
+  if (typeof ageFrom !== "number" || typeof ageTo !== "number") return null;
+  if (ageFrom > ageTo) return null;
+  return { from: ageFrom, to: ageTo };
+}
+
+function isWithinAgeRange(range: AgeRange, age: number): boolean {
+  return age >= range.from && age <= range.to;
+}
+
+export function evaluatedAgeRanges(evaluations: ItemEvaluation[]): AgeRange[] {
+  const ranges: AgeRange[] = [];
+  for (const evaluation of evaluations) {
+    const range = evaluatedAgeRange(evaluation);
+    if (
+      range &&
+      !ranges.some(
+        (listed) => listed.from === range.from && listed.to === range.to,
+      )
+    ) {
+      ranges.push(range);
+    }
+  }
+  return ranges.sort((left, right) => left.from - right.from);
+}
+
+export function usesFallbackStandards(
+  judgment: { itemEvaluations?: ItemEvaluation[] },
+  age: number | null | undefined,
+): boolean {
+  if (typeof age !== "number") return false;
+  return (judgment.itemEvaluations ?? []).some((evaluation) => {
+    const range = evaluatedAgeRange(evaluation);
+    return range !== null && !isWithinAgeRange(range, age);
+  });
+}
+
+export const FALLBACK_STANDARDS_NOTE =
+  "測定時の年齢に対応する年代の基準値が無い測定は、最も近い年代の基準値で項目を評価しています。その測定の運動器年齢は、基準値を年代の外へ延長して推定した値です。";
 
 export type JudgedItem = {
   item: MeasurementItem;
