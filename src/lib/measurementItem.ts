@@ -6,6 +6,7 @@ export type MeasurementItem = Schemas["v1MeasurementItem"];
 export type Category = Schemas["v1Category"];
 export type Unit = Schemas["v1Unit"];
 export type ValueType = Schemas["v1ValueType"];
+export type ItemElement = Schemas["v1ItemElement"];
 
 export const CHOICE_MAX_LENGTH = 32;
 
@@ -14,6 +15,22 @@ export const CATEGORY_MOTOR_FUNCTION = "CATEGORY_MOTOR_FUNCTION";
 const UNIT_LEVEL = "UNIT_LEVEL";
 
 const NORMALIZATION_HEIGHT_RATIO = "NORMALIZATION_HEIGHT_RATIO";
+
+const SCORE_DIRECTION_LABELS: Record<string, string> = {
+  SCORE_DIRECTION_HIGHER_IS_BETTER: "高いほど良い",
+  SCORE_DIRECTION_LOWER_IS_BETTER: "低いほど良い",
+};
+
+const TRIAL_AGGREGATION_LABELS: Record<string, string> = {
+  TRIAL_AGGREGATION_MEAN: "平均",
+  TRIAL_AGGREGATION_BEST: "良い方",
+};
+
+const SIDE_AGGREGATION_LABELS: Record<string, string> = {
+  SIDE_AGGREGATION_MEAN: "平均",
+  SIDE_AGGREGATION_BEST: "良い方",
+  SIDE_AGGREGATION_WORST: "悪い方",
+};
 
 const CATEGORY_LABELS: Record<string, string> = {
   CATEGORY_UNSPECIFIED: "その他",
@@ -128,6 +145,10 @@ function joinLevelParts(parts: LevelLabelParts): string {
   return [parts.stance, parts.height].filter(Boolean).join(" ");
 }
 
+export function levelCountOf(item: MeasurementItem): number {
+  return levelPartsOf(item).length;
+}
+
 export function levelOptionsOf(
   item: MeasurementItem,
   sided: boolean,
@@ -216,7 +237,7 @@ export function recordingLabel(item: MeasurementItem): string {
     parts.push("選択");
   }
 
-  const levels = levelPartsOf(item).length;
+  const levels = levelCountOf(item);
   if (levels > 0) parts.push(`${levels}段階`);
 
   if (item.sideMode === "SIDE_MODE_BILATERAL") parts.push("左右");
@@ -232,6 +253,37 @@ export function recordingLabel(item: MeasurementItem): string {
 
 export function judgingLabel(item: MeasurementItem): string {
   return isNormalized(item) ? "身長で割った値で判定" : "";
+}
+
+export function isJudgedItem(item: MeasurementItem): boolean {
+  return Boolean(
+    item.scoreDirection && SCORE_DIRECTION_LABELS[item.scoreDirection],
+  );
+}
+
+export function isLowerBetter(item: MeasurementItem): boolean {
+  return item.scoreDirection === "SCORE_DIRECTION_LOWER_IS_BETTER";
+}
+
+export function scoreDirectionLabel(item: MeasurementItem): string {
+  return SCORE_DIRECTION_LABELS[item.scoreDirection ?? ""] ?? "";
+}
+
+export function trialAggregationLabel(item: MeasurementItem): string {
+  const label = TRIAL_AGGREGATION_LABELS[item.trialAggregation ?? ""];
+  if (!label) return "";
+  const trials = trialCountOf(item);
+  return trials > 1 ? `${trials}回の${label}` : "1回";
+}
+
+export function sideAggregationLabel(item: MeasurementItem): string {
+  if (item.sideMode === "SIDE_MODE_NONE") return "左右なし";
+  const label = SIDE_AGGREGATION_LABELS[item.sideAggregation ?? ""];
+  if (!label) return "";
+  if (isOptionalBilateral(item)) {
+    return `${sideNoneLabel(item)}・左・右のうち${label}`;
+  }
+  return `左右の${label}`;
 }
 
 export type MeasurementItemGroup = {
