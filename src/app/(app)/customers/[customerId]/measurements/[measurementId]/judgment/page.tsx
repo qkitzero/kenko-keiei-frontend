@@ -218,7 +218,12 @@ function JudgmentDetail({
           />
         ) : (
           <>
-            <ItemEvaluations judgment={judged} items={items.data} />
+            <ItemEvaluations
+              judgment={judged}
+              items={items.data}
+              customer={customer.data}
+              age={age}
+            />
             <ElementEvaluations judgment={judged} criteria={criteria} />
             <JudgmentSummary judgment={judged} measurement={measurement.data} />
           </>
