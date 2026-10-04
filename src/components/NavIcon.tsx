@@ -15,6 +15,12 @@ const PATHS: Record<NavIconName, string[]> = {
     "M8 7h3M8 11h3M8 15h3",
   ],
   measurementItems: ["M4 20V10M9 20V4M14 20v-7M19 20v-4", "M2 20h20"],
+  judgmentCriteria: [
+    "M12 3v18M8 21h8",
+    "M5 7h14",
+    "m5 7-3 7a3 3 0 0 0 6 0L5 7Z",
+    "m19 7-3 7a3 3 0 0 0 6 0l-3-7Z",
+  ],
   tenants: [
     "m12 3 9 4.5-9 4.5-9-4.5L12 3Z",
     "m3 12 9 4.5 9-4.5",
