@@ -216,6 +216,7 @@ export interface components {
     };
     v1ListOrganizationJudgmentsResponse: {
       judgments?: components["schemas"]["v1OrganizationJudgment"][];
+      nextPageToken?: string;
     };
     v1OrganizationJudgment: {
       customerId?: string;
@@ -482,6 +483,8 @@ export interface operations {
     parameters: {
       query?: {
         includeInactive?: boolean;
+        pageSize?: number;
+        pageToken?: string;
       };
       header?: never;
       path: {
