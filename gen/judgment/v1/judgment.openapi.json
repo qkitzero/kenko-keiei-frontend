@@ -249,6 +249,23 @@
             "schema": {
               "type": "boolean"
             }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageToken",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "tags": ["JudgmentService"]
@@ -503,6 +520,9 @@
             "items": {
               "$ref": "#/components/schemas/v1OrganizationJudgment"
             }
+          },
+          "nextPageToken": {
+            "type": "string"
           }
         }
       },

@@ -1,6 +1,10 @@
 import { authorizedRequest } from "@/app/api/_lib/authorizedRequest";
-import { jsonResponse, toStatusResult } from "@/app/api/_lib/response";
-import { judgmentClient } from "@/app/api/fitness/client";
+import { jsonResponse } from "@/app/api/_lib/response";
+import { withTimeout } from "@/app/api/_lib/timeout";
+import {
+  ORGANIZATION_JUDGMENTS_TIMEOUT_MS,
+  listAllOrganizationJudgments,
+} from "@/app/api/fitness/organizationJudgments";
 import { NextRequest } from "next/server";
 
 type Params = { params: Promise<{ organizationId: string }> };
@@ -12,10 +16,12 @@ export async function GET(req: NextRequest, { params }: Params) {
     req.nextUrl.searchParams.get("includeInactive") === "true";
 
   const result = await authorizedRequest(req, (accessToken) =>
-    toStatusResult(
-      judgmentClient.GET("/v1/organization/{organizationId}/judgments", {
+    withTimeout(ORGANIZATION_JUDGMENTS_TIMEOUT_MS, (signal) =>
+      listAllOrganizationJudgments({
         headers: { Authorization: `Bearer ${accessToken}` },
-        params: { path: { organizationId }, query: { includeInactive } },
+        organizationId,
+        includeInactive,
+        signal,
       }),
     ),
   );
