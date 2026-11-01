@@ -1,5 +1,6 @@
 import { authorizedRequest } from "@/app/api/_lib/authorizedRequest";
 import { jsonResponse, toStatusResult } from "@/app/api/_lib/response";
+import { withTimeout } from "@/app/api/_lib/timeout";
 import {
   customerClient,
   judgmentClient,
@@ -15,21 +16,6 @@ import { NextRequest, NextResponse } from "next/server";
 type Params = { params: Promise<{ tenantId: string }> };
 
 type UpstreamResult = { data?: unknown; error?: unknown; status: number };
-
-async function withTimeout<T>(
-  call: (signal: AbortSignal) => Promise<T>,
-): Promise<T> {
-  const controller = new AbortController();
-  const timer = setTimeout(
-    () => controller.abort(),
-    SUMMARY_UPSTREAM_TIMEOUT_MS,
-  );
-  try {
-    return await call(controller.signal);
-  } finally {
-    clearTimeout(timer);
-  }
-}
 
 function failureOf(results: UpstreamResult[]): UpstreamResult | null {
   const unauthenticated = results.find((result) => result.status === 401);
@@ -57,7 +43,7 @@ export async function GET(req: NextRequest, { params }: Params) {
     const headers = { Authorization: `Bearer ${accessToken}` };
 
     const [customers, organizations] = await Promise.all([
-      withTimeout((signal) =>
+      withTimeout(SUMMARY_UPSTREAM_TIMEOUT_MS, (signal) =>
         toStatusResult(
           customerClient.GET("/v1/customers", {
             headers,
@@ -66,7 +52,7 @@ export async function GET(req: NextRequest, { params }: Params) {
           }),
         ),
       ),
-      withTimeout((signal) =>
+      withTimeout(SUMMARY_UPSTREAM_TIMEOUT_MS, (signal) =>
         toStatusResult(
           organizationClient.GET("/v1/organizations", {
             headers,
@@ -95,7 +81,7 @@ export async function GET(req: NextRequest, { params }: Params) {
 
     const judgmentResults = await Promise.all(
       scopedOrganizations.map(({ organizationId }) =>
-        withTimeout((signal) =>
+        withTimeout(SUMMARY_UPSTREAM_TIMEOUT_MS, (signal) =>
           toStatusResult(
             judgmentClient.GET("/v1/organization/{organizationId}/judgments", {
               headers,
