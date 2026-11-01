@@ -1,11 +1,8 @@
 import { authorizedRequest } from "@/app/api/_lib/authorizedRequest";
 import { jsonResponse, toStatusResult } from "@/app/api/_lib/response";
 import { withTimeout } from "@/app/api/_lib/timeout";
-import {
-  customerClient,
-  judgmentClient,
-  organizationClient,
-} from "@/app/api/fitness/client";
+import { customerClient, organizationClient } from "@/app/api/fitness/client";
+import { listAllOrganizationJudgments } from "@/app/api/fitness/organizationJudgments";
 import { currentFiscalYear } from "@/lib/date";
 import {
   SUMMARY_UPSTREAM_TIMEOUT_MS,
@@ -82,16 +79,12 @@ export async function GET(req: NextRequest, { params }: Params) {
     const judgmentResults = await Promise.all(
       scopedOrganizations.map(({ organizationId }) =>
         withTimeout(SUMMARY_UPSTREAM_TIMEOUT_MS, (signal) =>
-          toStatusResult(
-            judgmentClient.GET("/v1/organization/{organizationId}/judgments", {
-              headers,
-              params: {
-                path: { organizationId },
-                query: { includeInactive: true },
-              },
-              signal,
-            }),
-          ),
+          listAllOrganizationJudgments({
+            headers,
+            organizationId,
+            includeInactive: true,
+            signal,
+          }),
         ),
       ),
     );
